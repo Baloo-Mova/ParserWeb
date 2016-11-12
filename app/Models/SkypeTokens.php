@@ -4,13 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SkypeLogins extends Model
+class SkypeTokens extends Model
 {
     public $timestamps = false;
-    public $table = "skype_logins";
+    public $table = "skype_tokens";
 
     public $fillable = [
         'login',
-        'password',
+        'skypeToken',
+        'registrationToken',
+        'expiry',
     ];
 }

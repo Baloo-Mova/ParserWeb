@@ -2,6 +2,7 @@
 
 namespace App\MyFacade;
 use App\Models\SkypeLogins;
+use App\Models\SkypeTokens;
 
 class Skype
 {
@@ -9,20 +10,23 @@ class Skype
     private $password, $registrationToken, $skypeToken, $expiry = 0, $logged = false, $hashedUsername;
 
     public function __construct($username, $password, $parameters) {
+
         $this->username = $username;
         $this->password = $password;
         $this->hashedUsername = sha1($username);
 
-        $skype_logins = SkypeLogins::where('login',$username)->first();
 
-        if(!empty($skype_logins)){
-            $this->skypeToken = $skype_logins->skypeToken;
-            $this->registrationToken = $skype_logins->registrationToken;
-            $this->expiry = $skype_logins->expiry;
+
+        $skype_tokens = SkypeTokens::where('login',$username)->first();
+
+        if(!empty($skype_tokens)){
+            $this->skypeToken = $skype_tokens->skypeToken;
+            $this->registrationToken = $skype_tokens->registrationToken;
+            $this->expiry = $skype_tokens->expiry;
         }else{
+            $this->clearUserData();
             $this->login();
         }
-
 
         switch ($parameters['method']){
             case 'sendFriendInvite':
@@ -34,8 +38,20 @@ class Skype
             case 'sendFrom':
                 $this->sendFrom($username, $parameters['to'], $parameters['message']);
                 break;
+            case 'sendRandom':
+                $this->sendRandom($parameters['to'], $parameters['message']);
+                break;
         }
 
+    }
+
+    private function clearUserData(){
+
+        echo "Чистим данные";
+
+        unset($this->skypeToken);
+        unset($this->registrationToken);
+        unset($this->hashedUsername);
     }
 
     private function login() {
@@ -124,6 +140,8 @@ class Skype
         $login = $this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/endpoints", "POST", "{}", true);
 
         preg_match("`registrationToken=(.+);`isU", $login, $registrationToken);
+
+
         $this->registrationToken = $registrationToken[1];
 
 
@@ -138,14 +156,13 @@ class Skype
         $this->expiry = $expiry;
         $this->logged = true;
 
-        $skype_logins = new SkypeLogins(); // записываем в БД данные о логине
-        $skype_logins->login = $this->username;
-        $skype_logins->skypeToken = $this->skypeToken;
-        $skype_logins->registrationToken = $this->registrationToken;
-        $skype_logins->expiry = $this->expiry;
-        $skype_logins->save();
+        $skype_tokens = new SkypeTokens; // записываем в БД данные о логине
+        $skype_tokens->login = $this->username;
+        $skype_tokens->skypeToken = $this->skypeToken;
+        $skype_tokens->registrationToken = $this->registrationToken;
+        $skype_tokens->expiry = $this->expiry;
+        $skype_tokens->save();
 
-        //file_put_contents("{$this->folder}/auth_{$this->hashedUsername}", json_encode($cache));
 
         return true;
     }
@@ -199,7 +216,8 @@ class Skype
         if (!$this->logged)
             return true;
 
-        unlink("{$this->folder}/auth_{$this->username}");
+        SkypeTokens::where('login', $this->username)->delete();
+
         unset($this->skypeToken);
         unset($this->registrationToken);
 
@@ -219,7 +237,6 @@ class Skype
 
 
     //
-    //public function sendRandom($to, $message);
     public function isFriend($to){
         $username = $this->URLtoUser($to);
         $post = [
@@ -228,6 +245,17 @@ class Skype
         $res = json_decode($this->web("https://api.skype.com/users/self/contacts/auth-request/$to", "PUT", $post));
 
         return $res->status->code;
+    }
+    public function sendRandom($to, $message){
+
+        $from = SkypeLogins::inRandomOrder()->first();
+
+        $this->clearUserData();
+
+        $this->__construct($from->login, $from->password, ["method" => "sendFrom", "to" => $to, 'message' => $message]);
+
+        echo "from ".$from->login." to ".$to;
+
     }
     public function sendFrom($from, $to, $message){
         $user = $this->URLtoUser($to);
@@ -262,6 +290,9 @@ class Skype
         return isset($data["code"]) && $data["code"] == 20100;
     }
     public function sendMessage($to, $message){
+
+        echo "||".$to." ".$this->username."<br>";
+
         $user = $this->URLtoUser($to);
         $mode = strstr($user, "thread.skype") ? 19 : 8;
         $messageID = $this->timestamp();

@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateSkypeLoginsTable extends Migration
+class CreateSkypeTokensTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,12 @@ class CreateSkypeLoginsTable extends Migration
      */
     public function up()
     {
-        Schema::create('skype_logins', function (Blueprint $table) {
+        Schema::create('skype_tokens', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('login', 255);
-            $table->string('password', 255);
+            $table->text('login');
+            $table->text('skypeToken');
+            $table->text('registrationToken');
+            $table->string('expiry', 255);
         });
     }
 
@@ -27,6 +29,6 @@ class CreateSkypeLoginsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('skype_logins');
+        Schema::dropIfExists('skype_tokens');
     }
 }
