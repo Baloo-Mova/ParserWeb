@@ -17,8 +17,8 @@ Route::get('/', function () {
 });
 
 Route::get('/skype', function(){
-      new Skype("papapetlyak@gmail.com", "azerty18", ["method" => "sendFriendInvite", "to" => "petliak.serhii", "message" => "Testing"]); //sendFriendInvite()
+     // new Skype("petlyakss@gmail.com", "azerty99", ["method" => "sendFriendInvite", "to" => "petliak.serhii", "message" => "Testing"]); //sendFriendInvite()
     // new Skype("petlyakssphone@gmail.com", "azerty99", ["method" => "sendMessage", "to" => "petliak.serhii", "message" => "Тестовое сообщение"]); //sendMessage()
      // new Skype("petliak.serhii", "azerty99", ["method" => "sendFrom", "to" => "papapetlyak@gmail.com", "message" => "Тестовое сообщение"]);
-     // new Skype("petlyakssphone@gmail.com", "azerty99", ["method" => "sendRandom", "to" => "papapetlyak@gmail.com", "message" => "Тестовое сообщение - Random(message)"]);
+     // new Skype("petlyakss@gmail.com", "azerty99", ["method" => "sendRandom", "to" => "petliak.serhii", "message" => "Тестовое сообщение - Random(message)"]);
 });

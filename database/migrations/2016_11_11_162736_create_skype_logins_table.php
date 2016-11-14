@@ -17,6 +17,9 @@ class CreateSkypeLoginsTable extends Migration
             $table->increments('id');
             $table->string('login', 255);
             $table->string('password', 255);
+            $table->text('skypeToken')->nullable();
+            $table->text('registrationToken')->nullable();
+            $table->string('expiry', 255)->nullable();
         });
     }
 

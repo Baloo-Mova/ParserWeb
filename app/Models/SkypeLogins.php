@@ -12,5 +12,8 @@ class SkypeLogins extends Model
     public $fillable = [
         'login',
         'password',
+        'skypeToken',
+        'registrationToken',
+        'expiry',
     ];
 }
