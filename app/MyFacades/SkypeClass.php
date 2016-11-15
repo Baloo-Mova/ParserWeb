@@ -27,12 +27,14 @@ class SkypeClass {
             $this->skypeToken = $auth["skypeToken"];
             $this->registrationToken = $auth["registrationToken"];
             $this->expiry = $auth["expiry"];
+            echo "<br>login - ok<br>";
         } else {
             $this->login();
         }
     }
 
     private function login() {
+        echo "need login<br>";
         $loginForm = $this->web("https://login.skype.com/login/oauth/microsoft?client_id=578134&redirect_uri=https%3A%2F%2Fweb.skype.com%2F&username={$this->username}", "GET", [], true, true);
 
         preg_match("`urlPost:'(.+)',`isU", $loginForm, $loginURL);
@@ -112,11 +114,13 @@ class SkypeClass {
         $login = $this->web("https://login.skype.com/login/microsoft?client_id=578134&redirect_uri=https://web.skype.com/", "POST", $post);
 
 
+
         preg_match("`<input type=\"hidden\" name=\"skypetoken\" value=\"(.+)\"/>`isU", $login, $skypeToken);
+
         $this->skypeToken = $skypeToken[1];
 
         $login = $this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/endpoints", "POST", "{}", true);
-
+        //dd($login);
         preg_match("`registrationToken=(.+);`isU", $login, $registrationToken);
 
 
@@ -147,6 +151,7 @@ class SkypeClass {
         $skype_logins->registrationToken = $this->registrationToken;
         $skype_logins->expiry = $this->expiry;
         $skype_logins->save();
+        echo "login SUCCESS<br>";
 
         return true;
     }
@@ -230,8 +235,6 @@ class SkypeClass {
         $req = $this->web("https://api.skype.com/users/self/contacts/auth-request/$to", "PUT", $post);
         $data = json_decode($req, true);
 
-        print_r($data['status']);
-
         return $data['status']['code'];
     }
 
@@ -246,8 +249,6 @@ class SkypeClass {
 
         $req = $this->web("https://api.skype.com/users/self/contacts/auth-request/$to", "PUT", $post);
         $data = json_decode($req, true);
-
-
 
         return isset($data["code"]) && $data["code"] == 20100;
     }
@@ -267,7 +268,7 @@ class SkypeClass {
         ];
 
         $req = json_decode($this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/conversations/$mode:$to/messages", "POST", json_encode($post)), true);
-
+dd($req);
         return isset($req["OriginalArrivalTime"]) ? $messageID : 0;
     }
 
@@ -275,7 +276,14 @@ class SkypeClass {
 
         $this->index($from["login"], $from["password"]);
 
-        if($this->isFriend($to, $message) == 20000){
+        $is_friend = $this->isFriend($to, $message);
+
+        if($is_friend == 50000){
+            unset($auth);
+            $this->sendFrom($from, $to, $message);
+        }
+
+        if($is_friend == 20000) {
             $this->sendMessage(["login" => $from["login"], "password" => $from["password"]], $to, $message);
         }
     }
@@ -289,9 +297,14 @@ class SkypeClass {
 
             $this->index($from->login, $from->password);
 
-            echo $this->isFriend($to, $message);
+            $is_friend = $this->isFriend($to, $message);
 
-            if($this->isFriend($to, $message) == 20000){
+            if($is_friend == 50000){
+                unset($auth);
+                $this->sendRandom($to, $message);
+            }
+
+            if($is_friend == 20000){
                 $this->sendMessage(["login" => $from->login, "password" => $from->password], $to, $message);
             }
         }

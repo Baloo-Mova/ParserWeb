@@ -17,8 +17,8 @@ Route::get('/', function () {
 
 Route::get('skypeclass', function(){
 
-    //SkypeClass::sendMessage(["login" => "from", "password" => "pass"], "to", "MyMessage");
-    //SkypeClass::sendFriendInvite(["login" => "from", "password" => "pass"], "to", "MyMessage");
-    //SkypeClass::sendFrom(["login" => "from", "password" => "pass"], "to", "MyMessage");
-    //SkypeClass::sendRandom("to", "MyRandomMessage14");
+    //SkypeClass::sendMessage(["login" => "from", "password" => "secret"], "to", "message");
+    //SkypeClass::sendFriendInvite(["login" => "from", "password" => "secret"], "to", "message");
+    //SkypeClass::sendFrom(["login" => "from", "password" => "secret"], "to", "message");
+    //SkypeClass::sendRandom("to", "message");
 });
