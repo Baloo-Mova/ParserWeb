@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\AccountsData;
 
-class AccountsDataControler extends Controller
+class AccountsDataController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -13,7 +14,8 @@ class AccountsDataControler extends Controller
      */
     public function index()
     {
-        //
+        $data = AccountsData::paginate(config('config.accountsdatapaginate'));
+        return view('accounts_data.index', ['data' => $data]);
     }
 
     /**
@@ -23,7 +25,7 @@ class AccountsDataControler extends Controller
      */
     public function create()
     {
-        //
+        return view('accounts_data.create');
     }
 
     /**
@@ -34,7 +36,17 @@ class AccountsDataControler extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $data = new AccountsData;
+        $data->fill($request->all());
+        if(!(empty($request->get("smtp_port")))){
+            $data->smtp_port = $request->get("smtp_port");
+        }
+        if(!(empty($request->get("smtp_address")))){
+            $data->smtp_address = $request->get("smtp_address");
+        }
+        $data->save();
+
+        return redirect()->route('accounts_data.index');
     }
 
     /**
@@ -56,7 +68,8 @@ class AccountsDataControler extends Controller
      */
     public function edit($id)
     {
-        //
+        $data = AccountsData::whereId($id)->first();
+        return view("accounts_data.edit", ["data" => $data]);
     }
 
     /**
@@ -68,7 +81,17 @@ class AccountsDataControler extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $data = AccountsData::whereId($id)->first();
+        $data->fill($request->all());
+        if(!(empty($request->get("smtp_port")))){
+            $data->smtp_port = $request->get("smtp_port");
+        }
+        if(!(empty($request->get("smtp_address")))){
+            $data->smtp_address = $request->get("smtp_address");
+        }
+        $data->save();
+
+        return redirect()->route('accounts_data.index');
     }
 
     /**
@@ -77,8 +100,11 @@ class AccountsDataControler extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function delete($id)
     {
-        //
+        $data = AccountsData::whereId($id)->first();
+        $data->delete();
+
+        return redirect()->route('accounts_data.index');
     }
 }

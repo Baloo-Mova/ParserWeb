@@ -31,3 +31,11 @@ Route::group(['prefix' => 'user', 'middleware' => 'auth'], function () {
     Route::get('/delete/{id}', ['uses'=>'UserController@delete', 'as'=>'user.delete']);
 });
 
+Route::group(['prefix' => 'accounts-data', 'middleware' => 'auth'], function () {
+    Route::get('/', ['uses' => 'AccountsDataController@index', 'as' => 'accounts_data.index']);
+    Route::get('/create', ['uses' => 'AccountsDataController@create', 'as' => 'accounts_data.create']);
+    Route::post('/create', ['uses' => 'AccountsDataController@store', 'as' => 'accounts_data.store']);
+    Route::get('/edit/{id}', ['uses' => 'AccountsDataController@edit', 'as' => 'accounts_data.edit']);
+    Route::post('/edit/{id}', ['uses'=>'AccountsDataController@update', 'as'=>'accounts_data.update']);
+    Route::get('/delete/{id}', ['uses'=>'AccountsDataController@delete', 'as'=>'accounts_data.delete']);
+});
