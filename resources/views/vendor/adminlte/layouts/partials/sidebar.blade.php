@@ -22,7 +22,7 @@
         <ul class="sidebar-menu">
             <li class="header">{{ trans('adminlte_lang::message.header') }}</li>
             <!-- Optionally, you can add icons to the links -->
-            <li class="active"><a href="{{ url('home') }}"><i class='fa fa-link'></i> <span>Пользователи</span></a></li>
+            <li class="active"><a href="{{ route('user.index') }}"><i class='fa fa-link'></i> <span>Пользователи</span></a></li>
         </ul><!-- /.sidebar-menu -->
     </section>
     <!-- /.sidebar -->
