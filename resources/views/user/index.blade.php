@@ -1,7 +1,7 @@
 @extends('adminlte::layouts.app')
 
-@section('htmlheader_title')
-    Tr
+@section('contentheader_title')
+    Пользователи
 @endsection
 
 @section('main-content')

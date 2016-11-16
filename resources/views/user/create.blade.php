@@ -1,5 +1,8 @@
 @extends('adminlte::layouts.app')
 
+@section('contentheader_title')
+    Добавление нового пользователя
+@endsection
 
 @section('main-content')
     <div class="container-fluid spark-screen">

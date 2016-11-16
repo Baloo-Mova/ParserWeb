@@ -19,26 +19,12 @@
         <div class="navbar-custom-menu">
             <ul class="nav navbar-nav">
                 <!-- Notifications Menu -->
-                <li class="dropdown notifications-menu">
+                <li>
                     <!-- Menu toggle button -->
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    <a href="#">
                         <i class="fa fa-bell-o"></i>
-                        <span class="label label-warning">10</span>
+                        <span class="label label-warning">1</span>
                     </a>
-                    <ul class="dropdown-menu">
-                        <li class="header">{{ trans('adminlte_lang::message.notifications') }}</li>
-                        <li>
-                            <!-- Inner Menu: contains the notifications -->
-                            <ul class="menu">
-                                <li><!-- start notification -->
-                                    <a href="#">
-                                        <i class="fa fa-users text-aqua"></i> {{ trans('adminlte_lang::message.newmembers') }}
-                                    </a>
-                                </li><!-- end notification -->
-                            </ul>
-                        </li>
-                        <li class="footer"><a href="#">{{ trans('adminlte_lang::message.viewall') }}</a></li>
-                    </ul>
                 </li>
                 @if (Auth::guest())
                     <li><a href="{{ url('/login') }}">{{ trans('adminlte_lang::message.login') }}</a></li>
@@ -46,18 +32,17 @@
                     <!-- User Account Menu -->
                     <li class="user user-menu">
 
-                                    <a href="{{ url('/logout') }}" class=""
-                                       onclick="event.preventDefault();
-                                                 document.getElementById('logout-form').submit();">
-                                        <img src="{{ Gravatar::get($user->email) }}" class="user-image" alt="User Image"/>
-                                        Выход({{$user->name}})
-                                    </a>
+                        <a href="{{ url('/logout') }}" class=""
+                           onclick="event.preventDefault();
+                                     document.getElementById('logout-form').submit();">
+                            <img src="{{ Gravatar::get($user->email) }}" class="user-image" alt="User Image"/>
+                            Выход({{$user->name}})
+                        </a>
 
-                                    <form id="logout-form" action="{{ url('/logout') }}" method="POST" style="display: none;">
-                                        {{ csrf_field() }}
-                                        <input type="submit" value="logout" style="display: none;">
-                                    </form>
-
+                        <form id="logout-form" action="{{ url('/logout') }}" method="POST" style="display: none;">
+                            {{ csrf_field() }}
+                            <input type="submit" value="logout" style="display: none;">
+                        </form>
 
                     </li>
                 @endif

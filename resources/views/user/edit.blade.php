@@ -1,7 +1,7 @@
 @extends('adminlte::layouts.app')
 
-@section('contentheader')
-
+@section('contentheader_title')
+    Редактирование пользователя
 @endsection
 
 @section('main-content')

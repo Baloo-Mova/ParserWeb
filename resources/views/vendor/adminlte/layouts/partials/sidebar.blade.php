@@ -20,7 +20,7 @@
 
         <!-- Sidebar Menu -->
         <ul class="sidebar-menu">
-            <li class="header">{{ trans('adminlte_lang::message.header') }}</li>
+            <li class="header">Меню</li>
             <!-- Optionally, you can add icons to the links -->
             <li class="active"><a href="{{ route('user.index') }}"><i class='fa fa-link'></i> <span>Пользователи</span></a></li>
         </ul><!-- /.sidebar-menu -->
