@@ -22,8 +22,36 @@
         <ul class="sidebar-menu">
             <li class="header">Меню</li>
             <!-- Optionally, you can add icons to the links -->
-            <li class=""><a href="{{ route('user.index') }}"><i class='fa fa-link'></i> <span>Пользователи</span></a></li>
-            <li class=""><a href="{{ route('accounts_data.index') }}"><i class='fa fa-link'></i> <span>База аккаунтов</span></a></li>
+            <li class="{{ Request::is('user/')}}">
+                <a href="{{ route('user.index') }}">
+                    <i class='fa fa-link'></i>
+                    <span>Пользователи</span>
+                </a>
+            </li>
+            <li class="treeview {{ Request::is('smtpbase/*') ? 'active' : ''}}">
+                <a href="#">
+                    <i class="fa fa-link"></i>
+                    <span>База аккаунтов</span>
+                    <span class="pull-right-container">
+                        <i class="fa fa-angle-left pull-right"></i>
+                    </span>
+                </a>
+                <ul class="treeview-menu" style="display: none;">
+                    <li class="">
+                        <a href="{{ route('accounts_data.index') }}">
+                            <i class='fa fa-link'></i>
+                            <span>База аккаунтов</span>
+                        </a>
+                    </li>
+                    <li class=""><a href="{{ route('smtpbase.index') }}"><i class='fa fa-link'></i> <span>База smtp</span></a></li>
+                </ul>
+            </li>
+            <li class="{{ Request::is('settings/')}}">
+                <a href="{{ route('settings.index') }}">
+                    <i class='fa fa-link'></i>
+                    <span>Общие настройки</span>
+                </a>
+            </li>
         </ul><!-- /.sidebar-menu -->
     </section>
     <!-- /.sidebar -->

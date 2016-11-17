@@ -192,7 +192,7 @@ class AccountsDataController extends Controller
                 $data->password = $tmp[1];
                 $data->type_id = 3;
                 $data->user_id = $request->get('user_id');
-                
+
                 $data->save();
                 unset($tmp);
             }

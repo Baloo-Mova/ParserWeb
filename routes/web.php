@@ -43,3 +43,17 @@ Route::group(['prefix' => 'accounts-data', 'middleware' => 'auth'], function () 
     Route::post('/ok-upload', ['uses'=>'AccountsDataController@okupload', 'as'=>'accounts_data.ok.upload']);
     Route::post('/mails-upload', ['uses'=>'AccountsDataController@mailsupload', 'as'=>'accounts_data.mails.upload']);
 });
+
+Route::group(['prefix' => 'smtp-base', 'middleware' => 'auth'], function () {
+    Route::get('/', ['uses' => 'SmtpBaseController@index', 'as' => 'smtpbase.index']);
+    Route::get('/create', ['uses' => 'SmtpBaseController@create', 'as' => 'smtpbase.create']);
+    Route::post('/create', ['uses' => 'SmtpBaseController@store', 'as' => 'smtpbase.store']);
+    Route::get('/edit/{id}', ['uses' => 'SmtpBaseController@edit', 'as' => 'smtpbase.edit']);
+    Route::post('/edit/{id}', ['uses'=>'SmtpBaseController@update', 'as'=>'smtpbase.update']);
+    Route::get('/delete/{id}', ['uses'=>'SmtpBaseController@delete', 'as'=>'smtpbase.delete']);
+});
+
+Route::group(['prefix' => 'settings', 'middleware' => 'auth'], function () {
+    Route::get('/', ['uses' => 'SettingsController@index', 'as' => 'settings.index']);
+    Route::post('/', ['uses' => 'SettingsController@store', 'as' => 'settings.store']);
+});
