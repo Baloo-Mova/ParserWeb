@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\AccountsData;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use App\Models\SmtpBase;
 
 class AccountsDataController extends Controller
 {
@@ -132,6 +132,68 @@ class AccountsDataController extends Controller
                 $data->user_id = $request->get('user_id');
                 $data->save();
 
+                unset($tmp);
+            }
+        }
+
+        return redirect()->route('accounts_data.index');
+
+    }
+
+    public function okupload(Request $request)
+    {
+        if(!(empty($request->get('text')))){
+            $accounts = explode("\r\n", $request->get('text'));
+
+            foreach ($accounts as $line){
+                $tmp = explode(":", $line);
+                $data = new AccountsData;
+
+                $data->login = $tmp[0];
+                $data->password = $tmp[1];
+                $data->type_id = 2;
+                $data->user_id = $request->get('user_id');
+                $data->save();
+
+                unset($tmp);
+            }
+        }
+
+        return redirect()->route('accounts_data.index');
+
+    }
+
+    public function mailsupload(Request $request)
+    {
+
+        if(!(empty($request->get('text')))){
+            $accounts = explode("\r\n", $request->get('text'));
+
+            foreach ($accounts as $line){
+                $tmp = explode(":", $line);
+
+                $data = new AccountsData;
+
+                if(count($tmp) < 3){
+                    $domain = substr($tmp[0], strrpos($tmp[0], '@')+1);
+                    $smtp_data = SmtpBase::whereDomain($domain)->first();
+                    if(!(empty($smtp_data))){
+                        $data->smtp_port = $smtp_data->port;
+                        $data->smtp_address = $smtp_data->smtp;
+                    }else{
+                        continue;
+                    }
+                }else{
+                    $data->smtp_address = $tmp[2];
+                    $data->smtp_port = $tmp[3];
+                }
+
+                $data->login = $tmp[0];
+                $data->password = $tmp[1];
+                $data->type_id = 3;
+                $data->user_id = $request->get('user_id');
+                
+                $data->save();
                 unset($tmp);
             }
         }

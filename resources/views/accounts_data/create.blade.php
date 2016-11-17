@@ -39,9 +39,13 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="box box-primary">
+                <div class="box box-primary collapsed-box">
                     <div class="box-header">
                         Массовое добавление (VK)
+                        <div class="box-tools pull-right">
+                            <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse">
+                                <i class="fa fa-plus"></i></button>
+                        </div>
                     </div>
                     <div class="box-body">
                         <form action="{{ url('/accounts-data/vk-upload') }}" method="post">
@@ -53,6 +57,48 @@
                             <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
                         </form>
                         
+                    </div>
+                </div>
+
+                <div class="box box-primary collapsed-box">
+                    <div class="box-header">
+                        Массовое добавление (OK)
+                        <div class="box-tools pull-right">
+                            <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse">
+                                <i class="fa fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="box-body">
+                        <form action="{{ url('/accounts-data/ok-upload') }}" method="post">
+                            {{ csrf_field() }}
+                            <div class="form-group has-feedback">
+                                <textarea name="text" class="form-control" cols="30" rows="8"></textarea>
+                            </div>
+                            <input type="hidden" name="user_id" value="{{ $user->id }}">
+                            <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
+                        </form>
+
+                    </div>
+                </div>
+
+                <div class="box box-primary collapsed-box">
+                    <div class="box-header">
+                        Массовое добавление (Mails)
+                        <div class="box-tools pull-right">
+                            <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse">
+                                <i class="fa fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="box-body">
+                        <form action="{{ url('/accounts-data/mails-upload') }}" method="post">
+                            {{ csrf_field() }}
+                            <div class="form-group has-feedback">
+                                <textarea name="text" class="form-control" cols="30" rows="8"></textarea>
+                            </div>
+                            <input type="hidden" name="user_id" value="{{ $user->id }}">
+                            <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
+                        </form>
+
                     </div>
                 </div>
             </div>
