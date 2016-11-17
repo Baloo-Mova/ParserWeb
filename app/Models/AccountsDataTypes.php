@@ -16,5 +16,4 @@ class AccountsDataTypes extends Model
         'type_name'
     ];
 
-    protected $guarded = [];
 }

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\AccountsData;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class AccountsDataController extends Controller
 {
@@ -106,5 +108,35 @@ class AccountsDataController extends Controller
         $data->delete();
 
         return redirect()->route('accounts_data.index');
+    }
+
+    public function destroy()
+    {
+        DB::table('accounts_data')->truncate();
+
+        return redirect()->route('accounts_data.index');
+    }
+
+    public function vkupload(Request $request)
+    {
+        if(!(empty($request->get('text')))){
+            $accounts = explode("\r\n", $request->get('text'));
+
+            foreach ($accounts as $line){
+                $tmp = explode(":", $line);
+                $data = new AccountsData;
+
+                $data->login = $tmp[0];
+                $data->password = $tmp[1];
+                $data->type_id = 1;
+                $data->user_id = $request->get('user_id');
+                $data->save();
+
+                unset($tmp);
+            }
+        }
+
+        return redirect()->route('accounts_data.index');
+
     }
 }

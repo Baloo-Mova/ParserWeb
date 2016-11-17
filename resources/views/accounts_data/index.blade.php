@@ -9,7 +9,8 @@
         <div class="row">
             <div class="box box-primary">
                 <div class="box-body">
-                    <a href="{!! route("accounts_data.create") !!}" class="btn btn-success btn-flat add__button">Добавить</a>
+                    <a href="{!! route("accounts_data.create") !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>
+                    <a href="{!! route("accounts_data.destroy") !!}" class="btn btn-danger btn-flat pull-right add__button">Удалить все</a>
                     <table class="table table-bordered table-striped">
                         <thead>
                             <tr>
@@ -28,7 +29,7 @@
                                     <td>{{ $item->id }}</td>
                                     <td>{{ $item->login }}</td>
                                     <td>{{ $item->password }}</td>
-                                    <td>{{ $item->type_id }}</td>
+                                    <td>{{ $item->accountType->type_name }}</td>
                                     <td>{{ $item->smtp_port }}</td>
                                     <td>{{ $item->smtp_address }}</td>
                                     <td>
@@ -47,11 +48,10 @@
                                 </tr>
                             @endforelse
                         </tbody>
-
                     </table>
                 </div>
-                <div class="box-footer text-center">
-
+                <div class="box-footer">
+                    {!! $data->links() !!}
                 </div>
             </div>
         </div>

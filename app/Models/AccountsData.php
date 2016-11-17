@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\AccountsDataTypes;
 
 class AccountsData extends Model
 {
@@ -16,16 +17,8 @@ class AccountsData extends Model
         'user_id'
     ];
 
-    protected $guarded = [
-        'type_id',
-    ];
-
     public function accountType()
     {
-        return $this->belongsTo(AccountsDataTypes::class);
+        return $this->belongsTo(AccountsDataTypes::class, 'type_id');
     }
-
-    protected $allRelations = [
-        'type_id'
-    ];
 }
