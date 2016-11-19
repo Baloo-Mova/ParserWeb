@@ -10,7 +10,7 @@
 | to using a Closure or controller method. Build something great!
 |
 */
-Route::get('/', ['uses' =>'HomeController@index', 'as' =>'home']);
+Route::get('/', ['uses' => 'HomeController@index', 'as' => 'home.index']);
 
 Route::get('skypeclass', function(){
 
@@ -33,12 +33,18 @@ Route::group(['prefix' => 'user', 'middleware' => 'auth'], function () {
 
 Route::group(['prefix' => 'accounts-data', 'middleware' => 'auth'], function () {
     Route::get('/', ['uses' => 'AccountsDataController@index', 'as' => 'accounts_data.index']);
-    Route::get('/create', ['uses' => 'AccountsDataController@create', 'as' => 'accounts_data.create']);
-    Route::post('/create', ['uses' => 'AccountsDataController@store', 'as' => 'accounts_data.store']);
+    Route::get('vk', ['uses' => 'AccountsDataController@vk', 'as' => 'accounts_data.vk']);
+    Route::get('ok', ['uses' => 'AccountsDataController@ok', 'as' => 'accounts_data.ok']);
+    Route::get('emails', ['uses' => 'AccountsDataController@emails', 'as' => 'accounts_data.emails']);
+    Route::get('/create/{type}', ['uses' => 'AccountsDataController@create', 'as' => 'accounts_data.create']);
+    Route::post('/create/{type}', ['uses' => 'AccountsDataController@store', 'as' => 'accounts_data.store']);
     Route::get('/edit/{id}', ['uses' => 'AccountsDataController@edit', 'as' => 'accounts_data.edit']);
     Route::post('/edit/{id}', ['uses'=>'AccountsDataController@update', 'as'=>'accounts_data.update']);
     Route::get('/delete/{id}', ['uses'=>'AccountsDataController@delete', 'as'=>'accounts_data.delete']);
     Route::get('/destroy', ['uses'=>'AccountsDataController@destroy', 'as'=>'accounts_data.destroy']);
+    Route::get('/destroy-vk', ['uses'=>'AccountsDataController@destroyVk', 'as'=>'accounts_data.destroy.vk']);
+    Route::get('/destroy-ok', ['uses'=>'AccountsDataController@destroyOk', 'as'=>'accounts_data.destroy.ok']);
+    Route::get('/destroy-emails', ['uses'=>'AccountsDataController@destroyEmails', 'as'=>'accounts_data.destroy.emails']);
     Route::post('/vk-upload', ['uses'=>'AccountsDataController@vkupload', 'as'=>'accounts_data.vk.upload']);
     Route::post('/ok-upload', ['uses'=>'AccountsDataController@okupload', 'as'=>'accounts_data.ok.upload']);
     Route::post('/mails-upload', ['uses'=>'AccountsDataController@mailsupload', 'as'=>'accounts_data.mails.upload']);

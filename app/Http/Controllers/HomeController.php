@@ -33,6 +33,6 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return view('adminlte::home');
+        return redirect()->route("user.index");
     }
 }

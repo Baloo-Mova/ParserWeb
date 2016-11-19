@@ -1,7 +1,7 @@
 @extends('adminlte::layouts.app')
 
 @section('contentheader_title')
-    База аккаунтов
+    База Аккаунтов VK
 @endsection
 
 @section('main-content')
@@ -9,8 +9,15 @@
         <div class="row">
             <div class="box box-primary">
                 <div class="box-body">
-                    <a href="{!! route("accounts_data.create") !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>
-                    <a href="{!! route("accounts_data.destroy") !!}" class="btn btn-danger btn-flat pull-right add__button">Удалить все</a>
+                    <a href="{!! route("accounts_data.create",["type" => 1]) !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>
+                    <a href="{{ route('accounts_data.destroy') }}"
+                       onclick="return confirm('Вы точно хотите очистить БД? Данное действие удалит записи всех типов (VK, OK, Emails)')"
+                       class="btn btn-danger btn-flat pull-right add__button"
+                       title="Данное действие удалит записи всех типов (VK, OK, Emails)">Очистить БД</a>
+                    <a href="{{ route('accounts_data.destroy.vk') }}"
+                       onclick="return confirm('Вы точно хотите удалить все записи типа VK?')"
+                       class="btn btn-danger btn-flat pull-right add__button delete__button"
+                       title="Данное действие удалит записи типа VK">Удалить все</a>
                     <table class="table table-bordered table-striped">
                         <thead>
                             <tr>
@@ -18,8 +25,6 @@
                                 <th>Логин</th>
                                 <th>Пароль</th>
                                 <th>Тип</th>
-                                <th>SMTP порт</th>
-                                <th>SMTP адрес</th>
                                 <th>Действия</th>
                             </tr>
                         </thead>
@@ -30,8 +35,6 @@
                                     <td>{{ $item->login }}</td>
                                     <td>{{ $item->password }}</td>
                                     <td>{{ $item->accountType->type_name }}</td>
-                                    <td>{{ $item->smtp_port }}</td>
-                                    <td>{{ $item->smtp_address }}</td>
                                     <td>
                                         <a href="{{ route('accounts_data.edit',['id'=>$item['id']]) }}"
                                            class="btn btn-default" title="Update"><span class="glyphicon glyphicon-pencil"></span></a>

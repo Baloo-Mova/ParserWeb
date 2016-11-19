@@ -1,7 +1,7 @@
 @extends('adminlte::layouts.app')
 
 @section('contentheader_title')
-    Общие настройки
+    Общие Настройки
 @endsection
 
 @section('main-content')
@@ -13,7 +13,8 @@
                         <form action="" method="post">
                             {{csrf_field()}}
                             <div class="form-group has-feedback">
-                                <input type="text" class="form-control" placeholder="Best-proxies" name="best_proxies" value="{{ empty($data) ? "" : $data->best_proxies }}"/>
+                                <label for="best_proxies" class="control-label">Best-proxies</label>
+                                <input type="text" class="form-control" placeholder="Best-proxies" name="best_proxies" id="best_proxies" value="{{ empty($data) ? "" : $data->best_proxies }}"/>
                             </div>
                             <button type="submit" class="btn btn-primary btn-flat">Сохранить</button>
                         </form>

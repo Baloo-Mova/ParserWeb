@@ -1,7 +1,7 @@
 @extends('adminlte::layouts.app')
 
 @section('contentheader_title')
-    Добавление новых данных об smtp
+    Добавление Новых Данных SMTP
 @endsection
 
 @section('main-content')
@@ -13,13 +13,16 @@
                         <form action="" method="post">
                             {{csrf_field()}}
                             <div class="form-group has-feedback">
-                                <input type="text" class="form-control" placeholder="Домен" name="domain"/>
+                                <label for="domain" class="control-label">Домен</label>
+                                <input type="text" class="form-control" placeholder="Домен" name="domain" id="domain"/>
                             </div>
                             <div class="form-group has-feedback">
-                                <input type="text" class="form-control" placeholder="Smtp" name="smtp"/>
+                                <label for="smtp" class="control-label">Smtp</label>
+                                <input type="text" class="form-control" placeholder="Smtp" name="smtp" id="smtp"/>
                             </div>
                             <div class="form-group has-feedback">
-                                <input type="text" class="form-control" placeholder="Порт" name="port"/>
+                                <label for="port" class="control-label">Порт</label>
+                                <input type="text" class="form-control" placeholder="Порт" name="port" id="port"/>
                             </div>
                             <button type="submit" class="btn btn-primary btn-flat">Добавить</button>
                         </form>

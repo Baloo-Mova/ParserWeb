@@ -13,16 +13,16 @@
                         <form action="" method="post">
                             {{csrf_field()}}
                             <div class="form-group has-feedback">
-                                <input type="text" class="form-control" placeholder="Имя" name="name" value="{{ old('name') }}"/>
-                                <span class="glyphicon glyphicon-user form-control-feedback"></span>
+                                <label for="name" class="control-label">Имя</label>
+                                <input type="text" class="form-control" placeholder="Имя" name="name" id="name" value="{{ old('name') }}"/>
                             </div>
                             <div class="form-group has-feedback">
-                                <input type="email" class="form-control" placeholder="Ел. почта}" name="email" value="{{ old('email') }}"/>
-                                <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
+                                <label for="email" class="control-label">Ел. почта</label>
+                                <input type="email" class="form-control" placeholder="Ел. почта" name="email" id="email" value="{{ old('email') }}"/>
                             </div>
                             <div class="form-group has-feedback">
-                                <input type="password" class="form-control" placeholder="Пароль" name="password"/>
-                                <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+                                <label for="password" class="control-label">Пароль</label>
+                                <input type="password" class="form-control" placeholder="Пароль" name="password" id="password"/>
                             </div>
                             <button type="submit" class="btn btn-primary btn-flat">Зарегистрировать</button>
                         </form>

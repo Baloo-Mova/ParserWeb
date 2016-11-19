@@ -21,4 +21,19 @@ class AccountsData extends Model
     {
         return $this->belongsTo(AccountsDataTypes::class, 'type_id');
     }
+
+    static function scopeVk($query)
+    {
+        $query->where('type_id', '=', 1)->orderBy('id', 'desc');
+    }
+
+    static function scopeOk($query)
+    {
+        $query->where('type_id', '=', 2)->orderBy('id', 'desc');
+    }
+
+    static function scopeEmails($query)
+    {
+        $query->where('type_id', '=', 3)->orderBy('id', 'desc');
+    }
 }

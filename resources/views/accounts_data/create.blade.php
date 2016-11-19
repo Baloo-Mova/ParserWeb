@@ -1,7 +1,7 @@
 @extends('adminlte::layouts.app')
 
 @section('contentheader_title')
-    Добавление новых данных об аккаунте
+    Добавление Новых Данных Об Аккаунте
 @endsection
 
 @section('main-content')
@@ -13,25 +13,32 @@
                         <form action="" method="post">
                             {{csrf_field()}}
                             <div class="form-group has-feedback">
-                                <input type="text" class="form-control" placeholder="Логин" name="login"/>
+                                <label for="login" class="control-label">Логин</label>
+                                <input type="text" class="form-control" placeholder="Логин" name="login" id="login"/>
                             </div>
                             <div class="form-group has-feedback">
-                                <input type="password" class="form-control" placeholder="Пароль" name="password"/>
+                                <label for="password" class="control-label">Пароль</label>
+                                <input type="password" class="form-control" placeholder="Пароль" name="password" id="password"/>
                             </div>
                             <div class="form-group has-feedback">
-                                <select class="form-control" name="type_id" id="">
+                                <label for="type_id" class="control-label">Тип Аккаунта</label>
+                                <select class="form-control" name="type_id" id="type_id">
                                     <option value=""></option>
-                                    <option value="1">VK</option>
-                                    <option value="2">OK</option>
-                                    <option value="3">SMTP</option>
+                                    <option value="1" {{ $type == 1 ? "selected" : "" }}>VK</option>
+                                    <option value="2" {{ $type == 2 ? "selected" : "" }}>OK</option>
+                                    <option value="3" {{ $type == 3 ? "selected" : "" }}>SMTP</option>
                                 </select>
                             </div>
+                            @if($type == 3)
                             <div class="form-group has-feedback">
-                                <input type="text" class="form-control" placeholder="SMTP порт" name="smtp_port"/>
+                                <label for="smtp_port" class="control-label">SMTP Порт</label>
+                                <input type="text" class="form-control" placeholder="SMTP порт" name="smtp_port" id="smtp_port"/>
                             </div>
                             <div class="form-group has-feedback">
-                                <input type="text" class="form-control" placeholder="SMTP Адрес" name="smtp_address"/>
+                                <label for="smtp_address" class="control-label">SMTP Адрес</label>
+                                <input type="text" class="form-control" placeholder="SMTP Адрес" name="smtp_address" id="smtp_address"/>
                             </div>
+                            @endif
                             <input type="hidden" name="user_id" value="{{ $user->id }}">
                             <button type="submit" class="btn btn-primary btn-flat">Сохранить</button>
                         </form>
@@ -39,9 +46,10 @@
                 </div>
             </div>
             <div class="col-md-6">
+                @if($type == 1)
                 <div class="box box-primary collapsed-box">
                     <div class="box-header">
-                        Массовое добавление (VK)
+                        Массовое Добавление (VK)
                         <div class="box-tools pull-right">
                             <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse">
                                 <i class="fa fa-plus"></i></button>
@@ -56,13 +64,32 @@
                             <input type="hidden" name="user_id" value="{{ $user->id }}">
                             <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
                         </form>
-                        
                     </div>
                 </div>
 
                 <div class="box box-primary collapsed-box">
                     <div class="box-header">
-                        Массовое добавление (OK)
+                        Массовое Добавление Из Файла(VK)
+                        <div class="box-tools pull-right">
+                            <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse">
+                                <i class="fa fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="box-body">
+                        <form action="{{ url('/accounts-data/vk-upload') }}" method="post">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="user_id" value="{{ $user->id }}">
+                            <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
+                            <span class="btn-label"><b> {{ storage_path()."\\".config('config.vkFolder') }}</b></span>
+                        </form>
+                    </div>
+                </div>
+                @endif
+
+                @if($type == 2)
+                <div class="box box-primary collapsed-box">
+                    <div class="box-header">
+                        Массовое Добавление (OK)
                         <div class="box-tools pull-right">
                             <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse">
                                 <i class="fa fa-plus"></i></button>
@@ -77,13 +104,32 @@
                             <input type="hidden" name="user_id" value="{{ $user->id }}">
                             <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
                         </form>
-
                     </div>
                 </div>
 
                 <div class="box box-primary collapsed-box">
                     <div class="box-header">
-                        Массовое добавление (Mails)
+                        Массовое Добавление Из Файла(OK)
+                        <div class="box-tools pull-right">
+                            <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse">
+                                <i class="fa fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="box-body">
+                        <form action="{{ url('/accounts-data/ok-upload') }}" method="post">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="user_id" value="{{ $user->id }}">
+                            <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
+                            <span class="btn-label"><b> {{ storage_path()."\\".config('config.okFolder') }}</b></span>
+                        </form>
+                    </div>
+                </div>
+                @endif
+
+                @if($type == 3)
+                <div class="box box-primary collapsed-box">
+                    <div class="box-header">
+                        Массовое Добавление (Mails)
                         <div class="box-tools pull-right">
                             <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse">
                                 <i class="fa fa-plus"></i></button>
@@ -98,9 +144,29 @@
                             <input type="hidden" name="user_id" value="{{ $user->id }}">
                             <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
                         </form>
-
                     </div>
                 </div>
+
+
+                <div class="box box-primary collapsed-box">
+                    <div class="box-header">
+                        Массовое Добавление Из Файла(Mails)
+                        <div class="box-tools pull-right">
+                            <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse">
+                                <i class="fa fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="box-body">
+                        <form action="{{ url('/accounts-data/mails-upload') }}" method="post">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="user_id" value="{{ $user->id }}">
+                            <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
+                            <span class="btn-label"><b> {{ storage_path('app')."\\".config('config.emailsFolder') }}</b></span>
+                        </form>
+                    </div>
+                </div>
+                @endif
+
             </div>
         </div>
     </div>

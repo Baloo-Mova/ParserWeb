@@ -6,18 +6,48 @@ use Illuminate\Http\Request;
 use App\Models\AccountsData;
 use Illuminate\Support\Facades\DB;
 use App\Models\SmtpBase;
+use Illuminate\Support\Facades\Storage;
 
 class AccountsDataController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Главный экшен. Перенаправление на список акков ВК
      *
      * @return \Illuminate\Http\Response
      */
     public function index()
     {
-        $data = AccountsData::paginate(config('config.accountsdatapaginate'));
-        return view('accounts_data.index', ['data' => $data]);
+        return redirect()->route('accounts_data.vk');
+    }
+    /**
+     * Вывод всех записей типа ВК
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function vk()
+    {
+        $data = AccountsData::vk()->paginate(config('config.accountsdatapaginate'));
+        return view('accounts_data.vk', ['data' => $data]);
+    }
+    /**
+     * Вывод всех записей типа ОК
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function ok()
+    {
+        $data = AccountsData::ok()->paginate(config('config.accountsdatapaginate'));
+        return view('accounts_data.ok', ['data' => $data]);
+    }
+    /**
+     * Вывод всех записей типа MAILS
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function emails()
+    {
+        $data = AccountsData::emails()->paginate(config('config.accountsdatapaginate'));
+        return view('accounts_data.emails', ['data' => $data]);
     }
 
     /**
@@ -25,9 +55,9 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create($type)
     {
-        return view('accounts_data.create');
+        return view('accounts_data.create', ["type" => $type]);
     }
 
     /**
@@ -40,26 +70,37 @@ class AccountsDataController extends Controller
     {
         $data = new AccountsData;
         $data->fill($request->all());
+        $type_id = $request->get("type_id");
         if(!(empty($request->get("smtp_port")))){
             $data->smtp_port = $request->get("smtp_port");
         }
         if(!(empty($request->get("smtp_address")))){
             $data->smtp_address = $request->get("smtp_address");
         }
+        if($type_id == 3 && (empty($data->smtp_address) || empty($data->smtp_port))){
+            $domain = substr($data->login, strrpos($data->login, '@')+1);
+            $smtp_data = SmtpBase::whereDomain($domain)->first();
+            if(!(empty($smtp_data))){
+                $data->smtp_port = $smtp_data->port;
+                $data->smtp_address = $smtp_data->smtp;
+            }
+        }
         $data->save();
 
-        return redirect()->route('accounts_data.index');
-    }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
+        switch ($type_id){
+            case 1:
+                return redirect()->route('accounts_data.vk');
+                break;
+
+            case 2:
+                return redirect()->route('accounts_data.ok');
+                break;
+
+            case 3:
+                return redirect()->route('accounts_data.emails');
+                break;
+        }
     }
 
     /**
@@ -85,15 +126,38 @@ class AccountsDataController extends Controller
     {
         $data = AccountsData::whereId($id)->first();
         $data->fill($request->all());
+        $type_id = $request->get("type_id");
         if(!(empty($request->get("smtp_port")))){
             $data->smtp_port = $request->get("smtp_port");
         }
         if(!(empty($request->get("smtp_address")))){
             $data->smtp_address = $request->get("smtp_address");
         }
+        if($type_id == 3 && (empty($data->smtp_address) || empty($data->smtp_port))){
+        $domain = substr($data->login, strrpos($data->login, '@')+1);
+        $smtp_data = SmtpBase::whereDomain($domain)->first();
+        if(!(empty($smtp_data))){
+            $data->smtp_port = $smtp_data->port;
+            $data->smtp_address = $smtp_data->smtp;
+        }
+    }
         $data->save();
 
-        return redirect()->route('accounts_data.index');
+        switch ($type_id){
+            case 1:
+                return redirect()->route('accounts_data.vk');
+                break;
+
+            case 2:
+                return redirect()->route('accounts_data.ok');
+                break;
+
+            case 3:
+                return redirect()->route('accounts_data.emails');
+                break;
+        }
+
+        return redirect()->back();
     }
 
     /**
@@ -107,98 +171,203 @@ class AccountsDataController extends Controller
         $data = AccountsData::whereId($id)->first();
         $data->delete();
 
-        return redirect()->route('accounts_data.index');
+        return redirect()->back();
     }
+    /**
+     * Удаление всех записей типа ВК
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function destroyVk()
+    {
 
+        DB::table('accounts_data')->where('type_id', '=', 1)->delete();
+
+        return redirect()->route('accounts_data.vk');
+    }
+    /**
+     * Удаление всех записей типа ОК
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function destroyOk()
+    {
+
+        DB::table('accounts_data')->where('type_id', '=', 2)->delete();
+
+        return redirect()->route('accounts_data.ok');
+    }
+    /**
+     * Удаление всех записей типа Маилс
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function destroyEmails()
+    {
+
+        DB::table('accounts_data')->where('type_id', '=', 3)->delete();
+
+        return redirect()->route('accounts_data.emails');
+    }
+    /**
+     * Очистка таблицы
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function destroy()
     {
         DB::table('accounts_data')->truncate();
 
-        return redirect()->route('accounts_data.index');
+        return redirect()->back();
     }
-
+    /**
+     * Массовая загрузка ВК
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function vkupload(Request $request)
     {
         if(!(empty($request->get('text')))){
             $accounts = explode("\r\n", $request->get('text'));
+            $this->vkokParse($accounts, $request->get('user_id'), 1);
+        }else{
+            if (!Storage::has(config('config.vkFolder'))) {
+                Storage::makeDirectory(config('config.vkFolder'));
+            }
+            $files = scandir(storage_path('app') . '/' . config('config.vkFolder'));
 
-            foreach ($accounts as $line){
-                $tmp = explode(":", $line);
-                $data = new AccountsData;
-
-                $data->login = $tmp[0];
-                $data->password = $tmp[1];
-                $data->type_id = 1;
-                $data->user_id = $request->get('user_id');
-                $data->save();
-
-                unset($tmp);
+            $count = count($files);
+            if ($count > 2) {
+                for ($i = 2; $i < $count; $i++) {
+                    $file = Storage::get(config('config.vkFolder') . '/' . $files[$i]);
+                    $accounts = explode("\r\n", $file);
+                    $this->vkokParse($accounts, $request->get('user_id'), 1);
+                }
             }
         }
 
-        return redirect()->route('accounts_data.index');
+        return redirect()->route('accounts_data.vk');
 
     }
-
+    /**
+     * Массовая загрузка ОК
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function okupload(Request $request)
     {
         if(!(empty($request->get('text')))){
             $accounts = explode("\r\n", $request->get('text'));
+            $this->vkokParse($accounts, $request->get('user_id'), 2);
+        }else{
+            if (!Storage::has(config('config.okFolder'))) {
+                Storage::makeDirectory(config('config.okFolder'));
+            }
+            $files = scandir(storage_path('app') . '/' . config('config.okFolder'));
 
-            foreach ($accounts as $line){
-                $tmp = explode(":", $line);
-                $data = new AccountsData;
-
-                $data->login = $tmp[0];
-                $data->password = $tmp[1];
-                $data->type_id = 2;
-                $data->user_id = $request->get('user_id');
-                $data->save();
-
-                unset($tmp);
+            $count = count($files);
+            if ($count > 2) {
+                for ($i = 2; $i < $count; $i++) {
+                    $file = Storage::get(config('config.okFolder') . '/' . $files[$i]);
+                    $accounts = explode("\r\n", $file);
+                    $this->vkokParse($accounts, $request->get('user_id'), 2);
+                }
             }
         }
 
-        return redirect()->route('accounts_data.index');
+        return redirect()->route('accounts_data.ok');
 
     }
+    /**
+     * Сохранялка для массовой загрузки ВК м ОК
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function vkokParse($data, $user, $type){
+        foreach ($data as $line){
+            $tmp = explode(":", $line);
+            $accData = new AccountsData;
 
+            $accData->login = $tmp[0];
+            $accData->password = $tmp[1];
+            $accData->type_id = $type;
+            $accData->user_id = $user;
+            $accData->save();
+
+            unset($tmp);
+        }
+    }
+    /**
+     * Массовая загрузка Мыл
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function mailsupload(Request $request)
     {
 
         if(!(empty($request->get('text')))){
             $accounts = explode("\r\n", $request->get('text'));
+            $this->mailsParse($accounts, $request->get('user_id'));
+        }else{
+            if (!Storage::has(config('config.emailsFolder'))) {
+                Storage::makeDirectory(config('config.emailsFolder'));
+            }
+            $files = scandir(storage_path('app') . '/' . config('config.emailsFolder'));
 
-            foreach ($accounts as $line){
-                $tmp = explode(":", $line);
-
-                $data = new AccountsData;
-
-                if(count($tmp) < 3){
-                    $domain = substr($tmp[0], strrpos($tmp[0], '@')+1);
-                    $smtp_data = SmtpBase::whereDomain($domain)->first();
-                    if(!(empty($smtp_data))){
-                        $data->smtp_port = $smtp_data->port;
-                        $data->smtp_address = $smtp_data->smtp;
-                    }else{
-                        continue;
-                    }
-                }else{
-                    $data->smtp_address = $tmp[2];
-                    $data->smtp_port = $tmp[3];
+            $count = count($files);
+            if ($count > 2) {
+                for ($i = 2; $i < $count; $i++) {
+                    $file = Storage::get(config('config.emailsFolder') . '/' . $files[$i]);
+                    $accounts = explode("\r\n", $file);
+                    $this->mailsParse($accounts, $request->get('user_id'));
                 }
-
-                $data->login = $tmp[0];
-                $data->password = $tmp[1];
-                $data->type_id = 3;
-                $data->user_id = $request->get('user_id');
-
-                $data->save();
-                unset($tmp);
             }
         }
 
-        return redirect()->route('accounts_data.index');
+        return redirect()->route('accounts_data.emails');
 
+    }
+    /**
+     * Сохранялка для массовой загрузки Мыл
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function mailsParse($data, $user){
+        foreach ($data as $line){
+            $tmp = explode(":", $line);
+
+            $accData = new AccountsData;
+
+            if(count($tmp) < 3){
+                $domain = substr($tmp[0], strrpos($tmp[0], '@')+1);
+                $smtp_data = SmtpBase::whereDomain($domain)->first();
+                if(!(empty($smtp_data))){
+                    $accData->smtp_port = $smtp_data->port;
+                    $accData->smtp_address = $smtp_data->smtp;
+                }else{
+                    continue;
+                }
+            }else{
+                $accData->smtp_address = $tmp[2];
+                $accData->smtp_port = $tmp[3];
+            }
+
+            $accData->login = $tmp[0];
+            $accData->password = $tmp[1];
+            $accData->type_id = 3;
+            $accData->user_id = $user;
+
+            $accData->save();
+            unset($tmp);
+        }
     }
 }
