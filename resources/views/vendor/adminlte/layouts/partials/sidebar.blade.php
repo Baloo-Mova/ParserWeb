@@ -58,7 +58,7 @@
                     <li class="">
                         <a href="{{ route('smtpbase.index') }}" class="{{ Request::path() == 'smtp-base' ? 'link_active' : ''}}">
                             <i class='fa fa-envelope'></i>
-                            <span>База SMTP</span>
+                            <span>Default SMTP</span>
                         </a>
                     </li>
                 </ul>
