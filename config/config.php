@@ -7,4 +7,5 @@ return [
     "vkFolder" => "vk",
     "okFolder" => "ok",
     "emailsFolder" => "emails",
+    "tmp_folder" => "app/tmp_files/",
 ];

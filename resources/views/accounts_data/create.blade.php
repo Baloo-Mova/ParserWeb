@@ -21,13 +21,7 @@
                                 <input type="password" class="form-control" placeholder="Пароль" name="password" id="password"/>
                             </div>
                             <div class="form-group has-feedback">
-                                <label for="type_id" class="control-label">Тип Аккаунта</label>
-                                <select class="form-control" name="type_id" id="type_id">
-                                    <option value=""></option>
-                                    <option value="1" {{ $type == 1 ? "selected" : "" }}>VK</option>
-                                    <option value="2" {{ $type == 2 ? "selected" : "" }}>OK</option>
-                                    <option value="3" {{ $type == 3 ? "selected" : "" }}>SMTP</option>
-                                </select>
+                                <input type="hidden" name="type_id" id="type_id" value="{{ $type }}">
                             </div>
                             @if($type == 3)
                             <div class="form-group has-feedback">
@@ -76,11 +70,14 @@
                         </div>
                     </div>
                     <div class="box-body">
-                        <form action="{{ url('/accounts-data/vk-upload') }}" method="post">
+                        <form action="{{ url('/accounts-data/vk-upload') }}" enctype="multipart/form-data"  method="post">
                             {{ csrf_field() }}
                             <input type="hidden" name="user_id" value="{{ $user->id }}">
+                            <div class="form-group">
+                                <label for="text_file">Загрузить Файл</label>
+                                <input type="file" class="form-controll" id="text_file" name="text_file">
+                            </div>
                             <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
-                            <span class="btn-label"><b> {{ storage_path()."\\".config('config.vkFolder') }}</b></span>
                         </form>
                     </div>
                 </div>
@@ -116,11 +113,14 @@
                         </div>
                     </div>
                     <div class="box-body">
-                        <form action="{{ url('/accounts-data/ok-upload') }}" method="post">
+                        <form action="{{ url('/accounts-data/ok-upload') }}" enctype="multipart/form-data"  method="post">
                             {{ csrf_field() }}
                             <input type="hidden" name="user_id" value="{{ $user->id }}">
+                            <div class="form-group">
+                                <label for="text_file">Загрузить Файл</label>
+                                <input type="file" class="form-controll" id="text_file" name="text_file">
+                            </div>
                             <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
-                            <span class="btn-label"><b> {{ storage_path()."\\".config('config.okFolder') }}</b></span>
                         </form>
                     </div>
                 </div>
@@ -157,11 +157,14 @@
                         </div>
                     </div>
                     <div class="box-body">
-                        <form action="{{ url('/accounts-data/mails-upload') }}" method="post">
+                        <form action="{{ url('/accounts-data/mails-upload') }}" enctype="multipart/form-data"  method="post">
                             {{ csrf_field() }}
                             <input type="hidden" name="user_id" value="{{ $user->id }}">
+                            <div class="form-group">
+                                <label for="text_file">Загрузить Файл</label>
+                                <input type="file" class="form-controll" id="text_file" name="text_file">
+                            </div>
                             <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
-                            <span class="btn-label"><b> {{ storage_path('app')."\\".config('config.emailsFolder') }}</b></span>
                         </form>
                     </div>
                 </div>

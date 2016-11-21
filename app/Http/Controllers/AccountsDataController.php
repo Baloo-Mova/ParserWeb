@@ -236,18 +236,11 @@ class AccountsDataController extends Controller
             $accounts = explode("\r\n", $request->get('text'));
             $this->vkokParse($accounts, $request->get('user_id'), 1);
         }else{
-            if (!Storage::has(config('config.vkFolder'))) {
-                Storage::makeDirectory(config('config.vkFolder'));
-            }
-            $files = scandir(storage_path('app') . '/' . config('config.vkFolder'));
-
-            $count = count($files);
-            if ($count > 2) {
-                for ($i = 2; $i < $count; $i++) {
-                    $file = Storage::get(config('config.vkFolder') . '/' . $files[$i]);
-                    $accounts = explode("\r\n", $file);
-                    $this->vkokParse($accounts, $request->get('user_id'), 1);
-                }
+            if ($request->hasFile('text_file')) {
+                $filename = uniqid('vk_file', true) . '.' . $request->file('text_file')->getClientOriginalExtension();
+                $request->file('text_file')->storeAs('tmp_files', $filename);
+                $file = file(storage_path(config('config.tmp_folder')).$filename);
+                $this->vkokParse($file, $request->get('user_id'), 1);
             }
         }
 
@@ -266,18 +259,11 @@ class AccountsDataController extends Controller
             $accounts = explode("\r\n", $request->get('text'));
             $this->vkokParse($accounts, $request->get('user_id'), 2);
         }else{
-            if (!Storage::has(config('config.okFolder'))) {
-                Storage::makeDirectory(config('config.okFolder'));
-            }
-            $files = scandir(storage_path('app') . '/' . config('config.okFolder'));
-
-            $count = count($files);
-            if ($count > 2) {
-                for ($i = 2; $i < $count; $i++) {
-                    $file = Storage::get(config('config.okFolder') . '/' . $files[$i]);
-                    $accounts = explode("\r\n", $file);
-                    $this->vkokParse($accounts, $request->get('user_id'), 2);
-                }
+            if ($request->hasFile('text_file')) {
+                $filename = uniqid('ok_file', true) . '.' . $request->file('text_file')->getClientOriginalExtension();
+                $request->file('text_file')->storeAs('tmp_files', $filename);
+                $file = file(storage_path(config('config.tmp_folder')).$filename);
+                $this->vkokParse($file, $request->get('user_id'), 2);
             }
         }
 
@@ -317,18 +303,11 @@ class AccountsDataController extends Controller
             $accounts = explode("\r\n", $request->get('text'));
             $this->mailsParse($accounts, $request->get('user_id'));
         }else{
-            if (!Storage::has(config('config.emailsFolder'))) {
-                Storage::makeDirectory(config('config.emailsFolder'));
-            }
-            $files = scandir(storage_path('app') . '/' . config('config.emailsFolder'));
-
-            $count = count($files);
-            if ($count > 2) {
-                for ($i = 2; $i < $count; $i++) {
-                    $file = Storage::get(config('config.emailsFolder') . '/' . $files[$i]);
-                    $accounts = explode("\r\n", $file);
-                    $this->mailsParse($accounts, $request->get('user_id'));
-                }
+            if ($request->hasFile('text_file')) {
+                $filename = uniqid('smtp_file', true) . '.' . $request->file('text_file')->getClientOriginalExtension();
+                $request->file('text_file')->storeAs('tmp_files', $filename);
+                $file = file(storage_path(config('config.tmp_folder')).$filename);
+                $this->mailsParse($file, $request->get('user_id'));
             }
         }
 
