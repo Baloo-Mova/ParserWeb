@@ -20,7 +20,7 @@ class CreateSearchQueriesTable extends Migration
             $table->integer('sex');
             $table->text('mails');
             $table->integer('country');
-            $table->string('city', 255);
+            $table->integer('city');
             $table->text('phones');
             $table->text('skypes');
             $table->string('query', 255);

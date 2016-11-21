@@ -30,7 +30,7 @@
             </li>
             <li class="{{ Request::path() == 'search-queries' ? 'active' : ''}}">
                 <a href="{{ route('search_queries.index') }}">
-                    <i class='fa fa-cog'></i>
+                    <i class='fa fa-link'></i>
                     <span>Таблица запросов</span>
                 </a>
             </li>
