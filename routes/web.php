@@ -66,4 +66,5 @@ Route::group(['prefix' => 'settings', 'middleware' => 'auth'], function () {
 
 Route::group(['prefix' => 'search-queries', 'middleware' => 'auth'], function () {
     Route::get('/', ['uses' => 'SearchQueriesController@index', 'as' => 'search_queries.index']);
+    Route::post('/', ['uses' => 'SearchQueriesController@getCsv', 'as' => 'search_queries.getCsv']);
 });

@@ -8,5 +8,6 @@ return [
     "vkFolder" => "vk",
     "okFolder" => "ok",
     "emailsFolder" => "emails",
+    "csv_tmp_folder" => "csv/",
     "tmp_folder" => "app/tmp_files/",
 ];

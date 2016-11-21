@@ -62,35 +62,32 @@
 
     <!-- Modal -->
     <div class="modal fade searchQueryModal" id="searchQueryModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel"> Создать Выборку и Сохранить В CSV</h4>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group has-feedback">
-                        <label for="login" class="control-label">Страна</label>
-                        <select name="" id="" class="form-control">
+        <form action="" method="post">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
 
-                        </select>
+                        {{ csrf_field() }}
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="myModalLabel"> Создать Выборку и Сохранить В CSV</h4>
                     </div>
-                    <div class="form-group has-feedback">
-                        <label for="login" class="control-label">Город</label>
-                        <select name="" id="" class="form-control">
-
-                        </select>
+                    <div class="modal-body">
+                            <div class="form-group has-feedback">
+                                <label for="query" class="control-label">Query</label>
+                                <select name="query" id="query" class="form-control">
+                                    <option value=""></option>
+                                    @foreach($data_for_select as $item)
+                                        <option value="{{ $item->query }}">{{ $item->query }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                     </div>
-                    <div class="form-group has-feedback">
-                        <label for="login" class="control-label">Поисковый Запрос</label>
-                        <input type="text" class="form-control">
+                    <div class="modal-footer">
+                        <input type="submit" class="btn btn-primary btn-flat pull-left" value="Сохранить">
+                        <button type="button" class="btn btn-default btn-flat pull-left" data-dismiss="modal">Закрыть</button>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default btn-flat pull-left" data-dismiss="modal">Закрыть</button>
-                    <button type="button" class="btn btn-primary btn-flat pull-left">Сохранить</button>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
 @endsection
