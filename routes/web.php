@@ -63,3 +63,7 @@ Route::group(['prefix' => 'settings', 'middleware' => 'auth'], function () {
     Route::get('/', ['uses' => 'SettingsController@index', 'as' => 'settings.index']);
     Route::post('/', ['uses' => 'SettingsController@store', 'as' => 'settings.store']);
 });
+
+Route::group(['prefix' => 'search-queries', 'middleware' => 'auth'], function () {
+    Route::get('/', ['uses' => 'SearchQueriesController@index', 'as' => 'search_queries.index']);
+});
