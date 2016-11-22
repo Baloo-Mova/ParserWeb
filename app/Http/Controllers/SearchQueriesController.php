@@ -22,15 +22,22 @@ class SearchQueriesController extends Controller
     }
     public function getCsv(Request $request)
     {
-        $table = SearchQueries::where('query', '=', $request->get('query'))->get()->toArray();
 
-        $file = fopen('file.csv', 'w');
-        foreach ($table as $row) {
-            $tmp = array_shift($row);
-            fputcsv($file, $row);
+        if(empty($request->get('query'))){
+            return redirect()->back();
+        }else{
+
+            $table = SearchQueries::where('query', '=', $request->get('query'))->get()->toArray();
+
+            $file = fopen('file.csv', 'w');
+            foreach ($table as $row) {
+                $tmp = array_shift($row);
+                fputcsv($file, $row);
+            }
+            fclose($file);
+
+            return response()->download('file.csv');
+
         }
-        fclose($file);
-
-        return response()->download('file.csv');
     }
 }
