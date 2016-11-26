@@ -18,14 +18,6 @@
         <!-- Navbar Right Menu -->
         <div class="navbar-custom-menu">
             <ul class="nav navbar-nav">
-                <!-- Notifications Menu -->
-                <li>
-                    <!-- Menu toggle button -->
-                    <a href="#">
-                        <i class="fa fa-bell-o"></i>
-                        <span class="label label-warning">1</span>
-                    </a>
-                </li>
                 @if (Auth::guest())
                     <li><a href="{{ url('/login') }}">{{ trans('adminlte_lang::message.login') }}</a></li>
                 @else

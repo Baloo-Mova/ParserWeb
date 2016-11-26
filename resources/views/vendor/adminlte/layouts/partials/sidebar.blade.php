@@ -28,12 +28,6 @@
                     <span>Пользователи</span>
                 </a>
             </li>
-            <li class="{{ Request::path() == 'search-queries' ? 'active' : ''}}">
-                <a href="{{ route('search_queries.index') }}">
-                    <i class='fa fa-link'></i>
-                    <span>Таблица запросов</span>
-                </a>
-            </li>
             <li class="treeview {{ Request::path() == 'accounts-data/vk'
                                 || Request::path() == 'accounts-data/ok'
                                 || Request::path() == 'accounts-data/emails'

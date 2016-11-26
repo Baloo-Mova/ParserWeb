@@ -36,3 +36,7 @@ label {
     -moz-border-radius: 0px !important;
     border-radius: 0px !important;
 }
+.site_list_div,
+.send_directly_div{
+    display: none;
+}
