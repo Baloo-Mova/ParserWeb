@@ -13,5 +13,6 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(AdminUser::class);
         $this->call(AccountsDataTypesSeeder::class);
+        $this->call(TasksTypesSeeder::class);
     }
 }
