@@ -4,7 +4,7 @@ return [
     "userspaginate" => 10,
     "accountsdatapaginate" => 10,
     "smtpbasepaginate" => 10,
-    "searchqueriespaginate" => 50,
+    "searchqueriespaginate" => 20,
     "vkFolder" => "vk",
     "okFolder" => "ok",
     "emailsFolder" => "emails",

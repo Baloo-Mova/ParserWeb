@@ -33,6 +33,6 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return redirect()->route("user.index");
+        return redirect()->route("parsing_tasks.index");
     }
 }

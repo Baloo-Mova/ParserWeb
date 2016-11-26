@@ -68,3 +68,7 @@ Route::group(['prefix' => 'search-queries', 'middleware' => 'auth'], function ()
     Route::get('/', ['uses' => 'SearchQueriesController@index', 'as' => 'search_queries.index']);
     Route::post('/', ['uses' => 'SearchQueriesController@getCsv', 'as' => 'search_queries.getCsv']);
 });
+
+Route::group(['prefix' => 'parsing-tasks', 'middleware' => 'auth'], function () {
+    Route::get('/', ['uses' => 'ParsingTasksController@index', 'as' => 'parsing_tasks.index']);
+});
