@@ -15,7 +15,6 @@
                                 <div class="form-group has-feedback">
                                     <label for="task_type" class="control-label">Тип Задачи</label>
                                     <select class="form-control task_type_select" name="task_type_id" id="task_type" >
-                                        <option value="0" ></option>
                                         @foreach($types as $item)
                                             <option value="{{ $item->id }}" {{ $item->id == 1 ? "selected" : "" }}>{{ $item->name }}</option>
                                         @endforeach

@@ -6,10 +6,6 @@ $(document).ready(function() {
      */
     $(".task_type_select").on("change", function(){
         switch ($(this).val()){
-            case ('0'):
-                $(".site_list_div").css("display","none");
-                $(".task_query_div").css("display","none");
-                break;
             case ('1'):
                 $(".task_query_div").css("display","block");
                 $(".site_list_div").css("display","none");
