@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "1301760258a1db344be8555e2b5e63f5",
-    "content-hash": "401b8cc774dec08d26bbcbd967a44b3a",
+    "hash": "64ef824f7ab5bafc7629c4c09f1289d6",
+    "content-hash": "2e22537abbbd8919bf0865b36f30bc36",
     "packages": [
         {
             "name": "acacha/admin-lte-template-laravel",
@@ -669,6 +669,72 @@
                 "storage"
             ],
             "time": "2016-10-19 20:38:46"
+        },
+        {
+            "name": "lstrojny/fxmlrpc",
+            "version": "0.10.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/lstrojny/fxmlrpc.git",
+                "reference": "376f954655b69df4ff8e512392cc75793212fc39"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/lstrojny/fxmlrpc/zipball/376f954655b69df4ff8e512392cc75793212fc39",
+                "reference": "376f954655b69df4ff8e512392cc75793212fc39",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4"
+            },
+            "require-dev": {
+                "egeloen/http-adapter": "0.6.*@dev",
+                "internations/kodierungsregelwerksammlung": "dev-master",
+                "lstrojny/hmmmath": "*",
+                "monolog/monolog": ">=1.1",
+                "phpunit/phpunit": "~4",
+                "psr/log": "*",
+                "symfony/process": "~2.1",
+                "zendframework/zend-log": "~2",
+                "zendframework/zendframework1": "~1.12.4"
+            },
+            "suggest": {
+                "guzzle/guzzle": "To integrate Guzzle as HTTP client",
+                "monolog/monolog": "To integrate monolog as logger",
+                "zendframework/zend-log": "To use ZF2 Zend\\Log\\Logger as a logger",
+                "zendframework/zendframework1": "To use ZF1 Log"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "fXmlRpc\\": "src/fXmlRpc"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Lars Strojny",
+                    "email": "lstrojny@php.net",
+                    "homepage": "http://usrportage.de"
+                }
+            ],
+            "description": "Fast and tiny XML/RPC client with bridges for various HTTP clients",
+            "keywords": [
+                "api",
+                "performance",
+                "rpc",
+                "xml",
+                "xmlrpc"
+            ],
+            "time": "2015-04-24 11:28:44"
         },
         {
             "name": "monolog/monolog",
