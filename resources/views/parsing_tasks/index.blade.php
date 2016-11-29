@@ -14,10 +14,10 @@
                     <table class="table table-bordered table-striped">
                         <thead>
                         <tr>
-                            <th>ID</th>
+                            <th class="small__th">ID</th>
                             <th>Тип Поиска</th>
                             <th>Поисковый Запрос</th>
-                            <th>Действия</th>
+                            <th class="tasks_action_td">Действия</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -28,8 +28,9 @@
                                     <td>{{ $item->tasksType->name }}</td>
                                     <td>{{ $item->task_query }}</td>
                                     <td>
-                                        <a href="{{ route('parsing_tasks.show', ['id' => $item->id]) }}">
+                                        <a href="{{ route('parsing_tasks.show', ['id' => $item->id]) }}" class="btn btn-default">
                                             <i class="fa fa-eye" aria-hidden="true"></i>
+                                            Просмотр
                                         </a>
                                     </td>
 

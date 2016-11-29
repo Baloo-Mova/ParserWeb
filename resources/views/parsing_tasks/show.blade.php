@@ -9,47 +9,44 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="box box-primary">
-                    <div class="box-body">
-
-                        <a href="{{ route('parsing_tasks.start') }}" class="btn btn-success">Запустить</a>
-                        <a href="{{ route('parsing_tasks.stop') }}" class="btn btn-danger">Остановить</a>
+                    <div class="box-header">
+                        <h3 class="box-title">Подробности</h3>
                     </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-12">
-                <div class="box box-primary">
                     <div class="box-body">
-                        <table class="table table-bordered table-striped">
-                            <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Тип Поиска</th>
-                                <th>Статус</th>
-                                <th>Поисковый Запрос</th>
-                            </tr>
-                            </thead>
+                        <table class="table table-bordered">
                             <tbody>
-                                <tr>
-                                    <td>{{ $data->id }}</td>
-                                    <td>{{ $data->tasksType->name }}</td>
-                                    <td>{{ $task_info }}</td>
-                                    <td>{{ $data->task_query }}</td>
-
-                                </tr>
+                            <tr>
+                                <td><strong>ID</strong></td>
+                                <td>{{ $data->id }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Тип Поиска</strong></td>
+                                <td>{{ $data->tasksType->name }}</td>
+                            <tr>
+                                <td><strong>Статус</strong></td>
+                                <td>{{ $task_info }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Поисковый Запрос</strong></td>
+                                <td>{{ $data->task_query }}</td>
+                            </tr>
                             </tbody>
                         </table>
                     </div>
-                    <div class="box-footer text-center">
+                    <div class="box-footer">
+                        <a href="{{ route('parsing_tasks.start') }}" class="btn btn-success" {{ $task_info == "RUNNING" ? "disabled" : "" }}>Запустить</a>
+                        <a href="{{ route('parsing_tasks.stop') }}" class="btn btn-danger" {{ $task_info == "STOPPED" ? "disabled" : "" }}>Остановить</a>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="box box-primary">
+                    <div class="box-header">
+                        <h3 class="box-title">Дополнительная Информация</h3>
+                    </div>
                     <div class="box-body">
                         <div class="select-tabs">
                             <ul class="nav nav-tabs text-center" id="myTab">
