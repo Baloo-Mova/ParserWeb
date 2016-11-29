@@ -21,10 +21,10 @@ class Tasks extends Model
     }
     public function getMail()
     {
-        return $this->belongsTo(TemplateDeliveryMails::class, 'id');
+        return $this->belongsTo(TemplateDeliveryMails::class, 'id', 'task_id');
     }
     public function getSkype()
     {
-        return $this->belongsTo(TemplateDeliverySkypes::class, 'id');
+        return $this->belongsTo(TemplateDeliverySkypes::class, 'id', 'task_id');
     }
 }
