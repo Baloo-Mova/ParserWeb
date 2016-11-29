@@ -17,15 +17,24 @@
                             <th>ID</th>
                             <th>Тип Поиска</th>
                             <th>Поисковый Запрос</th>
+                            <th>Действия</th>
                         </tr>
                         </thead>
                         <tbody>
                         @forelse($data as $item)
-                            <tr>
-                                <td>{{ $item->id }}</td>
-                                <td>{{ $item->tasksType->name }}</td>
-                                <td>{{ $item->task_query }}</td>
-                            </tr>
+
+                                <tr>
+                                    <td>{{ $item->id }}</td>
+                                    <td>{{ $item->tasksType->name }}</td>
+                                    <td>{{ $item->task_query }}</td>
+                                    <td>
+                                        <a href="{{ route('parsing_tasks.show', ['id' => $item->id]) }}">
+                                            <i class="fa fa-eye" aria-hidden="true"></i>
+                                        </a>
+                                    </td>
+
+                                </tr>
+
                         @empty
                             <tr>
                                 <td colspan="10" class="text-center">

@@ -22,6 +22,12 @@
         <ul class="sidebar-menu">
             <li class="header">Меню</li>
             <!-- Optionally, you can add icons to the links -->
+            <li class="{{ Request::path() == 'parsing-tasks' ? 'active' : ''}}">
+                <a href="{{ route('parsing_tasks.index') }}">
+                    <i class='fa fa-thumb-tack'></i>
+                    <span>Задачи</span>
+                </a>
+            </li>
             <li class="{{ Request::path() == 'user' ? 'active' : ''}}">
                 <a href="{{ route('user.index') }}">
                     <i class='fa fa-user'></i>

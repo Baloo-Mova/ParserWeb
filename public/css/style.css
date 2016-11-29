@@ -40,3 +40,6 @@ label {
 .send_directly_div{
     display: none;
 }
+.content-header h1{
+    text-align: center;
+}

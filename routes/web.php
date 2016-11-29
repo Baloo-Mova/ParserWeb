@@ -72,5 +72,8 @@ Route::group(['prefix' => 'search-queries', 'middleware' => 'auth'], function ()
 Route::group(['prefix' => 'parsing-tasks', 'middleware' => 'auth'], function () {
     Route::get('/', ['uses' => 'ParsingTasksController@index', 'as' => 'parsing_tasks.index']);
     Route::get('/create', ['uses' => 'ParsingTasksController@create', 'as' => 'parsing_tasks.create']);
+    Route::get('/show{id}', ['uses' => 'ParsingTasksController@show', 'as' => 'parsing_tasks.show']);
+    Route::get('/start', ['uses' => 'ParsingTasksController@start', 'as' => 'parsing_tasks.start']);
+    Route::get('/stop', ['uses' => 'ParsingTasksController@stop', 'as' => 'parsing_tasks.stop']);
     Route::post('/create', ['uses' => 'ParsingTasksController@store', 'as' => 'parsing_tasks.store']);
 });

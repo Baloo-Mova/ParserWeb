@@ -8,6 +8,7 @@ use App\Models\Tasks;
 use App\Models\TemplateDeliveryMails;
 use App\Models\TemplateDeliverySkypes;
 use App\Models\TemplateDeliveryMailsFiles;
+use Supervisor\Api;
 
 class ParsingTasksController extends Controller
 {
@@ -37,6 +38,7 @@ class ParsingTasksController extends Controller
             $mails = new TemplateDeliveryMails;
                 $mails->subject = $request->get('subject');
                 $mails->text = $request->get('mails_text');
+                $mails->task_id = $task->id;
             $mails->save();
         }
         //Записываем в таблицу шаблонов mails
@@ -62,10 +64,44 @@ class ParsingTasksController extends Controller
         if(!empty($request->get('subject'))){
             $skype = new TemplateDeliverySkypes();
                 $skype->text = $request->get('skype_text');
+                $skype->task_id = $task->id;
             $skype->save();
         }
         //Записываем в таблицу шаблонов mais
 
         return redirect()->route('parsing_tasks.index');
+    }
+
+    public function show($id)
+    {
+        $task = Tasks::whereId($id)->first();
+        $mails = $task->getMail()->first();
+        $skype = $task->getSkype()->first();
+
+        //$api = new Api('127.0.0.1', , '', '' );
+        //$task_info = $api->getProcessInfo('myworker');
+
+        return view('parsing_tasks.show', [
+            'data' => $task,
+            'task_info' => "STOPPED",
+            'mails' => $mails,
+            'skype' => $skype
+        ]);
+    }
+
+    public function start()
+    {
+        $api = new Api('127.0.0.1', port, 'user', 'pass' );
+        $api->startProcess('myworker');
+
+        return redirect()->back();
+    }
+
+    public function stop()
+    {
+        $api = new Api('127.0.0.1', port, 'user', 'pass' );
+        $api->stopProcess('myworker');
+
+        return redirect()->back();
     }
 }

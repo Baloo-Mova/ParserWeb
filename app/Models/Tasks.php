@@ -19,4 +19,12 @@ class Tasks extends Model
     {
         return $this->belongsTo(TasksType::class, 'task_type_id');
     }
+    public function getMail()
+    {
+        return $this->belongsTo(TemplateDeliveryMails::class, 'id');
+    }
+    public function getSkype()
+    {
+        return $this->belongsTo(TemplateDeliverySkypes::class, 'id');
+    }
 }
