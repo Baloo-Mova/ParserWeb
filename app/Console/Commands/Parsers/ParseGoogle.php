@@ -43,7 +43,7 @@ class ParseGoogle extends Command
     public function handle()
     {
         while (true) {
-            $task = Tasks::where(['task_type_id' => TasksType::WORD, 'reserved' => 0])->first();
+            $task = Tasks::where(['task_type_id' => TasksType::WORD, 'reserved' => 0, 'active_type' => 1])->first();
 
             if ( ! isset($task)) {
                 sleep(10);
