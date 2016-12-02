@@ -8,6 +8,8 @@ use App\Models\Tasks;
 use App\Models\TemplateDeliveryMails;
 use App\Models\TemplateDeliverySkypes;
 use App\Models\TemplateDeliveryMailsFiles;
+use App\Models\Parser\SiteLinks;
+use App\Models\SearchQueries;
 use Supervisor\Api;
 
 class ParsingTasksController extends Controller
@@ -30,8 +32,26 @@ class ParsingTasksController extends Controller
         $task = new Tasks();
             $task->task_type_id = $request->get('task_type_id');
             $task->task_query = $request->get('task_query');
+            $task->active_type = 1;
+            $task->reserved = 0;
+            $task->google_offset = 0;
         $task->save();
         //Записываем в таблицу тасков
+
+        //Обрабатываем список сайтов, если есть
+        $site_list = $request->get('site_list');
+        if($task->task_type_id == 2 && !empty($site_list)){
+            $sites = explode("\r\n", $site_list);
+            foreach ($sites as $item){
+                $site_links = new SiteLinks;
+                    $site_links->task_id = $task->id;
+                    $site_links->link = $item;
+                    $site_links->reserved = 1;
+                $site_links->save();
+                unset($site_links);
+            }
+        }
+        //Обрабатываем список сайтов, если есть
 
         //Записываем в таблицу шаблонов mails
         if(!empty($request->get('subject')) && !empty($request->get('mails_text'))){
@@ -77,30 +97,51 @@ class ParsingTasksController extends Controller
         $task = Tasks::whereId($id)->first();
         $mails = $task->getMail()->first();
         $skype = $task->getSkype()->first();
+        $search_queries = SearchQueries::where(['task_id' => $id])->orderBy('id', 'desc')->get();
+
+        $active_type = "";
 
         //$api = new Api('127.0.0.1', , '', '' );
         //$task_info = $api->getProcessInfo('myworker');
+        switch ($task->active_type){
+            case 0:
+                $active_type = "Пауза";
+            break;
+            case 1:
+                $active_type = "Работает";
+            break;
+            case 2:
+                $active_type = "Остановлен";
+            break;
+        }
 
         return view('parsing_tasks.show', [
-            'data' => $task,
-            'task_info' => "STOPPED",
-            'mails' => $mails,
-            'skype' => $skype
+            'data'              => $task,
+            'active_type'       => $active_type,
+            'mails'             => $mails,
+            'skype'             => $skype,
+            'search_queries'    => $search_queries
         ]);
     }
 
-    public function start()
+    public function start($id)
     {
-        $api = new Api('127.0.0.1', port, 'user', 'pass' );
-        $api->startProcess('myworker');
+        //$api = new Api('127.0.0.1', port, 'user', 'pass' );
+        //$api->startProcess('myworker');
+        $task = Tasks::whereId($id)->first();
+        $task->active_type = 1;
+        $task->save();
 
         return redirect()->back();
     }
 
-    public function stop()
+    public function stop($id)
     {
-        $api = new Api('127.0.0.1', port, 'user', 'pass' );
-        $api->stopProcess('myworker');
+        //$api = new Api('127.0.0.1', port, 'user', 'pass' );
+        //$api->stopProcess('myworker');
+        $task = Tasks::whereId($id)->first();
+        $task->active_type = 2;
+        $task->save();
 
         return redirect()->back();
     }

@@ -24,6 +24,14 @@ class APIController extends Controller
 
         if (count($results) > 0) {
             $maxId = $results[0]->id;
+        }else{
+            return json_encode([
+                'success'=>false,
+                'count_parsed'=> 0,
+                'count_queue'=> 0,
+                'max_id' => 0,
+                'result' => 0
+            ]);
         }
 
         $count = SearchQueries::where('task_id', '=', $taskId)->count();

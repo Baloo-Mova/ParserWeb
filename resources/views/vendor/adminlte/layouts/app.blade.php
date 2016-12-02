@@ -55,6 +55,9 @@ desired effect
 
 </div><!-- ./wrapper -->
 </div>
+
+@yield('js')
+
 @section('scripts')
     @include('adminlte::layouts.partials.scripts')
 @show
