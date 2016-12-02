@@ -15,7 +15,7 @@ class CreateSearchQueriesTable extends Migration
     {
         Schema::create('search_queries', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('link', 255);
+            $table->text('link');
             $table->text('mails');
             $table->text('phones');
             $table->text('skypes');

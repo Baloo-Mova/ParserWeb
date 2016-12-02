@@ -64,11 +64,14 @@ class ParseGoogle extends Command
                 $i             = 0;
 
                 do {
+
+                    echo "TASK STARTED $task->id".PHP_EOL;
+
                     $data = "";
                     while (strlen($data) < 200) {
 
-                        $data = $web->get("https://www.google.com.ua/search?q=" . urlencode($task->task_query) . "&start=" . $i * 10,
-                            $proxy->proxy);
+                        $data = $web->get("https://www.google.ru/search?q=" . urlencode($task->task_query) . "&start=" . $i * 10,
+                           $proxy->proxy);
 
                         if ($data == "NEED_NEW_PROXY") {
                             $proxy->reportBad();
@@ -98,18 +101,25 @@ class ParseGoogle extends Command
                                 $sitesCountNow++;
                             } catch (\Exception $ex) {
                                 $log          = new ErrorLog();
-                                $log->message = $ex->getMessage();
+                                $log->message = $ex->getMessage(). " line:".__LINE__ ;
                                 $log->task_id = $task->id;
                                 $log->save();
                             }
                         }
                     }
                     $i++;
+
+                    $task = Tasks::where('id','=',$task->id)->first();
+                    if(!isset($task) || $task->active_type == 2)
+                    {
+                        break;
+                    }
+
                 } while ($sitesCountNow > $sitesCountWas);
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
                 $log->task_id = $task->id;
-                $log->message = $ex->getMessage();
+                $log->message = $ex->getMessage(). " line:".__LINE__ ;
                 $log->save();
             }
         }

@@ -17,7 +17,7 @@
                             <tbody>
                             <tr>
                                 <td><strong>ID</strong></td>
-                                <td>{{ $data->id }}</td>
+                                <td class="reserve_task_id" data-task-id="{{ $data->id }}">{{ $data->id }}</td>
                             </tr>
                             <tr>
                                 <td><strong>Тип Поиска</strong></td>
@@ -64,7 +64,6 @@
                                 <div>
                                     <span>Обработаных: <span class="badge bg-success task_result_span_parsed">-</span></span>&nbsp;
                                     <span>В очереди: <span class="badge bg-info task_result_span_queue">-</span></span>&nbsp;
-                                    <span>Не обработанных: <span class="badge bg-danger task_result_span_not_parsed">-</span></span>
                                     <hr>
                                 </div>
                                 <table class="table table-bordered task_result_table">
@@ -78,81 +77,88 @@
                                     </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse($search_queries as $key => $value )
-                                            <tr>
-                                                <td data-id="{{ $value->id }}" data-text="{{ count($search_queries) - $key }}" data-task-id="{{ $value->task_id }}">{{ count($search_queries) - $key }}</td>
-                                                <td>{{ $value->link }}</td>
-                                                <td>{{ $value->mails }}</td>
-                                                <td>{{ $value->phones }}</td>
-                                                <td>{{ $value->skypes }}</td>
-                                            </tr>
-                                            @empty
-                                            <tr>
-                                                <td colspan="5" class="text-center">
-                                                    Нет результатов!
-                                                </td>
-                                            </tr>
-                                    @endforelse
+                                    {{--@forelse($search_queries as $key => $value )--}}
+                                    {{--<tr>--}}
+                                    {{--<td data-id="{{ $value->id }}" data-text="{{ count($search_queries) - $key }}" data-task-id="{{ $value->task_id }}">{{ count($search_queries) - $key }}</td>--}}
+                                    {{--<td>{{ $value->link }}</td>--}}
+                                    {{--<td>{{ $value->mails }}</td>--}}
+                                    {{--<td>{{ $value->phones }}</td>--}}
+                                    {{--<td>{{ $value->skypes }}</td>--}}
+                                    {{--</tr>--}}
+                                    {{--@empty--}}
+                                    {{--<tr class="no_results_class">--}}
+                                    {{--<td colspan="5" class="text-center">--}}
+                                    {{--Нет результатов!--}}
+                                    {{--</td>--}}
+                                    {{--</tr>--}}
+                                    {{--@endforelse--}}
+                                    <tr class="no_results_class">
+                                        <td colspan="5" class="text-center"> Ожидание результатов ...</td>
+                                    </tr>
                                     </tbody>
                                 </table>
-                                {{ $search_queries->links() }}
+                                {{--{{ $search_queries->links() }}--}}
                             </div>
 
                             <div id="data" class="tab-pane well fade">
                                 <table class="table table-bordered">
                                     <thead>
-                                        <tr>
-                                            <th>Mail subject</th>
-                                            <th>Mail text</th>
-                                            <th>Skype text</th>
-                                        </tr>
+                                    <tr>
+                                        <th>Mail subject</th>
+                                        <th>Mail text</th>
+                                        <th>Skype text</th>
+                                    </tr>
                                     </thead>
                                     <tbody>
-                                        <td> {{ empty($mails) ? "-" : $mails->subject }}</td>
-                                        <td> {{ empty($mails) ? "-" : $mails->text }}</td>
-                                        <td> {{ empty($skype) ? "-" : $skype->text }}</td>
+                                    <td> {{ empty($mails) ? "-" : $mails->subject }}</td>
+                                    <td> {{ empty($mails) ? "-" : $mails->text }}</td>
+                                    <td> {{ empty($skype) ? "-" : $skype->text }}</td>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
                     <div class="box-footer text-center">
+                        <input type="hidden" class="last_task_id" value="0">
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-
-
 @endsection
 
 @section('js')
     <script>
-        $(document).ready(function(){
-            var number = 0;
+        $(document).ready(function () {
+            window.number = 1;
 
-            function getNewInfo(taskId, lastId, text) {
+            function getNewInfo() {
 
-                if(window.location.search == "" || window.location.search == "?page=1") {
+                var
+                        lastId = $(".last_task_id").val(),
+                        taskId = $(".reserve_task_id").data("taskId");
 
+                if (window.location.search == "" || window.location.search == "?page=1") {
                     $.ajax({
-                        method: "get",
-                        url: "{{ url('api/actualParsed') }}/" + taskId + "/" + lastId,
-                        success: function (data) {
+                        method  : "get",
+                        url     : "{{ url('api/actualParsed') }}/" + taskId + "/" + lastId,
+                        success : function (data) {
                             console.log(data);
                             if (data.success == true) {
                                 $(".task_result_span_parsed").text(data.count_parsed);
                                 $(".task_result_span_queue").text(data.count_queue);
+                                $(".last_task_id").val(data.max_id);
+
+                                if (Object.keys(data.result).length > 0) {
+                                    $('.no_results_class').remove();
+                                }
+
                                 data.result.forEach(function (item, i, arr) {
 
-                                    //data.result.length
-
-                                    number = ++text;
-
                                     $(".task_result_table").prepend("<tr>" +
-                                            "<td data-id='" + data.result[0].id + "' data-task-id='" + data.result[0].task_id + "'>" + number + "</td>" +
-                                            "<td>" + item.link + "</td>" +
+                                            "<td  data-id='" + data.result[0].id + "' data-task-id='" + data.result[0].task_id + "'>" + (window.number++) + "</td>" +
+                                            "<td width='400px'><div style=\"max-width:400px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.link+"\">" + item.link + "</div></td>" +
                                             "<td>" + item.mails + "</td>" +
                                             "<td>" + item.phones + "</td>" +
                                             "<td>" + item.skypes + "</td>" +
@@ -167,18 +173,10 @@
                 }
             }
 
-            var task_table_td = "",
-                    taskId = "",
-                    lastId = "",
-                    text = "";
+            getNewInfo();
 
-            setInterval(function() {
-                task_table_td = $(".task_result_table").find("tr").find("td");
-                taskId = task_table_td.data("taskId");
-                lastId = task_table_td.data("id");
-                text = task_table_td.data("text");
-                getNewInfo(taskId, lastId, text);
-            }, 10000);
+            setInterval(
+                    getNewInfo, 3000);
         });
     </script>
 @stop

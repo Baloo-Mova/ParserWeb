@@ -13,7 +13,7 @@ class Proxy extends Command
      *
      * @var string
      */
-    protected $signature = "proxy:load";
+    protected $signature = "parse:proxy";
 
     /**
      * The console command description.

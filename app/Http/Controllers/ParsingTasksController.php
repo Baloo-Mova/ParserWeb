@@ -46,7 +46,7 @@ class ParsingTasksController extends Controller
                 $site_links = new SiteLinks;
                     $site_links->task_id = $task->id;
                     $site_links->link = $item;
-                    $site_links->reserved = 1;
+                    $site_links->reserved = 0;
                 $site_links->save();
                 unset($site_links);
             }

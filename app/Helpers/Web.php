@@ -59,7 +59,7 @@ class Web
 
             if(!empty($errorMessage)){
                 $err = new ErrorLog();
-                $err->message = $errorMessage;
+                $err->message = $ex->getMessage(). " line:".__LINE__ ;
                 $err->task_id = 0;
                 $err->save();
 
@@ -67,6 +67,10 @@ class Web
             }
         }
 
-        return "NEED_NEW_PROXY";
+        if(!empty($proxy)) {
+            return "NEED_NEW_PROXY";
+        }else{
+            return "";
+        }
     }
 }
