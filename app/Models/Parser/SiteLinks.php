@@ -11,4 +11,9 @@ class SiteLinks extends Model
         'link',
         'reserved'
     ];
+
+    public static function isInBase($string, $taskId)
+    {
+        return  self::where(['link'=>$string, 'task_id'=>$taskId])->count() > 0;
+    }
 }

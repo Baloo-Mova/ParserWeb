@@ -18,7 +18,11 @@ class Proxy extends Model
     }
 
     public function reportBad(){
-        self::delete();
+        try {
+            self::delete();
+        }catch (\Exception $ex){
+
+        }
     }
 
 }
