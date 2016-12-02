@@ -78,7 +78,6 @@
                                     </thead>
                                     <tbody>
                                         @forelse($search_queries as $key => $value )
-                                            <div class="hidden">{{++$key}}</div>
                                             <tr>
                                                 <td data-id="{{ $value->id }}" data-text="{{ count($search_queries) - $key }}" data-task-id="{{ $value->task_id }}">{{ count($search_queries) - $key }}</td>
                                                 <td>{{ $value->link }}</td>
