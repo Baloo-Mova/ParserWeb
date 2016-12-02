@@ -9,6 +9,7 @@ use App\Models\TemplateDeliveryMails;
 use App\Models\TemplateDeliverySkypes;
 use App\Models\TemplateDeliveryMailsFiles;
 use App\Models\Parser\SiteLinks;
+use App\Models\SearchQueries;
 use Supervisor\Api;
 
 class ParsingTasksController extends Controller
@@ -96,6 +97,7 @@ class ParsingTasksController extends Controller
         $task = Tasks::whereId($id)->first();
         $mails = $task->getMail()->first();
         $skype = $task->getSkype()->first();
+        $search_queries = SearchQueries::where(['task_id' => $id])->orderBy('id', 'desc')->get();
 
         $active_type = "";
 
@@ -114,10 +116,11 @@ class ParsingTasksController extends Controller
         }
 
         return view('parsing_tasks.show', [
-            'data' => $task,
-            'active_type' => $active_type,
-            'mails' => $mails,
-            'skype' => $skype
+            'data'              => $task,
+            'active_type'       => $active_type,
+            'mails'             => $mails,
+            'skype'             => $skype,
+            'search_queries'    => $search_queries
         ]);
     }
 

@@ -54,3 +54,12 @@ label {
 .nav-tabs > li > a{
     color: #0c0c0c !important;
 }
+.bg-success{
+    background-color: forestgreen !important;
+}
+.bg-info{
+    background-color: deepskyblue !important;
+}
+.bg-danger{
+    background-color: orangered !important;
+}

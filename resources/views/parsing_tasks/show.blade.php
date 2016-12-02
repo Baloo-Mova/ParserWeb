@@ -60,7 +60,41 @@
                         </div>
                         <div class="tab-content">
                             <div id="result" class="tab-pane well fade in active">
-                                2
+                                <div>
+                                    <span>Обработаных: <span class="badge bg-success task_result_span_parsed">-</span></span>&nbsp;
+                                    <span>В очереди: <span class="badge bg-info task_result_span_queue">-</span></span>&nbsp;
+                                    <span>Не обработанных: <span class="badge bg-danger task_result_span_not_parsed">-</span></span>
+                                    <hr>
+                                </div>
+                                <table class="table table-bordered task_result_table">
+                                    <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Link</th>
+                                        <th>Mails</th>
+                                        <th>Phones</th>
+                                        <th>Skypes</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($search_queries as $key => $value )
+                                            <div class="hidden">{{++$key}}</div>
+                                            <tr>
+                                                <td data-id="{{ $value->id }}" data-text="{{ count($search_queries) - $key }}" data-task-id="{{ $value->task_id }}">{{ count($search_queries) - $key }}</td>
+                                                <td>{{ $value->link }}</td>
+                                                <td>{{ $value->mails }}</td>
+                                                <td>{{ $value->phones }}</td>
+                                                <td>{{ $value->skypes }}</td>
+                                            </tr>
+                                            @empty
+                                            <tr>
+                                                <td colspan="5" class="text-center">
+                                                    Нет результатов!
+                                                </td>
+                                            </tr>
+                                    @endforelse
+                                    </tbody>
+                                </table>
                             </div>
 
                             <div id="data" class="tab-pane well fade">
@@ -87,5 +121,53 @@
             </div>
         </div>
     </div>
+
+    <script>
+        $(document).ready(function(){
+            var number = 0;
+
+            function getNewInfo(taskId, lastId, text) {
+
+                $.ajax({
+                     method: "get",
+                     url: "{{ url('api/actualParsed') }}/"+taskId+"/"+lastId,
+                     success: function (data) {
+                         console.log(data);
+                         if(data.success == true){
+                             $(".task_result_span_parsed").text(data.count_parsed);
+                             $(".task_result_span_queue").text(data.count_queue);
+                             data.result.forEach(function(item, i, arr) {
+
+                                 number = ++text;
+
+                                 $(".task_result_table").prepend("<tr>" +
+                                             "<td data-id='"+data.result[0].id+"' data-task-id='"+data.result[0].task_id+"'>"+number+"</td>" +
+                                             "<td>"+item.link+"</td>" +
+                                             "<td>"+item.mails+"</td>" +
+                                             "<td>"+item.phones+"</td>" +
+                                             "<td>"+item.skypes+"</td>" +
+                                         "</tr>");
+                             });
+
+                         }
+                     },
+                     dataType: "json"
+                 });
+            }
+
+            var task_table_td = "",
+                taskId = "",
+                lastId = "",
+                text = "";
+
+            setInterval(function() {
+                task_table_td = $(".task_result_table").find("tr").find("td");
+                taskId = task_table_td.data("taskId");
+                lastId = task_table_td.data("id");
+                text = task_table_td.data("text");
+                getNewInfo(taskId, lastId, text);
+            }, 10000);
+        });
+    </script>
 
 @endsection
