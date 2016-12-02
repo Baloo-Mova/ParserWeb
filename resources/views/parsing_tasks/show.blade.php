@@ -36,6 +36,7 @@
                     <div class="box-footer">
                         <a href="{{ route('parsing_tasks.start', ['id' => $data->id]) }}" class="btn btn-success" {{ $data->active_type == 1 || $data->google_offset == -1 ? "disabled" : "" }}>Запустить</a>
                         <a href="{{ route('parsing_tasks.stop', ['id' => $data->id]) }}" class="btn btn-danger" {{ $data->active_type == 0 || $data->active_type == 2 ? "disabled" : "" }}>Остановить</a>
+                        <a href="{{ route('parsing_tasks.reserved', ['id' => $data->id]) }}" class="btn btn-danger" {{ $data->reserved == 0 ? "disabled" : "" }}>Вернуть задачу</a>
                     </div>
                 </div>
             </div>
@@ -94,6 +95,7 @@
                                     @endforelse
                                     </tbody>
                                 </table>
+                                {{ $search_queries->links() }}
                             </div>
 
                             <div id="data" class="tab-pane well fade">
@@ -132,31 +134,37 @@
 
             function getNewInfo(taskId, lastId, text) {
 
-                $.ajax({
-                    method: "get",
-                    url: "{{ url('api/actualParsed') }}/"+taskId+"/"+lastId,
-                    success: function (data) {
-                        console.log(data);
-                        if(data.success == true){
-                            $(".task_result_span_parsed").text(data.count_parsed);
-                            $(".task_result_span_queue").text(data.count_queue);
-                            data.result.forEach(function(item, i, arr) {
+                if(window.location.search == "" || window.location.search == "?page=1") {
 
-                                number = ++text;
+                    $.ajax({
+                        method: "get",
+                        url: "{{ url('api/actualParsed') }}/" + taskId + "/" + lastId,
+                        success: function (data) {
+                            console.log(data);
+                            if (data.success == true) {
+                                $(".task_result_span_parsed").text(data.count_parsed);
+                                $(".task_result_span_queue").text(data.count_queue);
+                                data.result.forEach(function (item, i, arr) {
 
-                                $(".task_result_table").prepend("<tr>" +
-                                        "<td data-id='"+data.result[0].id+"' data-task-id='"+data.result[0].task_id+"'>"+number+"</td>" +
-                                        "<td>"+item.link+"</td>" +
-                                        "<td>"+item.mails+"</td>" +
-                                        "<td>"+item.phones+"</td>" +
-                                        "<td>"+item.skypes+"</td>" +
-                                        "</tr>");
-                            });
+                                    //data.result.length
 
-                        }
-                    },
-                    dataType: "json"
-                });
+                                    number = ++text;
+
+                                    $(".task_result_table").prepend("<tr>" +
+                                            "<td data-id='" + data.result[0].id + "' data-task-id='" + data.result[0].task_id + "'>" + number + "</td>" +
+                                            "<td>" + item.link + "</td>" +
+                                            "<td>" + item.mails + "</td>" +
+                                            "<td>" + item.phones + "</td>" +
+                                            "<td>" + item.skypes + "</td>" +
+                                            "</tr>");
+                                });
+
+                            }
+                        },
+                        dataType: "json"
+                    });
+
+                }
             }
 
             var task_table_td = "",

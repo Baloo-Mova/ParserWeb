@@ -97,7 +97,7 @@ class ParsingTasksController extends Controller
         $task = Tasks::whereId($id)->first();
         $mails = $task->getMail()->first();
         $skype = $task->getSkype()->first();
-        $search_queries = SearchQueries::where(['task_id' => $id])->orderBy('id', 'desc')->get();
+        $search_queries = SearchQueries::where(['task_id' => $id])->orderBy('id', 'desc')->paginate(10);
 
         $active_type = "";
 
@@ -126,8 +126,6 @@ class ParsingTasksController extends Controller
 
     public function start($id)
     {
-        //$api = new Api('127.0.0.1', port, 'user', 'pass' );
-        //$api->startProcess('myworker');
         $task = Tasks::whereId($id)->first();
         $task->active_type = 1;
         $task->save();
@@ -137,10 +135,17 @@ class ParsingTasksController extends Controller
 
     public function stop($id)
     {
-        //$api = new Api('127.0.0.1', port, 'user', 'pass' );
-        //$api->stopProcess('myworker');
         $task = Tasks::whereId($id)->first();
         $task->active_type = 2;
+        $task->save();
+
+        return redirect()->back();
+    }
+
+    public function reserved($id)
+    {
+        $task = Tasks::whereId($id)->first();
+        $task->reserved = 0;
         $task->save();
 
         return redirect()->back();
