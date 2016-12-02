@@ -45,9 +45,6 @@ class Web
                 ]);
                 $data = $request->getBody()->getContents();
 
-                echo $request->getStatusCode().PHP_EOL;
-                var_dump($request->getStatusCode() == "200");
-
                 if ( ! empty($data) && $request->getStatusCode() == "200") {
                     return $data;
                 }
