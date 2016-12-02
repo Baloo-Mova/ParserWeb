@@ -13,6 +13,4 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:api');
+Route::get('/actualParsed/{taskId}/{lastId}', ["uses" => "APIController@getActualTaskData", "as" => "get.actual.parsed.data"]);
