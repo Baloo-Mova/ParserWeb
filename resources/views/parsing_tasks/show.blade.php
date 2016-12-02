@@ -24,18 +24,18 @@
                                 <td>{{ $data->tasksType->name }}</td>
                             <tr>
                                 <td><strong>Статус</strong></td>
-                                <td>{{ $task_info }}</td>
+                                <td>{{ $active_type }}</td>
                             </tr>
                             <tr>
                                 <td><strong>Поисковый Запрос</strong></td>
-                                <td>{{ $data->task_query }}</td>
+                                <td>{{ $data->task_type_id == 1 ? $data->task_query : "-" }}</td>
                             </tr>
                             </tbody>
                         </table>
                     </div>
                     <div class="box-footer">
-                        <a href="{{ route('parsing_tasks.start') }}" class="btn btn-success" {{ $task_info == "RUNNING" ? "disabled" : "" }}>Запустить</a>
-                        <a href="{{ route('parsing_tasks.stop') }}" class="btn btn-danger" {{ $task_info == "STOPPED" ? "disabled" : "" }}>Остановить</a>
+                        <a href="{{ route('parsing_tasks.start', ['id' => $data->id]) }}" class="btn btn-success" {{ $data->active_type == 1 || $data->google_offset == -1 ? "disabled" : "" }}>Запустить</a>
+                        <a href="{{ route('parsing_tasks.stop', ['id' => $data->id]) }}" class="btn btn-danger" {{ $data->active_type == 0 || $data->active_type == 2 ? "disabled" : "" }}>Остановить</a>
                     </div>
                 </div>
             </div>
@@ -50,12 +50,20 @@
                     <div class="box-body">
                         <div class="select-tabs">
                             <ul class="nav nav-tabs text-center" id="myTab">
-                                <li class="active"><a href="#data" data-toggle="tab">Данные для рассылки</a></li>
-                                <li><a href="#result" data-toggle="tab">Результаты</a></li>
+                                <li class="active">
+                                    <a href="#result" data-toggle="tab">Результаты</a>
+                                </li>
+                                <li>
+                                    <a href="#data" data-toggle="tab">Данные для рассылки</a>
+                                </li>
                             </ul>
                         </div>
                         <div class="tab-content">
-                            <div id="data" class="tab-pane well fade in active">
+                            <div id="result" class="tab-pane well fade in active">
+                                2
+                            </div>
+
+                            <div id="data" class="tab-pane well fade">
                                 <table class="table table-bordered">
                                     <thead>
                                         <tr>
@@ -70,10 +78,6 @@
                                         <td> {{ empty($skype) ? "-" : $skype->text }}</td>
                                     </tbody>
                                 </table>
-                            </div>
-
-                            <div id="result" class="tab-pane well fade">
-                                2
                             </div>
                         </div>
                     </div>
