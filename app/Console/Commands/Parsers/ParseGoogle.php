@@ -5,8 +5,10 @@ namespace App\Console\Commands\Parsers;
 use App\Helpers\Web;
 use App\Models\Parser\ErrorLog;
 use App\Models\Parser\Proxy as ProxyItem;
+use App\Models\Parser\SiteLinks;
 use App\Models\Tasks;
 use App\Models\TasksType;
+use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 
 class ParseGoogle extends Command
@@ -54,33 +56,56 @@ class ParseGoogle extends Command
             $task->save();
 
             try {
-                $web = new Web();
+                $web           = new Web();
+                $crawler       = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
                 $sitesCountNow = 0;
                 $sitesCountWas = 0;
-                $proxy = ProxyItem::orderBy('id','desc')->first();
+                $proxy         = ProxyItem::orderBy('id', 'desc')->first();
+                $i             = 0;
 
-                do{
+                do {
                     $data = "";
                     while (strlen($data) < 200) {
-                        $data = $web->get("https://www.google.com.ua/search?client=opera&q=" . urlencode($task->task_query) . "&sourceid=opera&ie=UTF-8&oe=UTF-8",
+
+                        $data = $web->get("https://www.google.com.ua/search?q=" . urlencode($task->task_query) . "&start=" . $i * 10,
                             $proxy->proxy);
+
                         if ($data == "NEED_NEW_PROXY") {
                             $proxy->reportBad();
+                            echo "Report bad" . PHP_EOL;
                             while (true) {
-                                $proxy = ProxyItem::orderBy('id','desc')->first();
-                                if(!isset($proxy)){
-                                    echo "NO PROXY".PHP_EOL;
-                                    sleep(10);
+                                $proxy = ProxyItem::orderBy('id', 'desc')->first();
+                                if (isset($proxy)) {
+                                    echo $proxy->proxy . " HAVE PROXY" . PHP_EOL;
+                                    break;
                                 }
+                                sleep(10);
                             }
                         }
                     }
-
-
-
-
-                }while($sitesCountNow > $sitesCountWas);
-
+                    $sitesCountWas = $sitesCountNow;
+                    $crawler->clear();
+                    $crawler->load($data);
+                    foreach ($crawler->find('.r') as $item) {
+                        $link = $item->find('a', 0);
+                        if (isset($link) && ! empty($link->href)) {
+                            try {
+                                $site           = new SiteLinks();
+                                $site->link     = $link->href;
+                                $site->task_id  = $task->id;
+                                $site->reserved = 0;
+                                $site->save();
+                                $sitesCountNow++;
+                            } catch (\Exception $ex) {
+                                $log          = new ErrorLog();
+                                $log->message = $ex->getMessage();
+                                $log->task_id = $task->id;
+                                $log->save();
+                            }
+                        }
+                    }
+                    $i++;
+                } while ($sitesCountNow > $sitesCountWas);
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
                 $log->task_id = $task->id;

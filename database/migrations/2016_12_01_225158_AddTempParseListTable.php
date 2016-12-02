@@ -16,7 +16,7 @@ class AddTempParseListTable extends Migration
         Schema::create('site_links', function(Blueprint $table){
             $table->increments('id');
             $table->integer('task_id')->index();
-            $table->string('link');
+            $table->text('link');
             $table->boolean('reserved');
             $table->timestamps();
         });
