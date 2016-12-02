@@ -122,6 +122,11 @@
         </div>
     </div>
 
+
+
+@endsection
+
+@section('js')
     <script>
         $(document).ready(function(){
             var number = 0;
@@ -129,36 +134,36 @@
             function getNewInfo(taskId, lastId, text) {
 
                 $.ajax({
-                     method: "get",
-                     url: "{{ url('api/actualParsed') }}/"+taskId+"/"+lastId,
-                     success: function (data) {
-                         console.log(data);
-                         if(data.success == true){
-                             $(".task_result_span_parsed").text(data.count_parsed);
-                             $(".task_result_span_queue").text(data.count_queue);
-                             data.result.forEach(function(item, i, arr) {
+                    method: "get",
+                    url: "{{ url('api/actualParsed') }}/"+taskId+"/"+lastId,
+                    success: function (data) {
+                        console.log(data);
+                        if(data.success == true){
+                            $(".task_result_span_parsed").text(data.count_parsed);
+                            $(".task_result_span_queue").text(data.count_queue);
+                            data.result.forEach(function(item, i, arr) {
 
-                                 number = ++text;
+                                number = ++text;
 
-                                 $(".task_result_table").prepend("<tr>" +
-                                             "<td data-id='"+data.result[0].id+"' data-task-id='"+data.result[0].task_id+"'>"+number+"</td>" +
-                                             "<td>"+item.link+"</td>" +
-                                             "<td>"+item.mails+"</td>" +
-                                             "<td>"+item.phones+"</td>" +
-                                             "<td>"+item.skypes+"</td>" +
-                                         "</tr>");
-                             });
+                                $(".task_result_table").prepend("<tr>" +
+                                        "<td data-id='"+data.result[0].id+"' data-task-id='"+data.result[0].task_id+"'>"+number+"</td>" +
+                                        "<td>"+item.link+"</td>" +
+                                        "<td>"+item.mails+"</td>" +
+                                        "<td>"+item.phones+"</td>" +
+                                        "<td>"+item.skypes+"</td>" +
+                                        "</tr>");
+                            });
 
-                         }
-                     },
-                     dataType: "json"
-                 });
+                        }
+                    },
+                    dataType: "json"
+                });
             }
 
             var task_table_td = "",
-                taskId = "",
-                lastId = "",
-                text = "";
+                    taskId = "",
+                    lastId = "",
+                    text = "";
 
             setInterval(function() {
                 task_table_td = $(".task_result_table").find("tr").find("td");
@@ -169,5 +174,4 @@
             }, 10000);
         });
     </script>
-
-@endsection
+@stop
