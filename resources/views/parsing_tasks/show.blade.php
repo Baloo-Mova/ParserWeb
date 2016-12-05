@@ -165,124 +165,7 @@
                                     $('.no_results_class').remove();
                                 }
 
-                                if((data.result.length) >= 10){ // Если пришло больше 10 результатов
-                                    $(".task_result_tbody").html("");
-
-
-                                        data.result.forEach(function (item, i, arr) {
-                                            if(i < 10) {
-                                                $(".task_result_table").prepend("<tr>" +
-                                                        "<td  data-id='" + item.id + "' data-task-id='" + item.task_id + "' data-list-number='" + (window.number++) + "'>" + (window.number) + "</td>" +
-                                                        "<td width='400px'><div style=\"max-width:400px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"" + item.link + "\">" + item.link + "</div></td>" +
-                                                        "<td>" + item.mails + "</td>" +
-                                                        "<td>" + item.phones + "</td>" +
-                                                        "<td>" + item.skypes + "</td>" +
-                                                        "</tr>");
-                                            }else{
-                                                return false;
-                                            }
-                                        });
-
-                                    var l = 0;
-                                    if(data.count_parsed > 10){
-                                        if(data.count_parsed / 10 > 1){
-                                            l = parseInt((data.count_parsed / 10), 10) + 1;
-                                        }else{
-                                            l = (data.count_parsed / 10).toFixed();
-                                        }
-                                    }else{
-                                        if(data.count_parsed / 10 < 1){
-                                            l = 1;
-                                        }else{
-                                            l = (data.count_parsed / 10).toFixed();
-                                        }
-                                    }
-
-                                    if(data.count_parsed > 10){
-                                        paginatePrint(l, page_number); // Рисуем пагинацию
-                                    }
-
-
-                                }else{
-                                    if((data.result.length + $(".task_result_tbody tr").length) > 10){ // Если сумма полей в таблице + новых полей > 10
-                                        var others = (data.result.length + $(".task_result_tbody tr").length) - 10;
-
-                                        $(".task_result_tbody tr").each(function(i,elem) { // Перебираем старые элементы таблицы и удаляем лишние
-
-                                            if(i < others){
-                                                $(elem).remove();
-                                            }else{
-                                                return false;
-                                            }
-
-                                        });
-
-                                        data.result.forEach(function (item, i, arr) { // Добавляем новые элементы
-
-                                                $(".task_result_table").prepend("<tr>" +
-                                                        "<td  data-id='" + item.id + "' data-task-id='" + item.task_id + "' data-list-number='" + (window.number++) + "'>" + (window.number) + "</td>" +
-                                                        "<td width='400px'><div style=\"max-width:400px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"" + item.link + "\">" + item.link + "</div></td>" +
-                                                        "<td>" + item.mails + "</td>" +
-                                                        "<td>" + item.phones + "</td>" +
-                                                        "<td>" + item.skypes + "</td>" +
-                                                        "</tr>");
-
-                                        });
-
-                                        var l = 0;
-                                        if(data.count_parsed > 10){
-                                            if(data.count_parsed / 10 > 1){
-                                                l = parseInt((data.count_parsed / 10), 10) + 1;
-                                            }else{
-                                                l = (data.count_parsed / 10).toFixed();
-                                            }
-                                        }else{
-                                            if(data.count_parsed / 10 < 1){
-                                                l = 1;
-                                            }else{
-                                                l = (data.count_parsed / 10).toFixed();
-                                            }
-                                        }
-
-                                        if(data.count_parsed > 10){
-                                            paginatePrint(l, page_number); // Рисуем пагинацию
-                                        }
-
-                                    }else{ // Если в сумме не выходит 10
-
-                                        data.result.forEach(function (item, i, arr) { // Добавляем новые элементы
-
-                                            $(".task_result_table").prepend("<tr>" +
-                                                    "<td  data-id='" + item.id + "' data-task-id='" + item.task_id + "' data-list-number='" + (window.number++) + "'>" + (window.number) + "</td>" +
-                                                    "<td width='400px'><div style=\"max-width:400px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"" + item.link + "\">" + item.link + "</div></td>" +
-                                                    "<td>" + item.mails + "</td>" +
-                                                    "<td>" + item.phones + "</td>" +
-                                                    "<td>" + item.skypes + "</td>" +
-                                                    "</tr>");
-
-                                        });
-
-                                        var l = 0;
-                                        if(data.count_parsed > 10){
-                                            if(data.count_parsed / 10 > 1){
-                                                l = parseInt((data.count_parsed / 10), 10) + 1;
-                                            }else{
-                                                l = (data.count_parsed / 10).toFixed();
-                                            }
-                                        }else{
-                                            if(data.count_parsed / 10 < 1){
-                                                l = 1;
-                                            }else{
-                                                l = (data.count_parsed / 10).toFixed();
-                                            }
-                                        }
-
-                                        if(data.count_parsed > 10){
-                                            paginatePrint(l, page_number); // Рисуем пагинацию
-                                        }
-
-                                    }
-                                }
+                                    paginateConstruct(1);
 
                             }
                         },
@@ -292,12 +175,8 @@
                 }
             }
 
-            //getNewInfo();
-
-
             setInterval(
                     getNewInfo, 3000);
-
 
             function pagination(c, m) {
                 var current = c,
