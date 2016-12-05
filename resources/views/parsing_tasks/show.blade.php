@@ -302,7 +302,7 @@
             function pagination(c, m) {
                 var current = c,
                         last = m,
-                        delta = 2,
+                        delta = {{ config('config.task_result_paginate_delta') }},
                         left = current - delta,
                         right = current + delta + 1,
                         range = [],
