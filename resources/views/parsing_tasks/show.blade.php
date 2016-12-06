@@ -65,6 +65,8 @@
                                     <span>Обработаных: <span class="badge bg-success task_result_span_parsed">-</span></span>&nbsp;
                                     <span>В очереди: <span class="badge bg-info task_result_span_queue">-</span></span>&nbsp;
                                     <hr>
+                                    <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}" class="btn btn-primary" >Экспортировать в CSV</a>
+                                    <hr>
                                 </div>
                                 <table class="table table-bordered task_result_table">
                                     <thead>
