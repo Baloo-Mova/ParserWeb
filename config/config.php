@@ -5,6 +5,7 @@ return [
     "accountsdatapaginate" => 10,
     "smtpbasepaginate" => 10,
     "searchqueriespaginate" => 20,
+    "task_result_paginate_delta" => 2,
     "vkFolder" => "vk",
     "okFolder" => "ok",
     "emailsFolder" => "emails",

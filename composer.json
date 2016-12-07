@@ -10,7 +10,10 @@
         "acacha/admin-lte-template-laravel": "3.1.8",
         "acacha/user":"0.1.3",
         "ihor/supervisor-xml-rpc": "0.1.x-dev",
-        "guzzlehttp/guzzle": "~6.0"
+        "guzzlehttp/guzzle": "~6.0",
+        "supervisorphp/configuration": "^0.2.1",
+        "league/flysystem": "^1.0",
+        "ihor/supervisor-xml-rpc": "0.1.x-dev"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
