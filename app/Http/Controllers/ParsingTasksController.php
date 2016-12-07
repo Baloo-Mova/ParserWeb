@@ -150,4 +150,24 @@ class ParsingTasksController extends Controller
 
         return redirect()->back();
     }
+
+    public function getCsv($id)
+    {
+
+            $table = SearchQueries::where('task_id', '=', $id)->get()->toArray();
+
+            if(count($table) > 0){
+                $file = fopen('search_queries_result.csv', 'w');
+                foreach ($table as $row) {
+                    $tmp = array_shift($row);
+                    fputcsv($file, $row);
+                }
+                fclose($file);
+
+                return response()->download('search_queries_result.csv');
+            }else{
+                return redirect()->back();
+            }
+
+    }
 }

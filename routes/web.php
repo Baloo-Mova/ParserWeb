@@ -83,4 +83,5 @@ Route::group(['prefix' => 'parsing-tasks', 'middleware' => 'auth'], function () 
     Route::get('/stop/{id}', ['uses' => 'ParsingTasksController@stop', 'as' => 'parsing_tasks.stop']);
     Route::get('/reserved/{id}', ['uses' => 'ParsingTasksController@reserved', 'as' => 'parsing_tasks.reserved']);
     Route::post('/create', ['uses' => 'ParsingTasksController@store', 'as' => 'parsing_tasks.store']);
+    Route::get('/get-csv/{id}', ['uses' => 'ParsingTasksController@getCsv', 'as' => 'parsing_tasks.getCsv']);
 });

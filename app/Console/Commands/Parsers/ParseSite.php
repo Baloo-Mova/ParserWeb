@@ -61,13 +61,13 @@ class ParseSite extends Command
                 $crawler->clear();
                 $crawler->load($data);
 
-                $link->delete();
+                  $link->delete();
 
                 $data = $crawler->find('body', 0);
                 if ( ! empty($data)) {
                     $emails = $this->extractEmails($crawler->find('body', 0));
                     $skypes = $this->extractSkype($crawler->find('body', 0));
-
+                    dd($skypes);
                     $res          = new SearchQueries();
                     $res->mails   = implode(',', $emails);
                     $res->phones  = "";
@@ -79,7 +79,7 @@ class ParseSite extends Command
                 continue;
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->message = $ex->getMessage(). " line:".__LINE__ ;
+                $log->message = $ex->getMessage() . " line:" . __LINE__;
                 $log->task_id = 0;
                 $log->save();
             }
@@ -113,14 +113,19 @@ class ParseSite extends Command
     {
         $html = $data->innertext;
 
-        if (preg_match_all('/skype:(.*?)\\?/', $html, $M)) {
-            foreach ($M as $m) {
-                foreach ($m as $skype) {
-                    $skyp = trim(str_replace("skype:", "", $skype), "?");
-                    if ( ! in_array($skyp, $before)) {
-                        $before[] = $skyp;
-                    }
-                }
+        while (strpos($html, "\"skype:") > 0) {
+            $start = strpos($html, "\"skype:");
+            $temp  = substr($html, $start + 7, 50);
+            $html  = substr($html, $start + 57);
+
+            $temp       = substr($temp, 0, strpos($temp, "\""));
+            $questonPos = strpos($temp, "?");
+            if ($questonPos > 0) {
+                $temp = substr($temp, 0, $questonPos);
+            }
+
+            if ( ! in_array($temp, $before)) {
+                $before[] = $temp;
             }
         }
 
