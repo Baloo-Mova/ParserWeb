@@ -15,6 +15,6 @@ class TemplateDeliveryMails extends Model
     ];
 
     public function attaches(){
-        return $this->belongsTo(TemplateDeliveryMailsFiles::class,'id', 'mail_id');
+        return $this->hasMany(TemplateDeliveryMailsFiles::class,'mail_id', 'id');
     }
 }
