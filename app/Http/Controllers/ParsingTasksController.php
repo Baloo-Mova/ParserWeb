@@ -16,7 +16,7 @@ class ParsingTasksController extends Controller
 {
     public function index()
     {
-        $data = Tasks::all();
+        $data = Tasks::paginate(config('config.accountsdatapaginate'));
         return view('parsing_tasks.index', ['data' => $data]);
     }
 
@@ -242,6 +242,7 @@ class ParsingTasksController extends Controller
             $task->google_offset = 0;
             $task->need_send = 1;
         $task->save();
+        $task_id = $task->id;
         //Записываем в таблицу тасков
 
         //Обрабатываем список сайтов, если есть
@@ -253,7 +254,39 @@ class ParsingTasksController extends Controller
             $tmp_mail = [];
 
             if($mails_number > 3){
+                foreach ($mails as $key => $value){
+                    ++$key;
+                    $tmp_mail[] = $value;
 
+                    if($key % 3 == 0){
+                        $search_query = new SearchQueries;
+                            $search_query->link = "Тестовая рассылка";
+                            $search_query->mails = implode(",", $tmp_mail);
+                            $search_query->phones = null;
+                            $search_query->skypes = null;
+                            $search_query->task_id = $task_id;
+                            $search_query->email_reserved = 0;
+                            $search_query->email_sended = 0;
+                            $search_query->sk_recevied = 0;
+                            $search_query->sk_sended = 0;
+                        $search_query->save();
+
+                        unset($tmp_mail);
+                    }
+                    if($key == $mails_number){
+                        $search_query = new SearchQueries;
+                            $search_query->link = "Тестовая рассылка";
+                            $search_query->mails = implode(",", $tmp_mail);
+                            $search_query->phones = null;
+                            $search_query->skypes = null;
+                            $search_query->task_id = $task_id;
+                            $search_query->email_reserved = 0;
+                            $search_query->email_sended = 0;
+                            $search_query->sk_recevied = 0;
+                            $search_query->sk_sended = 0;
+                        $search_query->save();
+                    }
+                }
             }else{
                 foreach ($mails as $item){
                     $tmp_mail[] = $item;
@@ -263,7 +296,7 @@ class ParsingTasksController extends Controller
                     $search_query->mails = implode(",", $tmp_mail);
                     $search_query->phones = null;
                     $search_query->skypes = null;
-                    $search_query->task_id = $task->id;
+                    $search_query->task_id = $task_id;
                     $search_query->email_reserved = 0;
                     $search_query->email_sended = 0;
                     $search_query->sk_recevied = 0;
@@ -279,7 +312,7 @@ class ParsingTasksController extends Controller
             $mails = new TemplateDeliveryMails;
             $mails->subject = $request->get('subject');
             $mails->text = $request->get('mails_text');
-            $mails->task_id = $task->id;
+            $mails->task_id = $task_id;
             $mails->save();
         }
         //Записываем в таблицу шаблонов mails

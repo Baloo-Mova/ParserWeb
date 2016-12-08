@@ -29,13 +29,9 @@
                 </a>
             </li>
 
-            <li class="treeview {{ Request::path() == 'accounts-data/vk'
-                                || Request::path() == 'accounts-data/ok'
-                                || Request::path() == 'accounts-data/emails'
-                                || Request::path() == 'smtp-base'
-                                ? 'active' : ''}}">
+            <li class="treeview {{ Request::path() == 'parsing_tasks' ? 'active' : ''}}">
                 <a href="#">
-                    <i class="fa fa-tasks"></i>
+                    <i class="fa fa-paper-plane-o"></i>
                     <span>Тестовая Рассылка</span>
                     <span class="pull-right-container">
                         <i class="fa fa-angle-left pull-right"></i>
@@ -44,11 +40,11 @@
                 <ul class="treeview-menu" style="display: none;">
                     <li >
                         <a href="{{ route('accounts_data.vk') }}" class="{{ Request::path() == 'accounts-data/vk' ? 'link_active' : ''}}">
-                            <i class='fa fa-vk'></i>
+                            <i class='fa fa-skype'></i>
                             <span>Skype</span>
                         </a>
                         <a href="{{ route('parsing_tasks.testingDeliveryMails') }}" class="{{ Request::path() == 'accounts-data/ok' ? 'link_active' : ''}}">
-                            <i class='fa fa-odnoklassniki'></i>
+                            <i class='fa fa-envelope-o'></i>
                             <span>Emails</span>
                         </a>
                     </li>
