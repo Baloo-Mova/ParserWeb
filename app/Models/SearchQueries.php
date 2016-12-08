@@ -23,7 +23,7 @@ class SearchQueries extends Model
 
 
     public function getEmailTemplate(){
-        return TemplateDeliveryMails::where('task_id', '=', $this->task_id)->first();
+        return TemplateDeliveryMails::with('attaches')->where('task_id', '=', $this->task_id)->first();
     }
 
     public function getSkypeTemplate(){
