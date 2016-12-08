@@ -44,7 +44,6 @@ class EmailSender extends Command
     {
         while (true) {
             try {
-
                 $emails = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
                     ['search_queries.mails', '<>', ''],
                     'search_queries.email_reserved' => 0,
@@ -58,7 +57,7 @@ class EmailSender extends Command
                 }
 
                 $emails->email_reserved = 1;
-               // $emails->save();
+                $emails->save();
 
                 $template = $emails->getEmailTemplate();
 
@@ -91,8 +90,8 @@ class EmailSender extends Command
                     $emails->email_sended = count($to);
                 }
 
-//                $emails->save();
-//                sleep(1);
+                $emails->save();
+                sleep(1);
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
                 $log->message = $ex->getMessage() . " line:" . __LINE__;

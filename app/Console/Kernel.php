@@ -7,7 +7,7 @@ use App\Console\Commands\Parsers\ParseSite;
 use App\Console\Commands\Parsers\Proxy;
 use App\Console\Commands\Senders\EmailSender;
 use App\Console\Commands\Tester;
-use App\Console\Commands\SkypeSender;
+use App\Console\Commands\Senders\SkypeSender;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
