@@ -152,6 +152,60 @@ class ParsingTasksController extends Controller
         return redirect()->back();
     }
 
+    public function startDelivery($id)
+    {
+        $task = Tasks::whereId($id)->first();
+        $task->need_send = 1;
+        $task->save();
+
+        return redirect()->back();
+    }
+
+    public function stopDelivery($id)
+    {
+        $task = Tasks::whereId($id)->first();
+        $task->need_send = 0;
+        $task->save();
+
+        return redirect()->back();
+    }
+
+    public function changeDeliveryInfo(Request $request)
+    {
+        $skype_text = $request->get("skype_text");
+        $mail_subj = $request->get("mail_subject");
+        $mail_text = $request->get("mail_text");
+
+        if(isset($skype_text)){
+            $skype = TemplateDeliverySkypes::where("task_id", "=", $request->get("delivery_id"))->first();
+            if(empty($skype)){
+                $skype = new TemplateDeliverySkypes;
+                $skype->task_id = $request->get("delivery_id");
+            }
+            $skype->text = $skype_text;
+            $skype->save();
+        }
+
+        if(isset($mail_subj)){
+            $mail = TemplateDeliveryMails::where("task_id", "=", $request->get("delivery_id"))->first();
+
+            if(empty($mail)){
+                $mail = new TemplateDeliveryMails;
+                $mail->task_id = $request->get("delivery_id");
+            }
+
+            $mail->subject = $mail_subj;
+
+            if(isset($mail_text)){
+                $mail->text = $mail_text;
+            }
+
+            $mail->save();
+        }
+
+        return redirect()->back();
+    }
+
     public function getCsv($id)
     {
 
@@ -171,4 +225,6 @@ class ParsingTasksController extends Controller
             }
 
     }
+
+
 }

@@ -27,22 +27,55 @@ class SkypesAccountsController extends Controller
         return redirect()->route('skypes_accounts.index');
     }
 
+    public function edit($id)
+    {
+        $data = SkypeLogins::whereId($id)->first();
+        return view("skypes_accounts.edit", ["data" => $data]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $data = SkypeLogins::whereId($id)->first();
+        $data->fill($request->all());
+        $data->save();
+
+        return redirect()->route('skypes_accounts.index');
+    }
+
     public function massupload(Request $request)
     {
         if(!(empty($request->get('text')))){
             $accounts = explode("\r\n", $request->get('text'));
-
-            
-            $this->mailsParse($accounts, $request->get('user_id'));
+            $this->textParse($accounts);
         }else{
             if ($request->hasFile('text_file')) {
-                $filename = uniqid('smtp_file', true) . '.' . $request->file('text_file')->getClientOriginalExtension();
+                $filename = uniqid('skype_logins_file', true) . '.' . $request->file('text_file')->getClientOriginalExtension();
                 $request->file('text_file')->storeAs('tmp_files', $filename);
                 $file = file(storage_path(config('config.tmp_folder')).$filename);
-                $this->mailsParse($file, $request->get('user_id'));
+                $this->textParse($file);
             }
         }
 
-        return redirect()->route('accounts_data.emails');
+        return redirect()->route('skypes_accounts.index');
+    }
+
+    public function textParse($data)
+    {
+        foreach ($data as $line){
+            $tmp = explode(":", $line);
+                $skype = new SkypeLogins;
+                $skype->login = $tmp[0];
+                $skype->password = $tmp[1];
+                $skype->save();
+            unset($tmp);
+        }
+    }
+
+    public function delete($id)
+    {
+        $data = SkypeLogins::whereId($id)->first();
+        $data->delete();
+
+        return redirect()->back();
     }
 }

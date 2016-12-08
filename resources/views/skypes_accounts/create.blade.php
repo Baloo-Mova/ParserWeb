@@ -37,10 +37,10 @@
                         </div>
                     </div>
                     <div class="box-body">
-                        <form action="{{ url('/skypes-accounts/text-upload') }}" method="post">
+                        <form action="{{ url('/skypes-accounts/mass-upload') }}" method="post">
                             {{ csrf_field() }}
                             <div class="form-group has-feedback">
-                                <textarea name="text" class="form-control" cols="30" rows="8"></textarea>
+                                <textarea name="text" class="form-control" cols="30" rows="8">login:password</textarea>
                             </div>
                             <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
                         </form>
@@ -56,7 +56,7 @@
                         </div>
                     </div>
                     <div class="box-body">
-                        <form action="{{ url('/skypes-accounts/file-upload') }}" enctype="multipart/form-data"  method="post">
+                        <form action="{{ url('/skypes-accounts/mass-upload') }}" enctype="multipart/form-data"  method="post">
                             {{ csrf_field() }}
                             <div class="form-group">
                                 <label for="text_file">Загрузить Файл</label>

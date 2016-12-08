@@ -81,6 +81,11 @@ Route::group(['prefix' => 'parsing-tasks', 'middleware' => 'auth'], function () 
     Route::get('/show/{id}', ['uses' => 'ParsingTasksController@show', 'as' => 'parsing_tasks.show']);
     Route::get('/start/{id}', ['uses' => 'ParsingTasksController@start', 'as' => 'parsing_tasks.start']);
     Route::get('/stop/{id}', ['uses' => 'ParsingTasksController@stop', 'as' => 'parsing_tasks.stop']);
+
+    Route::get('/start-delivery/{id}', ['uses' => 'ParsingTasksController@startDelivery', 'as' => 'parsing_tasks.startDelivery']);
+    Route::get('/stop-delivery/{id}', ['uses' => 'ParsingTasksController@stopDelivery', 'as' => 'parsing_tasks.stopDelivery']);
+    Route::post('/change-delivery-info', ['uses' => 'ParsingTasksController@changeDeliveryInfo', 'as' => 'parsing_tasks.changeDeliveryInfo']);
+
     Route::get('/reserved/{id}', ['uses' => 'ParsingTasksController@reserved', 'as' => 'parsing_tasks.reserved']);
     Route::post('/create', ['uses' => 'ParsingTasksController@store', 'as' => 'parsing_tasks.store']);
     Route::get('/get-csv/{id}', ['uses' => 'ParsingTasksController@getCsv', 'as' => 'parsing_tasks.getCsv']);
@@ -91,4 +96,7 @@ Route::group(['prefix' => 'skypes-accounts', 'middleware' => 'auth'], function (
     Route::get('/create', ['uses' => 'SkypesAccountsController@create', 'as' => 'skypes_accounts.create']);
     Route::post('/create', ['uses' => 'SkypesAccountsController@store', 'as' => 'skypes_accounts.store']);
     Route::post('/mass-upload', ['uses'=>'SkypesAccountsController@massupload', 'as'=>'skypes_accounts.mass.upload']);
+    Route::get('/edit/{id}', ['uses' => 'SkypesAccountsController@edit', 'as' => 'skypes_accounts.edit']);
+    Route::post('/edit/{id}', ['uses'=>'SkypesAccountsController@update', 'as'=>'skypes_accounts.update']);
+    Route::get('/delete/{id}', ['uses'=>'SkypesAccountsController@delete', 'as'=>'skypes_accounts.delete']);
 });

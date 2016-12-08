@@ -37,6 +37,8 @@
                         <a href="{{ route('parsing_tasks.start', ['id' => $data->id]) }}" class="btn btn-success" {{ $data->active_type == 1 || $data->google_offset == -1 ? "disabled" : "" }}>Запустить</a>
                         <a href="{{ route('parsing_tasks.stop', ['id' => $data->id]) }}" class="btn btn-danger" {{ $data->active_type == 0 || $data->active_type == 2 ? "disabled" : "" }}>Остановить</a>
                         <a href="{{ route('parsing_tasks.reserved', ['id' => $data->id]) }}" class="btn btn-danger" {{ $data->reserved == 0 ? "disabled" : "" }}>Вернуть задачу</a>
+
+
                     </div>
                 </div>
             </div>
@@ -108,20 +110,28 @@
                             </div>
 
                             <div id="data" class="tab-pane well fade">
-                                <table class="table table-bordered">
-                                    <thead>
-                                    <tr>
-                                        <th>Mail subject</th>
-                                        <th>Mail text</th>
-                                        <th>Skype text</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <td> {{ empty($mails) ? "-" : $mails->subject }}</td>
-                                    <td> {{ empty($mails) ? "-" : $mails->text }}</td>
-                                    <td> {{ empty($skype) ? "-" : $skype->text }}</td>
-                                    </tbody>
-                                </table>
+                                <a href="{{ route('parsing_tasks.startDelivery', ['id' => $data->id]) }}" class="btn btn-success" {{empty($mails->subject) || empty($skype->text) || $data->need_send == 1 ? "disabled" : "" }}>Запустить рассылку</a>
+                                <a href="{{ route('parsing_tasks.stopDelivery', ['id' => $data->id]) }}" class="btn btn-danger" {{$data->need_send == 0 ? "disabled" : "" }}>Остановить рассылку</a>
+                                <hr>
+                                <form action="{{ route('parsing_tasks.changeDeliveryInfo') }}" method="post">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                        <tr>
+                                            <th>Mail subject</th>
+                                            <th>Mail text</th>
+                                            <th>Skype text</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                            {{ csrf_field() }}
+                                            <td><input type="text" class="form-control" name="mail_subject" value="{{ empty($mails) ? "-" : $mails->subject }}"></td>
+                                            <td><textarea name="mail_text" class="form-control" cols="30" rows="3">{{ empty($mails) ? "-" : $mails->text }}</textarea></td>
+                                            <td><textarea name="skype_text" class="form-control" cols="30" rows="3">{{ empty($skype) ? "-" : $skype->text }}</textarea></td>
+                                            <input type="hidden" name="delivery_id" value="{{ $data->id }}">
+                                        </tbody>
+                                    </table>
+                                    <input type="submit" class="btn btn-primary" value="Изменить">
+                                </form>
                             </div>
                         </div>
                     </div>

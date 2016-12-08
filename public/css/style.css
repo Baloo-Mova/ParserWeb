@@ -51,6 +51,10 @@ label {
     max-width: 60px;
     width: 60px !important;
 }
+.skypes_action_td{
+    max-width: 120px;
+    width: 105px !important;
+}
 .nav-tabs > li > a{
     color: #0c0c0c !important;
 }
