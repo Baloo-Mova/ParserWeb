@@ -85,3 +85,10 @@ Route::group(['prefix' => 'parsing-tasks', 'middleware' => 'auth'], function () 
     Route::post('/create', ['uses' => 'ParsingTasksController@store', 'as' => 'parsing_tasks.store']);
     Route::get('/get-csv/{id}', ['uses' => 'ParsingTasksController@getCsv', 'as' => 'parsing_tasks.getCsv']);
 });
+
+Route::group(['prefix' => 'skypes-accounts', 'middleware' => 'auth'], function () {
+    Route::get('/', ['uses' => 'SkypesAccountsController@index', 'as' => 'skypes_accounts.index']);
+    Route::get('/create', ['uses' => 'SkypesAccountsController@create', 'as' => 'skypes_accounts.create']);
+    Route::post('/create', ['uses' => 'SkypesAccountsController@store', 'as' => 'skypes_accounts.store']);
+    Route::post('/mass-upload', ['uses'=>'SkypesAccountsController@massupload', 'as'=>'skypes_accounts.mass.upload']);
+});

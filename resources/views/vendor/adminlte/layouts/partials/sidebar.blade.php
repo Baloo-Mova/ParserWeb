@@ -62,6 +62,12 @@
                         </a>
                     </li>
                     <li class="">
+                        <a href="{{ route('skypes_accounts.index') }}" class="{{ Request::path() == 'skypes-accounts' ? 'link_active' : ''}}">
+                            <i class='fa fa-envelope'></i>
+                            <span>Skype Аккаунты</span>
+                        </a>
+                    </li>
+                    <li class="">
                         <a href="{{ route('smtpbase.index') }}" class="{{ Request::path() == 'smtp-base' ? 'link_active' : ''}}">
                             <i class='fa fa-envelope'></i>
                             <span>Default SMTP</span>
