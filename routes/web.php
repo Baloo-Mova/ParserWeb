@@ -66,8 +66,8 @@ Route::group(['prefix' => 'settings', 'middleware' => 'auth'], function () {
     Route::post('/config/edit/{config}', ['uses' => 'SettingsController@config_edit', 'as' => 'settings.config.edit']);
     Route::get('/thread/start/{process}', ['uses' => 'SettingsController@proc_start', 'as' => 'settings.process.start']);
     Route::get('/thread/stop/{process}', ['uses' => 'SettingsController@proc_stop', 'as' => 'settings.process.stop']);
-    Route::post('/thread/startall/', ['uses' => 'SettingsController@proc_startall', 'as' => 'settings.process.start.all']);
-    Route::post('/thread/stopall/', ['uses' => 'SettingsController@proc_stopall', 'as' => 'settings.process.stop.all']);
+    Route::get('/thread/startall/', ['uses' => 'SettingsController@proc_startall', 'as' => 'settings.process.start.all']);
+    Route::get('/thread/stopall/', ['uses' => 'SettingsController@proc_stopall', 'as' => 'settings.process.stop.all']);
 });
 
 Route::group(['prefix' => 'search-queries', 'middleware' => 'auth'], function () {
