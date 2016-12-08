@@ -39,11 +39,11 @@
                 </a>
                 <ul class="treeview-menu" style="display: none;">
                     <li >
-                        <a href="{{ route('accounts_data.vk') }}" class="{{ Request::path() == 'accounts-data/vk' ? 'link_active' : ''}}">
+                        <a href="{{ route('parsing_tasks.testingDeliverySkypes') }}" class="{{ Request::path() == 'parsing_tasks/parsing_tasks.testingDeliverySkypes' ? 'link_active' : ''}}">
                             <i class='fa fa-skype'></i>
                             <span>Skype</span>
                         </a>
-                        <a href="{{ route('parsing_tasks.testingDeliveryMails') }}" class="{{ Request::path() == 'accounts-data/ok' ? 'link_active' : ''}}">
+                        <a href="{{ route('parsing_tasks.testingDeliveryMails') }}" class="{{ Request::path() == 'parsing_tasks/parsing_tasks.testingDeliveryMails' ? 'link_active' : ''}}">
                             <i class='fa fa-envelope-o'></i>
                             <span>Emails</span>
                         </a>
