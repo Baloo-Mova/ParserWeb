@@ -16,7 +16,9 @@
                                     <label for="task_type" class="control-label">Тип Задачи</label>
                                     <select class="form-control task_type_select" name="task_type_id" id="task_type" >
                                         @foreach($types as $item)
-                                            <option value="{{ $item->id }}" {{ $item->id == 1 ? "selected" : "" }}>{{ $item->name }}</option>
+                                            @if($item->id != 3)
+                                                <option value="{{ $item->id }}" {{ $item->id == 1 ? "selected" : "" }}>{{ $item->name }}</option>
+                                            @endif
                                         @endforeach
                                     </select>
                                 </div>

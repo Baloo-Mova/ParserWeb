@@ -45,7 +45,7 @@
                         @endforelse
                         </tbody>
                     </table>
-
+                    {{ $data->links() }}
                 </div>
                 <div class="box-footer text-center">
                 </div>
