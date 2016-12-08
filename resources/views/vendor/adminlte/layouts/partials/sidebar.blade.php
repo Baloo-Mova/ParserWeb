@@ -28,6 +28,33 @@
                     <span>Задачи</span>
                 </a>
             </li>
+
+            <li class="treeview {{ Request::path() == 'accounts-data/vk'
+                                || Request::path() == 'accounts-data/ok'
+                                || Request::path() == 'accounts-data/emails'
+                                || Request::path() == 'smtp-base'
+                                ? 'active' : ''}}">
+                <a href="#">
+                    <i class="fa fa-tasks"></i>
+                    <span>Тестовая Рассылка</span>
+                    <span class="pull-right-container">
+                        <i class="fa fa-angle-left pull-right"></i>
+                    </span>
+                </a>
+                <ul class="treeview-menu" style="display: none;">
+                    <li >
+                        <a href="{{ route('accounts_data.vk') }}" class="{{ Request::path() == 'accounts-data/vk' ? 'link_active' : ''}}">
+                            <i class='fa fa-vk'></i>
+                            <span>Skype</span>
+                        </a>
+                        <a href="{{ route('parsing_tasks.testingDeliveryMails') }}" class="{{ Request::path() == 'accounts-data/ok' ? 'link_active' : ''}}">
+                            <i class='fa fa-odnoklassniki'></i>
+                            <span>Emails</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
             <li class="{{ Request::path() == 'user' ? 'active' : ''}}">
                 <a href="{{ route('user.index') }}">
                     <i class='fa fa-user'></i>

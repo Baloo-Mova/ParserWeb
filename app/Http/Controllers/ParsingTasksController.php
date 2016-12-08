@@ -226,5 +226,83 @@ class ParsingTasksController extends Controller
 
     }
 
+    public function testingDeliveryMails()
+    {
+        return view("parsing_tasks.testingDeliveryMails");
+    }
+
+    public function storeTestingDeliveryMails(Request $request)
+    {
+        //Записываем в таблицу тасков
+        $task = new Tasks();
+            $task->task_type_id = 3;
+            $task->task_query = "Тестовая рассылка";
+            $task->active_type = 1;
+            $task->reserved = 0;
+            $task->google_offset = 0;
+            $task->need_send = 1;
+        $task->save();
+        //Записываем в таблицу тасков
+
+        //Обрабатываем список сайтов, если есть
+        $mails_list = $request->get('mails_list');
+        if(!empty($mails_list)){
+
+            $mails = explode("\r\n", $mails_list);
+            $mails_number = count($mails);
+            $tmp_mail = [];
+
+            if($mails_number > 3){
+
+            }else{
+                foreach ($mails as $item){
+                    $tmp_mail[] = $item;
+                }
+                $search_query = new SearchQueries;
+                    $search_query->link = "Тестовая рассылка";
+                    $search_query->mails = implode(",", $tmp_mail);
+                    $search_query->phones = null;
+                    $search_query->skypes = null;
+                    $search_query->task_id = $task->id;
+                    $search_query->email_reserved = 0;
+                    $search_query->email_sended = 0;
+                    $search_query->sk_recevied = 0;
+                    $search_query->sk_sended = 0;
+                $search_query->save();
+            }
+
+        }
+        //Обрабатываем список сайтов, если есть
+
+        //Записываем в таблицу шаблонов mails
+        if(!empty($request->get('subject')) && !empty($request->get('mails_text'))){
+            $mails = new TemplateDeliveryMails;
+            $mails->subject = $request->get('subject');
+            $mails->text = $request->get('mails_text');
+            $mails->task_id = $task->id;
+            $mails->save();
+        }
+        //Записываем в таблицу шаблонов mails
+
+        //Записываем в таблицу шаблонов вложений для mails
+        if ($request->hasFile('file')) {
+            foreach ($request->file('file') as $file){
+                $filename = uniqid('mail_'.$mails->id, true) . '.' . $file->getClientOriginalExtension();
+                $file->storeAs('mail_files', $filename);
+
+                $file_model = new TemplateDeliveryMailsFiles;
+                $file_model->mail_id = $mails->id;
+                $file_model->name = $filename;
+                $file_model->path = 'mail_files/'.$filename;
+                $file_model->save();
+
+                unset($file_model);
+            }
+        }
+        //Записываем в таблицу шаблонов вложений для mails
+
+        return redirect()->route('parsing_tasks.index');
+    }
+
 
 }

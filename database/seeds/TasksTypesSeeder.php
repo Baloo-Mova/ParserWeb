@@ -20,6 +20,9 @@ class TasksTypesSeeder extends Seeder
             ],
             [
                 'name' => 'Поиск по списку сайтов'
+            ],
+            [
+                'name' => 'Тестовая рассылка'
             ]
         ]);
     }

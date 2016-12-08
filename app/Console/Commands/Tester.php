@@ -39,8 +39,6 @@ class Tester extends Command
      */
     public function handle()
     {
-         SkypeClassFacade::sendRandom("bear_balooo","СООБЩЕНИЕ");
-
 
     }
 }
