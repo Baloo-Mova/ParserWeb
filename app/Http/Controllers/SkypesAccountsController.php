@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\SkypeLogins;
+use App\MyFacades\SkypeClassFacade;
 
 class SkypesAccountsController extends Controller
 {
@@ -21,9 +22,18 @@ class SkypesAccountsController extends Controller
 
     public function store(Request $request)
     {
+        
+        
         $skype = new SkypeLogins;
         $skype->fill($request->all());
+        $skype->valid=1;
         $skype->save();
+       SkypeClassFacade::index($request->get('login'),$request->get('password'));
+      
+       $skype = SkypeLogins::where(['login'=>$request->get('login')])->first();
+       if($skype->valid==0){
+          $skype->delete();
+           }
         return redirect()->route('skypes_accounts.index');
     }
 
@@ -46,7 +56,7 @@ class SkypesAccountsController extends Controller
     {
         if(!(empty($request->get('text')))){
             $accounts = explode("\r\n", $request->get('text'));
-            $this->textParse($accounts);
+            $this->textParse(array_filter($accounts));
         }else{
             if ($request->hasFile('text_file')) {
                 $filename = uniqid('skype_logins_file', true) . '.' . $request->file('text_file')->getClientOriginalExtension();
@@ -66,8 +76,18 @@ class SkypesAccountsController extends Controller
                 $skype = new SkypeLogins;
                 $skype->login = $tmp[0];
                 $skype->password = $tmp[1];
+                $skype->valid = 1;
                 $skype->save();
+                SkypeClassFacade::index($skype->login,$skype->password);
+      
+       $skype2 = SkypeLogins::where(['login'=> $tmp[0]])->first();
+       //dd($skype2);
+       if($skype2->valid==0){
+          $skype2->delete();
+           }
             unset($tmp);
+            
+            
         }
     }
 

@@ -5,8 +5,8 @@ use App\Models\SkypeLogins;
 
 class SkypeClass {
 
-    public $username;
-    private $password, $registrationToken, $skypeToken, $expiry = 0, $logged = false, $hashedUsername;
+    public $username, $valid = true;
+    private $password, $registrationToken, $skypeToken, $expiry = 0 , $logged = false, $hashedUsername;
 
     public function index($username, $password){
         $this->username = $username;
@@ -28,11 +28,21 @@ class SkypeClass {
             $this->skypeToken = $auth["skypeToken"];
             $this->registrationToken = $auth["registrationToken"];
             $this->expiry = $auth["expiry"];
+            $this->valid=true;
             echo "<br>login - ok<br>";
         } else {
-            $this->login();
+           $this->valid = $this->login();
+            //dd($this->valid);
         }
     }
+    
+     public function addSender($username, $password){
+     $this->username = $username;
+     $this->password = $password;
+     $this->valid = $this->login();
+     
+     }
+    
 
     private function login() {
         echo "need login<br>";
@@ -78,9 +88,22 @@ class SkypeClass {
         preg_match("`<input type=\"hidden\" name=\"NAP\" id=\"NAP\" value=\"(.+)\">`isU", $loginForm, $NAP);
         preg_match("`<input type=\"hidden\" name=\"ANON\" id=\"ANON\" value=\"(.+)\">`isU", $loginForm, $ANON);
         preg_match("`<input type=\"hidden\" name=\"t\" id=\"t\" value=\"(.+)\">`isU", $loginForm, $t);
+        
+        $validskype = SkypeLogins::where(['login' => $this->username])->first();
         if (!isset($NAP[1]) || !isset($ANON[1]) || !isset($t[1]))
-            exit(trigger_error("Skype : Authentication failed for {$this->username}", E_USER_WARNING));
-
+        {
+            if(!(empty($validskype))){
+            $validskype->valid = 0;
+            $validskype->save();
+            }
+            echo "Skype : Authentication failed for {$this->username}";
+            return false;
+            //exit(trigger_error("Skype : Authentication failed for {$this->username}", E_USER_WARNING));
+        }
+        if(!(empty($validskype))){
+            $validskype->valid = 1;
+            $validskype->save();
+        }
         $NAP = $NAP[1];
         $ANON = $ANON[1];
         $t = $t[1];
@@ -151,6 +174,7 @@ class SkypeClass {
         $skype_logins->skypeToken = $this->skypeToken;
         $skype_logins->registrationToken = $this->registrationToken;
         $skype_logins->expiry = $this->expiry;
+        $skype_logins->valid = 1;
         $skype_logins->save();
         echo "login SUCCESS<br>";
 
@@ -291,13 +315,17 @@ class SkypeClass {
 
     public function sendRandom($to, $message){
 
-        $from = SkypeLogins::inRandomOrder()->first();
+        while(true){
+        $from = SkypeLogins::where(['valid' => '1'])->inRandomOrder()->first();
 
         if(!empty($from)){
             echo "<br>from ".$from->login." to ".$to."<br>";
 
             $this->index($from->login, $from->password);
-
+            
+            //dd($this->valid);
+            if($this->valid==false) {sleep(10); continue;}
+            
             $is_friend = $this->isFriend($to, $message);
 
             if($is_friend == 50000){
@@ -309,6 +337,11 @@ class SkypeClass {
                 $this->sendMessage(["login" => $from->login, "password" => $from->password], $to, $message);
             }
         }
+        break;
+        }
     }
-
+ public function checkValid(){
+     
+     
+ }
 }

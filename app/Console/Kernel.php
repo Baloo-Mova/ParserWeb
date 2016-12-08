@@ -7,6 +7,7 @@ use App\Console\Commands\Parsers\ParseSite;
 use App\Console\Commands\Parsers\Proxy;
 use App\Console\Commands\Senders\EmailSender;
 use App\Console\Commands\Tester;
+use App\Console\Commands\SkypeSender;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -23,6 +24,7 @@ class Kernel extends ConsoleKernel
          ParseSite::class,
          EmailSender::class,
          Tester::class,
+         SkypeSender::class,   
     ];
 
     /**
