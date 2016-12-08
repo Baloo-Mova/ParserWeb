@@ -1,7 +1,7 @@
 @extends('adminlte::layouts.app')
 
 @section('contentheader_title')
-    Задачи К Парсингу
+    Скайп Аккаунты
 @endsection
 
 @section('main-content')
