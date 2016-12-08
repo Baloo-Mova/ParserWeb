@@ -15,5 +15,6 @@ class SkypeLogins extends Model
         'skypeToken',
         'registrationToken',
         'expiry',
+        'valid',
     ];
 }

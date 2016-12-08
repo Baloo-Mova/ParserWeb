@@ -19,9 +19,13 @@ class SearchQueries extends Model
         'phones',
         'skypes',
         'query',
+        'sk_recevied',
+        'sk_sended'
+        
     ];
 
 
+    
     public function getEmailTemplate(){
         return TemplateDeliveryMails::with('attaches')->where('task_id', '=', $this->task_id)->first();
     }
