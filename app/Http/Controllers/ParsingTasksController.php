@@ -80,14 +80,14 @@ class ParsingTasksController extends Controller
         }
         //Записываем в таблицу шаблонов вложений для mails
 
-        //Записываем в таблицу шаблонов mais
-        if(!empty($request->get('subject'))){
+        //Записываем в таблицу шаблонов skypes
+        if(!empty($request->get('skype_text'))){
             $skype = new TemplateDeliverySkypes();
                 $skype->text = $request->get('skype_text');
                 $skype->task_id = $task->id;
             $skype->save();
         }
-        //Записываем в таблицу шаблонов mais
+        //Записываем в таблицу шаблонов skypes
 
         return redirect()->route('parsing_tasks.index');
     }
