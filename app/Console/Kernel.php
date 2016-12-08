@@ -5,6 +5,7 @@ namespace App\Console;
 use App\Console\Commands\Parsers\ParseGoogle;
 use App\Console\Commands\Parsers\ParseSite;
 use App\Console\Commands\Parsers\Proxy;
+use App\Console\Commands\Senders\EmailSender;
 use App\Console\Commands\Tester;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -20,6 +21,7 @@ class Kernel extends ConsoleKernel
          Proxy::class,
          ParseGoogle::class,
          ParseSite::class,
+         EmailSender::class,
          Tester::class,
     ];
 

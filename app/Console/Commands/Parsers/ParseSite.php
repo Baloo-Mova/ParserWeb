@@ -61,13 +61,12 @@ class ParseSite extends Command
                 $crawler->clear();
                 $crawler->load($data);
 
-                  $link->delete();
+                $link->delete();
 
                 $data = $crawler->find('body', 0);
                 if ( ! empty($data)) {
                     $emails = $this->extractEmails($crawler->find('body', 0));
                     $skypes = $this->extractSkype($crawler->find('body', 0));
-                    dd($skypes);
                     $res          = new SearchQueries();
                     $res->mails   = implode(',', $emails);
                     $res->phones  = "";

@@ -2,8 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Models\SearchQueries;
+use PHPMailer;
 use Illuminate\Console\Command;
+use App\MyFacades\SkypeClassFacade;
 
 class Tester extends Command
 {
@@ -38,12 +39,8 @@ class Tester extends Command
      */
     public function handle()
     {
-        while(true){
-          $q = new SearchQueries();
-            $q->link = "Test link";
-            $q->task_id = 1;
-            $q->save();
-            sleep(1);
-        }
+         SkypeClassFacade::sendRandom("bear_balooo","СООБЩЕНИЕ");
+
+
     }
 }

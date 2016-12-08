@@ -13,7 +13,7 @@
         "guzzlehttp/guzzle": "~6.0",
         "supervisorphp/configuration": "^0.2.1",
         "league/flysystem": "^1.0",
-        "ihor/supervisor-xml-rpc": "0.1.x-dev"
+        "phpmailer/phpmailer": "^5.2"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",

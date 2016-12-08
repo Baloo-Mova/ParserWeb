@@ -20,4 +20,13 @@ class SearchQueries extends Model
         'skypes',
         'query',
     ];
+
+
+    public function getEmailTemplate(){
+        return TemplateDeliveryMails::where('task_id', '=', $this->task_id)->first();
+    }
+
+    public function getSkypeTemplate(){
+        return TemplateDeliverySkypes::where('task_id', '=', $this->task_id)->first();
+    }
 }

@@ -35,6 +35,7 @@ class ParsingTasksController extends Controller
             $task->active_type = 1;
             $task->reserved = 0;
             $task->google_offset = 0;
+            $task->need_send = $request->get('send_directly') != null;
         $task->save();
         //Записываем в таблицу тасков
 
