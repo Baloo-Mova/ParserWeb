@@ -30,7 +30,7 @@
 
                 <div class="box box-primary collapsed-box">
                     <div class="box-header">
-                        Массовое Добавление
+                        Массовое Добавление (login:password)
                         <div class="box-tools pull-right">
                             <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse">
                                 <i class="fa fa-plus"></i></button>
@@ -40,7 +40,7 @@
                         <form action="{{ url('/skypes-accounts/mass-upload') }}" method="post">
                             {{ csrf_field() }}
                             <div class="form-group has-feedback">
-                                <textarea name="text" class="form-control" cols="30" rows="8">login:password</textarea>
+                                <textarea name="text" class="form-control" cols="30" rows="8"></textarea>
                             </div>
                             <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
                         </form>
