@@ -13,4 +13,8 @@ class TemplateDeliveryMails extends Model
         'subject',
         'text',
     ];
+
+    public function attaches(){
+        return $this->belongsTo(TemplateDeliveryMailsFiles::class,'id', 'mail_id');
+    }
 }

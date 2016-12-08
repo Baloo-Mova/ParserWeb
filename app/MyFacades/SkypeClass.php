@@ -12,18 +12,19 @@ class SkypeClass {
         $this->username = $username;
         $this->password = $password;
         $this->hashedUsername = sha1($username);
-
+        $needRelogin = false;
         $skype_logins = SkypeLogins::where('login', $username)->first();
 
         if (!(empty($skype_logins))) {
             $auth['skypeToken'] = $skype_logins->skypeToken;
             $auth['registrationToken'] = $skype_logins->registrationToken;
             $auth['expiry'] = $skype_logins->expiry;
-            if (time() >= $auth["expiry"])
-                unset($auth);
+            if (time() >= $auth["expiry"]) {
+                $needRelogin = true;
+            }
         }
 
-        if (isset($auth)) {
+        if (!$needRelogin) {
             $this->skypeToken = $auth["skypeToken"];
             $this->registrationToken = $auth["registrationToken"];
             $this->expiry = $auth["expiry"];
@@ -120,7 +121,7 @@ class SkypeClass {
         $this->skypeToken = $skypeToken[1];
 
         $login = $this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/endpoints", "POST", "{}", true);
-        //dd($login);
+
         preg_match("`registrationToken=(.+);`isU", $login, $registrationToken);
 
 
@@ -268,7 +269,7 @@ class SkypeClass {
         ];
 
         $req = json_decode($this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/conversations/$mode:$to/messages", "POST", json_encode($post)), true);
-dd($req);
+
         return isset($req["OriginalArrivalTime"]) ? $messageID : 0;
     }
 
