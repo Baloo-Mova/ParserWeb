@@ -14,7 +14,8 @@ class AccountsData extends Model
         'login',
         'password',
         'type_id',
-        'user_id'
+        'user_id',
+        'count_sended_messages',
     ];
 
     public function accountType()

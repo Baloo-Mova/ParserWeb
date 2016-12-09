@@ -24,7 +24,8 @@
                                 <th>ID</th>
                                 <th>Логин</th>
                                 <th>Пароль</th>
-                                <th>Тип</th>
+                                <th>Кол-во отправленных сообщений</th>
+                                <th>Валидность аккаунта</th>
                                 <th>SMTP Порт</th>
                                 <th>SMTP Адрес</th>
                                 <th>Действия</th>
@@ -36,7 +37,8 @@
                                     <td>{{ $item->id }}</td>
                                     <td>{{ $item->login }}</td>
                                     <td>{{ $item->password }}</td>
-                                    <td>{{ $item->accountType->type_name }}</td>
+                                    <td>{{ $item->count_sended_messages}}</td>
+                                    <td>{{($item->valid==1 ? 'Валидный' : 'Не Валидный')}}</td>
                                     <td>{{ $item->smtp_port }}</td>
                                     <td>{{ $item->smtp_address }}</td>
                                     <td>

@@ -84,7 +84,7 @@ class SkypeSender extends Command {
 //                    'tasks.need_send' => 1,
 //                ])->first();
         // SkypeClassFacade::sendRandom("tvv1994","Добавь меня))");
-        sleep(100);
+        //sleep(100);
         //}
     }
 
