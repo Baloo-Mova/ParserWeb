@@ -62,10 +62,7 @@ class ParseGoogle extends Command
                 $sitesCountWas = 0;
                 $proxy         = ProxyItem::orderBy('id', 'desc')->first();
                 $i             = 0;
-
                 do {
-
-                    echo "TASK STARTED $task->id".PHP_EOL;
 
                     $data = "";
                     while (strlen($data) < 200) {
@@ -75,11 +72,9 @@ class ParseGoogle extends Command
 
                         if ($data == "NEED_NEW_PROXY") {
                             $proxy->reportBad();
-                            echo "Report bad" . PHP_EOL;
                             while (true) {
                                 $proxy = ProxyItem::orderBy('id', 'desc')->first();
                                 if (isset($proxy)) {
-                                    echo $proxy->proxy . " HAVE PROXY" . PHP_EOL;
                                     break;
                                 }
                                 sleep(10);

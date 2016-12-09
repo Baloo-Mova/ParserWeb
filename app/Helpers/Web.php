@@ -39,7 +39,6 @@ class Web
         $errorMessage = "";
         while ($tries < 4) {
             try {
-                echo "try $tries".PHP_EOL;
                 $request = $this->client->request("GET", $url, [
                     'proxy' => $proxy,
                 ]);

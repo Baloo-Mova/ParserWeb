@@ -16,7 +16,7 @@ class ParsingTasksController extends Controller
 {
     public function index()
     {
-        $data = Tasks::paginate(config('config.accountsdatapaginate'));
+        $data = Tasks::orderBy('id','desc')->paginate(config('config.accountsdatapaginate'));
         return view('parsing_tasks.index', ['data' => $data]);
     }
 
@@ -102,8 +102,6 @@ class ParsingTasksController extends Controller
 
         $active_type = "";
 
-        //$api = new Api('127.0.0.1', , '', '' );
-        //$task_info = $api->getProcessInfo('myworker');
         switch ($task->active_type){
             case 0:
                 $active_type = "Пауза";

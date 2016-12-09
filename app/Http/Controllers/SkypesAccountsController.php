@@ -22,24 +22,25 @@ class SkypesAccountsController extends Controller
 
     public function store(Request $request)
     {
-        
-        
+
         $skype = new SkypeLogins;
         $skype->fill($request->all());
-        $skype->valid=1;
+        $skype->valid = 1;
         $skype->save();
-       SkypeClassFacade::index($request->get('login'),$request->get('password'));
-      
-       $skype = SkypeLogins::where(['login'=>$request->get('login')])->first();
-       if($skype->valid==0){
-          $skype->delete();
-           }
+        SkypeClassFacade::index($request->get('login'), $request->get('password'));
+
+        $skype = SkypeLogins::where(['login' => $request->get('login')])->first();
+        if ($skype->valid == 0) {
+            $skype->delete();
+        }
+
         return redirect()->route('skypes_accounts.index');
     }
 
     public function edit($id)
     {
         $data = SkypeLogins::whereId($id)->first();
+
         return view("skypes_accounts.edit", ["data" => $data]);
     }
 
@@ -54,14 +55,15 @@ class SkypesAccountsController extends Controller
 
     public function massupload(Request $request)
     {
-        if(!(empty($request->get('text')))){
+        if ( ! (empty($request->get('text')))) {
             $accounts = explode("\r\n", $request->get('text'));
             $this->textParse(array_filter($accounts));
-        }else{
+        } else {
             if ($request->hasFile('text_file')) {
-                $filename = uniqid('skype_logins_file', true) . '.' . $request->file('text_file')->getClientOriginalExtension();
+                $filename = uniqid('skype_logins_file',
+                        true) . '.' . $request->file('text_file')->getClientOriginalExtension();
                 $request->file('text_file')->storeAs('tmp_files', $filename);
-                $file = file(storage_path(config('config.tmp_folder')).$filename);
+                $file = file(storage_path(config('config.tmp_folder')) . $filename);
                 $this->textParse($file);
             }
         }
@@ -71,23 +73,21 @@ class SkypesAccountsController extends Controller
 
     public function textParse($data)
     {
-        foreach ($data as $line){
-            $tmp = explode(":", $line);
-                $skype = new SkypeLogins;
-                $skype->login = $tmp[0];
-                $skype->password = $tmp[1];
-                $skype->valid = 1;
-                $skype->save();
-                SkypeClassFacade::index($skype->login,$skype->password);
-      
-       $skype2 = SkypeLogins::where(['login'=> $tmp[0]])->first();
-       //dd($skype2);
-       if($skype2->valid==0){
-          $skype2->delete();
-           }
+        foreach ($data as $line) {
+            $tmp             = explode(":", $line);
+            $skype           = new SkypeLogins;
+            $skype->login    = $tmp[0];
+            $skype->password = $tmp[1];
+            $skype->valid    = 1;
+            $skype->save();
+            SkypeClassFacade::index($skype->login, $skype->password);
+
+            $skype2 = SkypeLogins::where(['login' => $tmp[0]])->first();
+
+            if ($skype2->valid == 0) {
+                $skype2->delete();
+            }
             unset($tmp);
-            
-            
         }
     }
 
