@@ -3,6 +3,7 @@
 namespace App\MyFacades;
 
 use App\Models\SkypeLogins;
+use App\Models\Parser\ErrorLog;
 
 class SkypeClass
 {
@@ -150,7 +151,10 @@ class SkypeClass
 
             return true;
         } catch (\Exception $ex) {
-            dd($ex->getTraceAsString());
+            $log          = new ErrorLog();
+            $log->message = $ex->getTraceAsString();
+            $log->task_id = 0;
+            $log->save();
             return false;
         }
     }
@@ -246,6 +250,7 @@ class SkypeClass
 
     public function index($username, $password)
     {
+
         $this->username       = $username;
         $this->password       = $password;
         $this->hashedUsername = sha1($username);
@@ -312,7 +317,6 @@ class SkypeClass
 
     public function sendMessage($from, $to, $message)
     {
-
         $this->index($from["login"], $from["password"]);
 
         $user      = $this->URLtoUser($to);
@@ -339,7 +343,7 @@ class SkypeClass
     public function sendRandom($to, $message)
     {
         while (true) {
-            $from = SkypeLogins::where(['valid' => '1'])->inRandomOrder()->first();
+            $from = SkypeLogins::where(['valid' => '1'])->orderByRaw('RAND()')->first();
 
             if ( ! empty($from)) {
                 $this->index($from->login, $from->password);

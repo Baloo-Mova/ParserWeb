@@ -66,6 +66,7 @@
                                 <div>
                                     <span>Обработаных: <span class="badge bg-success task_result_span_parsed">-</span></span>&nbsp;
                                     <span>В очереди: <span class="badge bg-info task_result_span_queue">-</span></span>&nbsp;
+                                    <span>Разослано: <span class="badge bg-warning task_result_span_sended">-</span></span>&nbsp;
                                     <hr>
                                     <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}" class="btn btn-primary" >Экспортировать в CSV</a>
                                     <hr>
@@ -171,6 +172,7 @@
                             if (data.success == true) {
                                 $(".task_result_span_parsed").text(data.count_parsed);
                                 $(".task_result_span_queue").text(data.count_queue);
+                                $(".task_result_span_sended").text(data.count_sended);
                                 $(".last_task_id").val(data.max_id);
 
                                 if (Object.keys(data.result).length > 0) {

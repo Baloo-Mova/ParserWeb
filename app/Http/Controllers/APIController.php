@@ -22,11 +22,15 @@ class APIController extends Controller
 
         $count = SearchQueries::where('task_id', '=', $taskId)->count();
         $countQueue = SiteLinks::where('task_id', '=', $taskId)->count();
+        $countSended = SearchQueries::where([
+            'task_id'=> $taskId
+        ])->select(DB::raw('SUM(email_sended) + SUM(sk_sended) as total'))->first()->total;
 
         return json_encode([
             'success'=>true,
             'count_parsed'=>$count,
             'count_queue'=>$countQueue,
+            'count_sended' => $countSended,
             'max_id' => $maxId,
             'result' => $results
         ]);

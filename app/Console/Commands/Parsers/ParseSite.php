@@ -56,26 +56,63 @@ class ParseSite extends Command
                 $link->reserved = 1;
                 $link->save();
 
+                $task_id      = $link->task_id;
+                $default_link = $link->link;
+
                 $data = $web->get($link->link);
 
                 $crawler->clear();
                 $crawler->load($data);
 
-                $link->delete();
-
                 $data = $crawler->find('body', 0);
+
                 if ( ! empty($data)) {
-                    $emails = $this->extractEmails($crawler->find('body', 0));
-                    $skypes = $this->extractSkype($crawler->find('body', 0));
+
+                    $emails = $this->extractEmails($data);
+                    $skypes = $this->extractSkype($data);
+
+                    $additionalLinks = [];
+                    $baseData        = parse_url($link->link);
+
+                    foreach ($data->find('a') as $link) {
+                        $href  = $link->href;
+                        $linkA = "";
+                        if ( ! empty($href) && $href != "#" && ! strpos($href, "javascript")) {
+                            if ($href[0] == '/') {
+                                $linkA = "http://" . $baseData['host'] . $href;
+                            }
+                            if ($href[0] != '/') {
+                                $linkA = "http://" . $baseData['host'] . '/' . $href;
+                            }
+                            if ($this->startsWith($href, "http")) {
+                                $linkA = $href;
+                            }
+
+                            if ( ! in_array($href, $additionalLinks)) {
+                                $additionalLinks[] = $linkA;
+                                try {
+                                    $crawler->clear();
+                                    $crawler->load($web->get($href));
+                                    $data   = $crawler->find('body', 0);
+                                    $emails = $this->extractEmails($data, $emails);
+                                    $skypes = $this->extractSkype($data, $skypes);
+                                } catch (\Exception $ex) {
+                                }
+                            }
+                        }
+                    }
+
                     $res          = new SearchQueries();
                     $res->mails   = implode(',', $emails);
                     $res->phones  = "";
                     $res->skypes  = implode(',', $skypes);
-                    $res->link    = $link->link;
-                    $res->task_id = $link->task_id;
+                    $res->link    = $default_link;
+                    $res->task_id = $task_id;
                     $res->save();
                 }
-                continue;
+
+
+                 $link->delete();
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
                 $log->message = $ex->getMessage() . " line:" . __LINE__;
@@ -91,7 +128,7 @@ class ParseSite extends Command
         $html  = $data->innertext;
         if (preg_match_all('~[-a-z0-9_]+(?:\\.[-a-z0-9_]+)*@[-a-z0-9]+(?:\\.[-a-z0-9]+)*\\.[a-z]+~i', $plain, $M)) {
             foreach ($M as $m) {
-                if ( ! in_array(trim($m[0]), $before)) {
+                if ( ! in_array(trim($m[0]), $before) && ! strpos($m[0], "Rating@Mail.ru")) {
                     $before[] = trim($m[0]);
                 }
             }
@@ -99,7 +136,9 @@ class ParseSite extends Command
 
         if (preg_match_all('~[-a-z0-9_]+(?:\\.[-a-z0-9_]+)*@[-a-z0-9]+(?:\\.[-a-z0-9]+)*\\.[a-z]+~i', $html, $M)) {
             foreach ($M as $m) {
-                if ( ! in_array(trim($m[0]), $before)) {
+                if ( ! in_array(trim($m[0]), $before) && strpos(strtolower($m[0]),
+                        strtolower("Rating@Mail.ru")) === false
+                ) {
                     $before[] = trim($m[0]);
                 }
             }
@@ -129,6 +168,23 @@ class ParseSite extends Command
         }
 
         return $before;
+    }
+
+    function startsWith($haystack, $needle)
+    {
+        $length = strlen($needle);
+
+        return (substr($haystack, 0, $length) === $needle);
+    }
+
+    function endsWith($haystack, $needle)
+    {
+        $length = strlen($needle);
+        if ($length == 0) {
+            return true;
+        }
+
+        return (substr($haystack, -$length) === $needle);
     }
 
 }

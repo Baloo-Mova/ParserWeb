@@ -1,26 +1,24 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Cleaner;
 
-use PHPMailer;
 use Illuminate\Console\Command;
-use App\MyFacades\SkypeClassFacade;
 
-class Tester extends Command
+class Cleaner extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'test';
+    protected $signature = 'base:clean';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Clean bad base items';
 
     /**
      * Create a new command instance.
@@ -39,6 +37,6 @@ class Tester extends Command
      */
     public function handle()
     {
-        SkypeClassFacade::sendRandom("bear_balooo", "test");
+
     }
 }

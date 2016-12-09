@@ -69,7 +69,7 @@ class EmailSender extends Command
                     continue;
                 }
 
-                $from = AccountsData::where(['type_id' => 3])->orderByRaw("RAND()")->first();
+                $from = AccountsData::where(['type_id' => 3, 'valid' => 1])->orderByRaw("RAND()")->first();
 
                 if ( ! isset($from)) {
                     $log          = new ErrorLog();
@@ -113,7 +113,7 @@ class EmailSender extends Command
         $mail->Password   = $arguments['from']->password;                           // SMTP password
         $mail->SMTPSecure = 'ssl';                            // Enable TLS encryption, `ssl` also accepted
         $mail->Port       = $arguments['from']->smtp_port;                                    // TCP port to connect to
-
+        $mail->CharSet    = 'UTF-8';
         $mail->setFrom($arguments['from']->login);
 
         foreach ($arguments['to'] as $email) {
@@ -137,9 +137,10 @@ class EmailSender extends Command
             $log->task_id = 0;
             $log->save();
 
-//            if(strpos($mail->ErrorInfo, )){
-//
-//            }
+            if (strpos($mail->ErrorInfo, "SPAM") > 0) {
+                $arguments["from"]->valid = 0;
+                $arguments['from']->save();
+            }
 
             return false;
         } else {
