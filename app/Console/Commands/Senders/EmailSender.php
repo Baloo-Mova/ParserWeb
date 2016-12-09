@@ -144,6 +144,8 @@ class EmailSender extends Command
 
             return false;
         } else {
+            $arguments["from"]->count_sended_messages+=1;
+            $arguments['from']->save();
             return true;
         }
     }
