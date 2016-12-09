@@ -136,7 +136,7 @@ class AccountsDataController extends Controller
             $mail->Password   = $data['password'];                           // SMTP password
             $mail->SMTPSecure = 'ssl';                            // Enable TLS encryption, `ssl` also accepted
             $mail->Port       = $data['port'];                                    // TCP port to connect to
-
+            $mail->CharSet    = 'UTF-8';
             $mail->setFrom($data['login']);
             $mail->addAddress($data['login']);     // Add a recipient
 

@@ -8,7 +8,8 @@ use App\Models\AccountsData;
 use App\Models\NotValidMessages;
 use PHPMailer;
 
-class NotValidMailsCleaner extends Command {
+class NotValidMailsCleaner extends Command
+{
 
     /**
      * The name and signature of the console command.
@@ -29,7 +30,8 @@ class NotValidMailsCleaner extends Command {
      *
      * @return void
      */
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
     }
 
@@ -38,64 +40,71 @@ class NotValidMailsCleaner extends Command {
      *
      * @return mixed
      */
-    public function handle() {
-
-        $mailsDB = AccountsData::orderBy('id', 'desc')->get();
-
+    public function handle()
+    {
+        $mailsDB   = AccountsData::where(["type_id" => 3])->get();
+        $randwords = explode("\n", file_get_contents(storage_path('app/') . "corn.txt"));
+        $max       = count($randwords);
         foreach ($mailsDB as $mailDB) {
-            try {
+            $subject = "";
+            $body    = "";
 
+            for ($i = 0; $i <= rand(3, 6); $i++) {
+                $subject .= trim($randwords[random_int(0, $max)]) . " ";
+            }
 
+            for ($i = 0; $i <= rand(15, 40); $i++) {
+                $body .= trim($randwords[random_int(0, $max)]) . " ";
+            }
+            $body = $body . ".";
 
-                $mail = new PHPMailer;
-                // $mail->SMTPDebug = 3;                               // Enable verbose debug output
-                $mail->isSMTP();                                      // Set mailer to use SMTP
-                $mail->Host = $mailDB->smtp_adress;  // Specify main and backup SMTP servers
-                $mail->SMTPAuth = true;                               // Enable SMTP authentication
-                $mail->Username = $mailDB->login;                 // SMTP username
-                $mail->Password = $mailDB->password;                           // SMTP password
-                $mail->SMTPSecure = 'ssl';                            // Enable TLS encryption, `ssl` also accepted
-                $mail->Port = $mailDB->smtp_port;                                    // TCP port to connect to
-
-                $mail->setFrom($mailDB->login);
-                $mail->addAddress($mailDB->login);     // Add a recipient
-
-                $randwords = file(storage_path('app/')."corn.txt", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-               
-              
-                
-                $points = array("\r\n","\n",'. ','; ',': ',', ',"! ","? ");
-                
-                //dd(gettype($randwords));
-                $subject="";
-                $body = "";
-                for($i=0;$i<=rand(5, 11);$i+=1){
-                $subject = $subject.$randwords[array_rand($randwords)]." ";
-                //dd($subject);
-                }
-                 for($i=0;$i<=rand(15, 40);$i+=1){
-                $body += $body.$randwords[array_rand($randwords)]." ";
-                 }
-                $body =$body.".";
-                //dd($subject);
-                $mail->Subject = $subject;
-                $mail->Body = $body;
-
-                if (!$mail->send()) {
-                    $log = new ErrorLog();
-                    $log->message = 'Mailer Error: ' . $mail->ErrorInfo;
-                    $log->task_id = 0;
-                    $log->save();
-                    $mailDB->delete();
-                   // return false;
-                } else {
-                   // return true;
-                }
-            } catch (\Exception $ex) {
+            if ( ! $this->testEmail([
+                "login"    => $mailDB->login,
+                "password" => $mailDB->password,
+                "smtp"     => $mailDB->smtp_address,
+                "port"     => $mailDB->smtp_port,
+                'subject'  => $subject,
+                'text'     => $body,
+            ])
+            ) {
                 $mailDB->delete();
-                //return false;
             }
         }
     }
 
+    public function testEmail($data)
+    {
+        try {
+            $mail = new PHPMailer;
+            // $mail->SMTPDebug = 3;                               // Enable verbose debug output
+            $mail->isSMTP();                                      // Set mailer to use SMTP
+            $mail->Host       = $data['smtp'];                  // Specify main and backup SMTP servers
+            $mail->SMTPAuth   = true;                               // Enable SMTP authentication
+            $mail->Username   = $data['login'];                 // SMTP username
+            $mail->Password   = $data['password'];                           // SMTP password
+            $mail->SMTPSecure = 'ssl';                            // Enable TLS encryption, `ssl` also accepted
+            $mail->Port       = $data['port'];                                    // TCP port to connect to
+            $mail->CharSet    = 'UTF-8';
+            $mail->setFrom($data['login']);
+            $mail->addAddress($data['login']);     // Add a recipient
+
+            $mail->Subject = $data['subject'];
+            $mail->Body    = $data['text'];
+
+            if ( ! $mail->send()) {
+                $log          = new ErrorLog();
+                $log->message = 'Mailer Error: ' . $mail->ErrorInfo;
+                $log->task_id = 0;
+                $log->save();
+
+                return false;
+            } else {
+                return true;
+            }
+        } catch (\Exception $ex) {
+            echo $ex->getTraceAsString();
+
+            return false;
+        }
+    }
 }

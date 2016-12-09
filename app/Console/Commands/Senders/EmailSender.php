@@ -66,8 +66,10 @@ class EmailSender extends Command
                     $log->message = "Невозможно отравить email сообщение без шаблона";
                     $log->task_id = $emails->task_id;
                     $log->save();
+                    sleep(10);
                     continue;
                 }
+
 
                 $from = AccountsData::where(['type_id' => 3, 'valid' => 1])->orderByRaw("RAND()")->first();
 
@@ -76,6 +78,7 @@ class EmailSender extends Command
                     $log->message = "Невозможно отравить email сообщение без отправителей";
                     $log->task_id = $emails->task_id;
                     $log->save();
+                    sleep(10);
                     continue;
                 }
                 $to = explode(',', $emails->mails);
@@ -88,6 +91,8 @@ class EmailSender extends Command
                 ])
                 ) {
                     $emails->email_sended = count($to);
+                }else{
+
                 }
 
                 $emails->save();
