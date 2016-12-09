@@ -76,13 +76,13 @@ class EmailSender extends Command
                     continue;
                 }
 
-                $ids  = DB::table('not_valid_messages')->where(['id_text' => 2])->select('id_sender')->get();
+                $ids  = DB::table('not_valid_messages')->where(['id_text' => $template->id])->select('id_sender')->get();
                 $temp = [];
                 foreach ($ids as $id) {
                     $temp[] = $id->id_sender;
                 }
                 
-                $from = AccountsData::where(['type_id' => 3],['count_sended_messages','<',41])->whereNotIn('id', $temp)->first();
+                $from = AccountsData::where(['type_id' => 3],['count_sended_messages','<',config("config.max_count_for_sended_messages")])->whereNotIn('id', $temp)->first();
                 //echo("------".$from."-------");
                 if ( !isset($from)) {
                     $log          = new ErrorLog();

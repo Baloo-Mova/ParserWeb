@@ -11,4 +11,5 @@ return [
     "emailsFolder" => "emails",
     "csv_tmp_folder" => "csv/",
     "tmp_folder" => "app/tmp_files/",
+    "max_count_for_sended_messages" => 40,
 ];
