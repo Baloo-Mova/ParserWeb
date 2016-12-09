@@ -4,10 +4,12 @@ namespace App\Console\Commands\Senders;
 
 use App\Models\AccountsData;
 use App\Models\AccountsDataTypes;
+use App\Models\NotValidMessages;
 use App\Models\SearchQueries;
 use App\Models\Parser\ErrorLog;
 use Illuminate\Console\Command;
 use PHPMailer;
+use Illuminate\Support\Facades\DB;
 
 class EmailSender extends Command
 {
@@ -70,8 +72,13 @@ class EmailSender extends Command
                     continue;
                 }
 
+                $ids  = DB::table('not_valid_messages')->where(['id_text' => 1])->select('id_sender')->get();
+                $temp = [];
+                foreach ($ids as $id) {
+                    $temp[] = $id->id_sender;
+                }
 
-                $from = AccountsData::where(['type_id' => 3, 'valid' => 1])->orderByRaw("RAND()")->first();
+                $from = AccountsData::where(['type_id' => 3])->whereNotIn('id', $temp)->first();
 
                 if ( ! isset($from)) {
                     $log          = new ErrorLog();
@@ -91,8 +98,7 @@ class EmailSender extends Command
                 ])
                 ) {
                     $emails->email_sended = count($to);
-                }else{
-
+                } else {
                 }
 
                 $emails->save();
@@ -149,8 +155,9 @@ class EmailSender extends Command
 
             return false;
         } else {
-            $arguments["from"]->count_sended_messages+=1;
+            $arguments["from"]->count_sended_messages += 1;
             $arguments['from']->save();
+
             return true;
         }
     }
