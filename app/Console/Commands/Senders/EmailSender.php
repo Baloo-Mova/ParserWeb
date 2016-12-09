@@ -52,12 +52,13 @@ class EmailSender extends Command
                     'search_queries.email_sended'   => 0,
                     'tasks.need_send'               => 1,
                 ])->select('search_queries.*')->first();
-
+                
                 if ( ! isset($emails)) {
+                   
                     sleep(10);
                     continue;
                 }
-
+                
                 $emails->email_reserved = 1;
                 $emails->save();
 
@@ -68,23 +69,29 @@ class EmailSender extends Command
                     $log->message = "Невозможно отравить email сообщение без шаблона";
                     $log->task_id = $emails->task_id;
                     $log->save();
+                    $emails->email_reserved = 0;
+                    $emails->save();
+                  
                     sleep(10);
                     continue;
                 }
 
-                $ids  = DB::table('not_valid_messages')->where(['id_text' => 1])->select('id_sender')->get();
+                $ids  = DB::table('not_valid_messages')->where(['id_text' => 2])->select('id_sender')->get();
                 $temp = [];
                 foreach ($ids as $id) {
                     $temp[] = $id->id_sender;
                 }
-
-                $from = AccountsData::where(['type_id' => 3])->whereNotIn('id', $temp)->first();
-
-                if ( ! isset($from)) {
+                
+                $from = AccountsData::where(['type_id' => 3],['count_sended_messages','<',41])->whereNotIn('id', $temp)->first();
+                //echo("------".$from."-------");
+                if ( !isset($from)) {
                     $log          = new ErrorLog();
                     $log->message = "Невозможно отравить email сообщение без отправителей";
                     $log->task_id = $emails->task_id;
                     $log->save();
+                    $emails->email_reserved = 0;
+                    $emails->save();
+                    
                     sleep(10);
                     continue;
                 }
@@ -97,8 +104,17 @@ class EmailSender extends Command
                     "to"       => $to,
                 ])
                 ) {
+                    
                     $emails->email_sended = count($to);
                 } else {
+                    
+                    $notvalidmess = new NotValidMessages;
+                    $notvalidmess->id_text = $emails->id;
+                    $notvalidmess->id_sender = $from->id;
+                    $notvalidmess->save();
+                    $emails->email_reserved = 0;
+                    $emails->save();
+                    
                 }
 
                 $emails->save();
@@ -107,7 +123,9 @@ class EmailSender extends Command
                 $log          = new ErrorLog();
                 $log->message = $ex->getMessage() . " line:" . __LINE__;
                 $log->task_id = 0;
+                
                 $log->save();
+                
             }
         }
     }
@@ -151,13 +169,16 @@ class EmailSender extends Command
             if (strpos($mail->ErrorInfo, "SPAM") > 0) {
                 $arguments["from"]->valid = 0;
                 $arguments['from']->save();
+            
+                //echo "SEND SPAM";
             }
-
+            
+            
             return false;
         } else {
             $arguments["from"]->count_sended_messages += 1;
             $arguments['from']->save();
-
+            
             return true;
         }
     }

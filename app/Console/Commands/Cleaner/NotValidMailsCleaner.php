@@ -67,6 +67,10 @@ class NotValidMailsCleaner extends Command
                 'text'     => $body,
             ])
             ) {
+                $notValidMessages = NotValidMessages::where(['id_send' => $mailDB->id])-get();
+                foreach($notValidMessages as $notValidMessage){
+                    $notValidMessage->delete();
+                } 
                 $mailDB->delete();
             }
         }
