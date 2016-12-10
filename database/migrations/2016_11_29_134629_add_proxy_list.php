@@ -15,7 +15,7 @@ class AddProxyList extends Migration
     {
         Schema::create('proxy', function(Blueprint $table){
             $table->increments("id");
-            $table->string("proxy",50)->nullable()->index();
+            $table->string("proxy",50)->unique();
             $table->timestamps();
         });
     }
