@@ -48,7 +48,7 @@ class Proxy extends Command
         $key = $settings->best_proxies;
         $web = new Web();
         while (true) {
-            $proxyList = explode("\n",$web->get("http://api.best-proxies.ru/proxylist.txt?key=".$key."&speed=1&type=http,https,socks4,socks5&unique=1&google=1&level=1&response=400&limit=0"));
+            $proxyList = explode("\n",$web->get("http://api.best-proxies.ru/proxylist.txt?key=".$key."&speed=1&includeType&type=http,https,socks4,socks5&unique=1&google=1&level=1&response=300&limit=0"));
             foreach ($proxyList as $list) {
                 try {
                     $p        = new \App\Models\Parser\Proxy();
