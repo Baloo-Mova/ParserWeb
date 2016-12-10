@@ -14,7 +14,7 @@ class AddColSkypeloginsTable extends Migration
     public function up()
     {
         Schema::table('skype_logins', function ($table) {
-     $table->integer('valid');
+     $table->integer('valid')->default(1);
      
     });
     }

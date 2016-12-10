@@ -15,10 +15,10 @@ class CreateSearchQueriesTable extends Migration
     {
         Schema::create('search_queries', function (Blueprint $table) {
             $table->increments('id');
-            $table->text('link');
-            $table->text('mails');
-            $table->text('phones');
-            $table->text('skypes');
+            $table->text('link')->nullable();
+            $table->text('mails')->nullable();
+            $table->text('phones')->nullable();
+            $table->text('skypes')->nullable();
         });
     }
 

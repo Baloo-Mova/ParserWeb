@@ -15,7 +15,7 @@ class CreateProcessTable extends Migration
     {
         Schema::create('process_configs', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name', 300);
+            $table->string('name', 300)->nullable();
             $table->text('description')->nullable();
             $table->integer('numprocs')->nullable();
             $table->string('path_config')->nullable();

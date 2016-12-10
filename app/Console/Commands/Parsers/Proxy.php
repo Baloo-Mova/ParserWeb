@@ -58,7 +58,7 @@ class Proxy extends Command
 
                 }
             }
-            sleep(10);
+            sleep(120);
         }
     }
 }
