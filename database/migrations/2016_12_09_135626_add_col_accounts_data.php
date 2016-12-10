@@ -14,7 +14,7 @@ class AddColAccountsData extends Migration
         public function up()
     {
         Schema::table('accounts_data', function ($table) {
-     $table->integer('count_sended_messages');
+     $table->integer('count_sended_messages')->default(0);
      
     });
     }
@@ -27,7 +27,7 @@ class AddColAccountsData extends Migration
     public function down()
     {
        Schema::table('accounts_data', function ($table) {
-    $table->dropColumn('count_sended_messages')->default(0);
+    $table->dropColumn('count_sended_messages');
     
 });
     }

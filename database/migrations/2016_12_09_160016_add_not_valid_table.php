@@ -16,7 +16,7 @@ class AddNotValidTable extends Migration
         Schema::create('not_valid_messages', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('id_text');
-            $table->string('id_sender');
+            $table->integer('id_sender');
             
         });
     }
