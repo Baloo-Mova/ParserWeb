@@ -118,7 +118,7 @@ class EmailSender extends Command
                 }
 
                 $emails->save();
-                sleep(1);
+                sleep(30);
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
                 $log->message = $ex->getMessage() . " line:" . __LINE__;
