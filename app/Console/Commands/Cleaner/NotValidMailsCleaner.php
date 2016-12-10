@@ -72,6 +72,7 @@ class NotValidMailsCleaner extends Command
                 $mailDB->delete();
             }
         }
+        sleep(300);
     }
 
     public function testEmail($data)
