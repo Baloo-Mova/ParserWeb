@@ -109,7 +109,7 @@ class EmailSender extends Command
                 } else {
                     
                     $notvalidmess = new NotValidMessages;
-                    $notvalidmess->id_text = $emails->id;
+                    $notvalidmess->id_text = $template->id;
                     $notvalidmess->id_sender = $from->id;
                     $notvalidmess->save();
                     $emails->email_reserved = 0;
