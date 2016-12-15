@@ -49,9 +49,9 @@ class VK {
         $ip_h = $crawler->find('input[name=ip_h]', 0)->value;
         $lg_h = $crawler->find('input[name=lg_h]', 0)->value;
 
-        print_r($ip_h . "\n");
-        print_r($lg_h . "\n");
-        print_r($vk_login . "\n");
+       // print_r($ip_h . "\n");
+       // print_r($lg_h . "\n");
+       // print_r($vk_login . "\n");
         //dd(urlencode($login));
         $request = $this->client->request("POST", "https://login.vk.com/?act=login", [
             'form_params' => [
@@ -70,9 +70,9 @@ class VK {
         );
         sleep(2);
         $data = $request->getBody()->getContents();
-        print_r($request->getStatusCode() . "\n");
+     //   print_r($request->getStatusCode() . "\n");
         //$cookie = $request->getHeader('set-cookie');
-        print_r($data . "\n");
+     //   print_r($data . "\n");
         //dd($request);
         if (strripos($data, "onLoginFailed")) {
             echo "----Login false\n";
@@ -88,10 +88,10 @@ class VK {
         $data = $request->getBody()->getContents();
         //dd(substr($phone,1,strlen($phone)-3));
         if (preg_match('/act=security\_check/s', $data)) {
-            echo "----want write number\n";
+          //  echo "----want write number\n";
 
             //$data = $request->getBody()->getContents();
-print_r($data);
+//print_r($data);
             preg_match("/hash\: '(.*?) /s", $data, $security_check_location);
             print_r($security_check_location);
 
@@ -111,6 +111,7 @@ print_r($data);
             );
             sleep(2);
             $data = $request->getBody()->getContents();
+            echo "\n\n\n-----";
             print_r($data);
             echo "--Comlpete\n";
         }
@@ -247,7 +248,7 @@ print_r($data);
                 //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
         );
         $data = $request->getBody()->getContents();
-        print_r($data);
+        //print_r($data);
         return true;
     }
 
