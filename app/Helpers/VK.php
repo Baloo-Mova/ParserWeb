@@ -111,6 +111,7 @@ print_r($data);
             );
             sleep(2);
             $data = $request->getBody()->getContents();
+            print_r($data);
             echo "--Comlpete\n";
         }
 
