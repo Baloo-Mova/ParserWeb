@@ -90,7 +90,7 @@ class VK {
         if (preg_match('/act=security\_check/s', $data)) {
             echo "----want write number\n";
 
-            $data = $request->getBody()->getContents();
+            //$data = $request->getBody()->getContents();
 print_r($data);
             preg_match("/hash\: '(.*?) /s", $data, $security_check_location);
             print_r($security_check_location);
@@ -210,7 +210,7 @@ print_r($data);
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://vk.com/id" . $to_userId, [
-                'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                    
                     ]
                   
@@ -241,7 +241,7 @@ print_r($data);
                 'title' => '',
                 'to_ids' => $to_userId,
             ],
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
                 ]
                 //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
         );
@@ -359,7 +359,7 @@ print_r($data);
 
         //$this->login($sender->login, $sender->password);
         $request = $this->client->request("POST", "https://vk.com/groups?act=catalog", [
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
             'form_params' => [
                 'al' => 1,
                 'c[q]' => $find,
@@ -378,7 +378,7 @@ print_r($data);
             // if($counter>=$summary) break;
             if ($counter != 0) {
                 $request = $this->client->request("POST", "https://vk.com/al_search.php", [
-                    'proxy' => '127.0.0.1:8888',
+                 //  'proxy' => '127.0.0.1:8888',
                     'form_params' => [
                         'al' => 1,
                         'al_ad' => 0,
