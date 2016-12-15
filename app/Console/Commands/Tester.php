@@ -39,6 +39,11 @@ class Tester extends Command
      */
     public function handle()
     {
-        SkypeClassFacade::sendRandom("bear_balooo", "test");
+        $data =  file_get_contents("text.txt");
+        $chas=substr($data,strpos($data,"toData: "),400);
+        //dd($chas);
+        preg_match("/hash\: '(.*?)... /s", $data, $chas);
+            dd($chas[1]);
+       // SkypeClassFacade::sendRandom("bear_balooo", "test");
     }
 }

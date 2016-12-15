@@ -13,6 +13,7 @@ class Tasks extends Model
     public $fillable = [
         'task_type_id',
         'task_query',
+        'vk_reserved',
     ];
 
     public function tasksType()

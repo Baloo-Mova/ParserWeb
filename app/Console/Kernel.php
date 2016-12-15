@@ -5,6 +5,10 @@ namespace App\Console;
 use App\Console\Commands\Parsers\ParseGoogle;
 use App\Console\Commands\Parsers\ParseSite;
 use App\Console\Commands\Parsers\Proxy;
+use App\Console\Commands\Parsers\ParseVKGetGroups;
+use App\Console\Commands\Parsers\ParseVKGetUsers;
+use App\Console\Commands\Parsers\ParseVK;
+use App\Console\Commands\Senders\VKSender;
 use App\Console\Commands\Senders\EmailSender;
 use App\Console\Commands\Tester;
 use App\Console\Commands\Senders\SkypeSender;
@@ -24,6 +28,10 @@ class Kernel extends ConsoleKernel
          Proxy::class,
          ParseGoogle::class,
          ParseSite::class,
+         ParseVKGetGroups::class,
+         ParseVKGetUsers::class,
+         ParseVK::class,
+        VKSender::class,
          EmailSender::class,
          Tester::class,
          SkypeSender::class, 
