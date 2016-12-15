@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddColSkypeloginsTable extends Migration
+class AddNewOkcolsToAccountsData extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,10 @@ class AddColSkypeloginsTable extends Migration
      */
     public function up()
     {
-        Schema::table('skype_logins', function ($table) {
-     $table->integer('valid')->default(1);
-     
-    });
+        Schema::table('accounts_data', function ($table) {
+            $table->string('ok_user_gwt', 55)->after('count_sended_messages')->nullable();
+            $table->string('ok_user_tkn', 55)->after('ok_user_gwt')->nullable();
+        });
     }
 
     /**
@@ -26,9 +26,6 @@ class AddColSkypeloginsTable extends Migration
      */
     public function down()
     {
-       Schema::table('skype_logins', function ($table) {
-    $table->dropColumn('valid');
-    
-});
+        //
     }
 }

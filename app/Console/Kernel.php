@@ -4,10 +4,13 @@ namespace App\Console;
 
 use App\Console\Commands\Parsers\ParseGoogle;
 use App\Console\Commands\Parsers\ParseSite;
+use App\Console\Commands\Parsers\ParseOk;
+use App\Console\Commands\Parsers\ParseOkGroups;
 use App\Console\Commands\Parsers\Proxy;
 use App\Console\Commands\Senders\EmailSender;
 use App\Console\Commands\Tester;
 use App\Console\Commands\Senders\SkypeSender;
+use App\Console\Commands\Senders\OkSender;
 use App\Console\Commands\Cleaner\NotValidMailsCleaner;
 
 use Illuminate\Console\Scheduling\Schedule;
@@ -24,9 +27,12 @@ class Kernel extends ConsoleKernel
          Proxy::class,
          ParseGoogle::class,
          ParseSite::class,
+         ParseOk::class,
+         ParseOkGroups::class,
          EmailSender::class,
          Tester::class,
-         SkypeSender::class, 
+         SkypeSender::class,
+         OkSender::class,
          NotValidMailsCleaner::class,
     ];
 
