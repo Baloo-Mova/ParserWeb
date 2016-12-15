@@ -39,7 +39,7 @@ class VK {
         $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
 
         $request = $this->client->request("GET", "https://vk.com", [
-            'proxy' => '127.0.0.1:8888',
+           // 'proxy' => '127.0.0.1:8888',
         ]);
         $data = $request->getBody()->getContents();
         $crawler->clear();
@@ -68,18 +68,19 @@ class VK {
                 ]
                 //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
         );
+        sleep(2);
         $data = $request->getBody()->getContents();
         print_r($request->getStatusCode() . "\n");
         //$cookie = $request->getHeader('set-cookie');
         print_r($data . "\n");
         //dd($request);
         if (strripos($data, "onLoginFailed")) {
-            echo "----Login false\n";
+           // echo "----Login false\n";
             return false;
         }
         //check phone number
         $request = $this->client->request("GET", "https://vk.com", [
-            'proxy' => '127.0.0.1:8888',
+          //  'proxy' => '127.0.0.1:8888',
                 //'cookie'=> $cookie
         ]);
 
@@ -87,7 +88,7 @@ class VK {
         $data = $request->getBody()->getContents();
         //dd(substr($phone,1,strlen($phone)-3));
         if (preg_match('/act=security\_check/s', $data)) {
-            echo "----want write number\n";
+           // echo "----want write number\n";
 
             $data = $request->getBody()->getContents();
 
@@ -104,25 +105,27 @@ class VK {
                     'hash' => $hash,
                     'to' => '',
                 ],
-                'proxy' => '127.0.0.1:8888',
+               // 'proxy' => '127.0.0.1:8888',
                     ]
                     //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
             );
+            sleep(2);
             $data = $request->getBody()->getContents();
-            echo "--Comlpete\n";
+           // echo "--Comlpete\n";
         }
 
 
 
         $request = $this->client->request("GET", "https://vk.com", [
-            'proxy' => '127.0.0.1:8888',
+           // 'proxy' => '127.0.0.1:8888',
                 //'cookie'=> $cookie
         ]);
+        sleep(2);
         $data = $request->getBody()->getContents();
         //$crawler->clear();
         $crawler->load($data);
         if ($crawler->find('#login_blocked_wrap', 0) != null) {
-            echo "this account banned";
+           // echo "this account banned";
             return false;
         }
         //$data = $crawler->find('#login_blocked_wrap', 0);
@@ -132,7 +135,7 @@ class VK {
                 'act' => 'a_get_comms_key',
                 'al' => 1,
             ],
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
                 ]
                 //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
         );
@@ -152,7 +155,7 @@ class VK {
         }
         //dd($json);
         //dd($account);
-        echo "login()-succes\n\n";
+       // echo "login()-succes\n\n";
         return true;
     }
 
@@ -162,14 +165,14 @@ class VK {
             if(!isset($sender)) {sleep(10); continue;}
             //echo($sender->login . "\n");
             if (empty($sender->vk_cookie)) {
-                echo "no coikie logining\n";
+                //echo "no coikie logining\n";
                 if ($this->login($sender->login, $sender->password)) {
                     $sender = AccountsData::where(['id' => $sender->id])->first();
                     //dd($sender->vk_cookie);
                 } else {
                     //$sender->valid = 0;
                     $sender->delete();
-                    echo "Send Rand Mess: sender not valid\n";
+                    //echo "Send Rand Mess: sender not valid\n";
                     continue;
                 }
             }
@@ -212,7 +215,7 @@ class VK {
                     ]
                   
             );
-
+            sleep(2);
             $data = $request->getBody()->getContents();
             if (strpos($data, "quick_login_button")) {
                 continue;
@@ -290,16 +293,16 @@ class VK {
 
         while (true) {
             $sender = AccountsData::where(['type_id' => 1, 'valid' => 1])->orderByRaw('RAND()')->first();
-            echo($sender->login . "\n Find groups " . $find . "\n");
+           // echo($sender->login . "\n Find groups " . $find . "\n");
             if (empty($sender->vk_cookie)) {
-                echo "no coikie logining\n";
+               // echo "no coikie logining\n";
                 if ($this->login($sender->login, $sender->password)) {
                     $sender = AccountsData::where(['id' => $sender->id])->first();
                     //dd($sender->vk_cookie);
                 } else {
                     //$sender->valid = 0;
                     $sender->delete();
-                    echo "account not valid\n";
+                  //  echo "account not valid\n";
                     continue;
                 }
             }
@@ -337,11 +340,10 @@ class VK {
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://vk.com/feed", [
-                'proxy' => '127.0.0.1:8888',
-                    //'headers' => [
-                    //'cookies' => $cookiejar->toArray(),],
+               // 'proxy' => '127.0.0.1:8888',
+                    
                     ]
-                    //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
+                    
             );
 
             $data = $request->getBody()->getContents();
@@ -370,7 +372,7 @@ class VK {
         );
         // $data = $request->getBody()->getContents();
 
-
+        sleep(2);
         $counter = 0;
         while (true) {
             // if($counter>=$summary) break;
@@ -433,16 +435,16 @@ class VK {
 
         while (true) {
             $sender = AccountsData::where(['type_id' => 1, 'valid' => 1])->orderByRaw('RAND()')->first();
-            echo($sender->login . "\n Parse group " . $vklink->link . "\n");
+           // echo($sender->login . "\n Parse group " . $vklink->link . "\n");
             if (empty($sender->vk_cookie)) {
-                echo "no coikie logining\n";
+               // echo "no coikie logining\n";
                 if ($this->login($sender->login, $sender->password)) {
                     $sender = AccountsData::where(['id' => $sender->id])->first();
                     //dd($sender->vk_cookie);
                 } else {
                     //$sender->valid = 0;
                     $sender->delete();
-                    echo "account not valid\n";
+                  //  echo "account not valid\n";
                     continue;
                 }
             }
@@ -478,7 +480,7 @@ class VK {
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://vk.com/feed", [
-                'proxy' => '127.0.0.1:8888',
+               // 'proxy' => '127.0.0.1:8888',
                     ]
             );
 
@@ -494,10 +496,10 @@ class VK {
 
 
         $request = $this->client->request("GET", $vklink->link, [
-            'proxy' => '127.0.0.1:8888',
+           // 'proxy' => '127.0.0.1:8888',
                 ]
         );
-
+        sleep(2);
         $data = $request->getBody()->getContents();
         $title = substr($data, strpos($data, "<title>"), (strpos($data, "</title>") - strpos($data, "<title>")));
         $title = str_replace("<title>", "", $title);
@@ -538,12 +540,12 @@ class VK {
         //$group->vkuser_id = "6138125";
         $query = file_get_contents("https://api.vk.com/method/groups.getMembers?v=5.60&group_id=" . $group->vkuser_id);
         $userstmp = json_decode($query, true);
-
+        sleep(1);
 
         $count = intval($userstmp["response"]["count"]);
         $users = $userstmp["response"]["items"];
         //dd($users);
-        echo $count . "\n";
+        //echo $count . "\n";
         foreach ($users as $value) {
 
             $search = VKLinks::where(['vkuser_id' => $value, 'task_id' => $group->task_id, 'type' => 1])->first();
@@ -564,7 +566,7 @@ class VK {
             }
         }
 
-        echo $count . "\n";
+       // echo $count . "\n";
         if ($count > 1000) {
             $offset = 1000;
             for ($i = 0; $i <= intval($count / 1000); $i++) {
@@ -574,6 +576,7 @@ class VK {
                 //$users = array_unique($users);
                 $users = $userstmp["response"]["items"];
                 $users = array_unique($users);
+                sleep(1);
                 foreach ($users as $value) {
 
                     $search = VKLinks::where(['vkuser_id' => $value, 'task_id' => $group->task_id, 'type' => 1])->first();
@@ -593,7 +596,7 @@ class VK {
                 $offset+=1000;
 
 
-                echo $i . " ";
+               // echo $i . " ";
             }
         }
 
@@ -607,7 +610,7 @@ class VK {
         $query = file_get_contents("https://api.vk.com/method/users.get?v=5.60&&fields=can_write_private_message,connections,contacts,city,deactivated&user_ids=" . $user->vkuser_id);
         $usertmp = json_decode($query, true);
         $usertmp = $usertmp["response"][0];
-        //dd($usertmp);
+        //print_r($usertmp);
         if (empty($usertmp["deactivated"])) {
 
             $phones = "";
@@ -628,7 +631,7 @@ class VK {
             }
 
 
-
+            sleep(1);
             $search = $search = SearchQueries::where(['link' => $user->link, 'task_id' => $user->task_id])->first();
 //dd($user->link);
 
@@ -649,10 +652,10 @@ class VK {
                 $vkuser->save();
             }
             // echo("parse user complete - id ".$vkuser->vkuser_id."\n");
-             $user->delete();
+            // $user->delete();
             return true;
         } else {
-            $user->delete();
+            //$user->delete();
            // echo("parse user complete - id ".$vkuser->vkuser_id."\n");
             return false;
         }
@@ -660,6 +663,7 @@ class VK {
     
      function parseUsers(VKLinks $users) {
 
+         
         $query = file_get_contents("https://api.vk.com/method/users.get?v=5.60&&fields=can_write_private_message,connections,contacts,city,deactivated&user_ids=" . $user->vkuser_id);
         $usertmp = json_decode($query, true);
         $usertmp = $usertmp["response"][0];

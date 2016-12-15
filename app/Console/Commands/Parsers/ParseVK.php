@@ -43,14 +43,14 @@ class ParseVK extends Command {
      * @return mixed
      */
     public function handle() {
-        $type = 0;
+        
         while (true) {
-        $vklink = VKLinks::where(['parsed' => 0,'type'=>$type])->first();
+        $vklink = VKLinks::where(['parsed' => 0])->first();
 
         if (!isset($vklink)) {
             sleep(10);
-            if($type!=0) {$type=0; continue;}
-            $type=1; continue;
+            
+            continue;
         }
 
         $vklink->parsed = 1;
@@ -62,16 +62,13 @@ class ParseVK extends Command {
             $i = 0;
 
             if ($vklink->type == 0) {
-                if (!$web->parseGroup($vklink)) {
-                    $vklink->parsed = 0;
-                    $vklink->save();
-                }
+               $web->parseGroup($vklink);
+                   $vklink->delete();
+                
             } 
             else if ($vklink->type == 1) {
-                 if (!$web->parseUsers($vklink)) {
-                    $vklink->parsed = 0;
-                    $vklink->save();
-                }
+                $web->parseUser($vklink) ;
+                $vklink->delete();
             }
 
 
