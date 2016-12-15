@@ -91,7 +91,7 @@ class VK {
             echo "----want write number\n";
 
             $data = $request->getBody()->getContents();
-
+print_r($data);
             preg_match("/hash\: '(.*?) /s", $data, $security_check_location);
             print_r($security_check_location);
 
