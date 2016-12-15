@@ -75,7 +75,7 @@ class VK {
         print_r($data . "\n");
         //dd($request);
         if (strripos($data, "onLoginFailed")) {
-           // echo "----Login false\n";
+            echo "----Login false\n";
             return false;
         }
         //check phone number
@@ -88,7 +88,7 @@ class VK {
         $data = $request->getBody()->getContents();
         //dd(substr($phone,1,strlen($phone)-3));
         if (preg_match('/act=security\_check/s', $data)) {
-           // echo "----want write number\n";
+            echo "----want write number\n";
 
             $data = $request->getBody()->getContents();
 
@@ -111,7 +111,7 @@ class VK {
             );
             sleep(2);
             $data = $request->getBody()->getContents();
-           // echo "--Comlpete\n";
+            echo "--Comlpete\n";
         }
 
 
@@ -125,7 +125,7 @@ class VK {
         //$crawler->clear();
         $crawler->load($data);
         if ($crawler->find('#login_blocked_wrap', 0) != null) {
-           // echo "this account banned";
+            echo "this account banned";
             return false;
         }
         //$data = $crawler->find('#login_blocked_wrap', 0);
@@ -155,7 +155,7 @@ class VK {
         }
         //dd($json);
         //dd($account);
-       // echo "login()-succes\n\n";
+        echo "login()-succes\n\n";
         return true;
     }
 
