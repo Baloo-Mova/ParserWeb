@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddColSkypeloginsTable extends Migration
+class CreateOkGroupsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,11 @@ class AddColSkypeloginsTable extends Migration
      */
     public function up()
     {
-        Schema::table('skype_logins', function ($table) {
-     $table->integer('valid')->default(1);
-     
-    });
+        Schema::create('ok_groups', function (Blueprint $table) {
+            $table->increments('id');
+            $table->text('group_url');
+            $table->integer('task_id');
+        });
     }
 
     /**
@@ -26,9 +27,6 @@ class AddColSkypeloginsTable extends Migration
      */
     public function down()
     {
-       Schema::table('skype_logins', function ($table) {
-    $table->dropColumn('valid');
-    
-});
+        Schema::dropIfExists('ok_groups');
     }
 }

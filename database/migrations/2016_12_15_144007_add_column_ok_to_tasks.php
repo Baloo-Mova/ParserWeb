@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddColSkypeloginsTable extends Migration
+class AddColumnOkToTasks extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,9 @@ class AddColSkypeloginsTable extends Migration
      */
     public function up()
     {
-        Schema::table('skype_logins', function ($table) {
-     $table->integer('valid')->default(1);
-     
-    });
+        Schema::table('tasks', function ($table) {
+            $table->integer('ok_offset')->default(1);
+        });
     }
 
     /**
@@ -26,9 +25,6 @@ class AddColSkypeloginsTable extends Migration
      */
     public function down()
     {
-       Schema::table('skype_logins', function ($table) {
-    $table->dropColumn('valid');
-    
-});
+        //
     }
 }
