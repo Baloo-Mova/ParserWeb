@@ -45,12 +45,12 @@ class ParseVKGetUsers extends Command
      */
     public function handle()
     {
-        //while (true) {
+        while (true) {
             $group = VKLinks::where(['type' => 0, 'getusers_reserved' => 0, 'getusers_status' => 0])->first();
 
-            if ( ! isset($group)) {
+            if ( !isset($group)) {
             sleep(10);
-               // continue;
+                continue;
             }
 
             $group->getusers_reserved = 1;
@@ -63,26 +63,12 @@ class ParseVKGetUsers extends Command
                 
                 if($web->getUsersOfGroup($group)){
                 $group->getusers_reserved = 0;
-                $group->getusers_status = 0;
+                $group->getusers_status = 1;
                 $group->save();
-                    
+                 
                     
                 }
                 
-                
-                //$web->getGroups("Шины",3);
-                   // $vklinks= VKLinks::where(['task_id' => 3, 'type'=>0])->get();
-                   // foreach ($vklinks as $vklink){
-                    //$vklink= VKLinks::where(['id' => 74])->first();
-                   // $web->parseGroup($vklink);
-                    
-                  //  }
-                //$vklink= VKLinks::where(['id' => 1])->first();
-               
-                ///$web->getUsersOfGroup($vklink);
-                //$vkuser= VKLinks::where(['type' => 1])->first();
-                
-                //$web->parseUser($vkuser);
                 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
@@ -90,6 +76,6 @@ class ParseVKGetUsers extends Command
                 $log->message = $ex->getMessage(). " line:".__LINE__ ;
                 $log->save();
             }
-        //}
+        }
     }
 }

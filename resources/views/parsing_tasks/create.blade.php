@@ -58,6 +58,12 @@
                                         <label for="skype_text" class="control-label">Текст Сообщения Skype</label>
                                         <textarea class="form-control" rows="5" name="skype_text" id="skype_text"></textarea>
                                     </div>
+                                    <hr>
+                                    <div class="form-group has-feedback">
+                                        <label for="vk_text" class="control-label">Текст Сообщения VK</label>
+                                        <textarea class="form-control" rows="5" name="vk_text" id="vk_text"></textarea>
+                                    </div>
+                                    <hr>
                                 </div>
                         </div>
                         <div class="box-footer">

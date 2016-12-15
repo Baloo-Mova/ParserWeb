@@ -45,12 +45,12 @@ class ParseVKGetGroups extends Command
      */
     public function handle()
     {
-        //while (true) {
-            $task = Tasks::where(['task_type_id' => 4, 'vk_reserved' => 0, 'active_type' => 1])->first();
+        while (true) {
+            $task = Tasks::where(['task_type_id' => 1, 'vk_reserved' => 0, 'active_type' => 1])->first();
 
-            if ( ! isset($task)) {
+            if ( !isset($task)) {
             sleep(10);
-               // continue;
+                continue;
             }
 
             $task->vk_reserved = 1;
@@ -78,6 +78,6 @@ class ParseVKGetGroups extends Command
                 $log->message = $ex->getMessage(). " line:".__LINE__ ;
                 $log->save();
             }
-        //}
+        }
     }
 }

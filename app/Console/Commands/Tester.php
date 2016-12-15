@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use PHPMailer;
 use Illuminate\Console\Command;
 use App\MyFacades\SkypeClassFacade;
+use App\Helpers\VK;
 
 class Tester extends Command
 {
@@ -39,11 +40,8 @@ class Tester extends Command
      */
     public function handle()
     {
-        $data =  file_get_contents("text.txt");
-        $chas=substr($data,strpos($data,"toData: "),400);
-        //dd($chas);
-        preg_match("/hash\: '(.*?)... /s", $data, $chas);
-            dd($chas[1]);
+       $test = new VK();
+       $test->sendRandomMessage("134923343", "sdsdssddsds");        
        // SkypeClassFacade::sendRandom("bear_balooo", "test");
     }
 }

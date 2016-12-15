@@ -28,4 +28,8 @@ class Tasks extends Model
     {
         return $this->belongsTo(TemplateDeliverySkypes::class, 'id', 'task_id');
     }
+    public function getVK()
+    {
+        return $this->belongsTo(TemplateDeliveryVK::class, 'id', 'task_id');
+    }
 }

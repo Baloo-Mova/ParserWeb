@@ -159,15 +159,16 @@ class VK {
     public function sendRandomMessage($to_userId, $messages) {
         while (true) {
             $sender = AccountsData::where(['type_id' => 1, 'valid' => 1])->orderByRaw('RAND()')->first();
-            echo($sender->login . "\n");
+            if(!isset($sender)) {sleep(10); continue;}
+            //echo($sender->login . "\n");
             if (empty($sender->vk_cookie)) {
                 echo "no coikie logining\n";
                 if ($this->login($sender->login, $sender->password)) {
                     $sender = AccountsData::where(['id' => $sender->id])->first();
                     //dd($sender->vk_cookie);
                 } else {
-                    $sender->valid = 0;
-                    $sender->save();
+                    //$sender->valid = 0;
+                    $sender->delete();
                     echo "Send Rand Mess: sender not valid\n";
                     continue;
                 }
@@ -207,10 +208,9 @@ class VK {
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://vk.com/id" . $to_userId, [
                 'proxy' => '127.0.0.1:8888',
-                    //'headers' => [
-                    //'cookies' => $cookiejar->toArray(),],
+                   
                     ]
-                    //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
+                  
             );
 
             $data = $request->getBody()->getContents();
@@ -297,8 +297,8 @@ class VK {
                     $sender = AccountsData::where(['id' => $sender->id])->first();
                     //dd($sender->vk_cookie);
                 } else {
-                    $sender->valid = 0;
-                    $sender->save();
+                    //$sender->valid = 0;
+                    $sender->delete();
                     echo "account not valid\n";
                     continue;
                 }
@@ -440,8 +440,8 @@ class VK {
                     $sender = AccountsData::where(['id' => $sender->id])->first();
                     //dd($sender->vk_cookie);
                 } else {
-                    $sender->valid = 0;
-                    $sender->save();
+                    //$sender->valid = 0;
+                    $sender->delete();
                     echo "account not valid\n";
                     continue;
                 }
@@ -512,7 +512,7 @@ class VK {
         }
         echo($skype);
         if (count($emails) != 0) {
-            $txt_email = implode($emails, ',');
+            $txt_email = implode($emails, ', ');
 
             $search = SearchQueries::where(['link' => $vklink->link, 'task_id' => $vklink->task_id])->first();
 
@@ -521,10 +521,10 @@ class VK {
                 $search_query = new SearchQueries;
                 $search_query->link = $vklink->link;
                 $search_query->mails = $txt_email;
-                $search_query->phones = "$";
+                $search_query->phones = " ";
                 $search_query->skypes = $skype;
-                $search_query->vk_id = ""; //$vklink->vkuser_id;
-                $search_query->vk_name = "$";
+                $search_query->vk_id = " "; //$vklink->vkuser_id;
+                $search_query->vk_name = " ";
                 $search_query->task_id = $vklink->task_id;
                 $search_query->save();
             }
@@ -607,7 +607,7 @@ class VK {
         $query = file_get_contents("https://api.vk.com/method/users.get?v=5.60&&fields=can_write_private_message,connections,contacts,city,deactivated&user_ids=" . $user->vkuser_id);
         $usertmp = json_decode($query, true);
         $usertmp = $usertmp["response"][0];
-
+        //dd($usertmp);
         if (empty($usertmp["deactivated"])) {
 
             $phones = "";
@@ -648,10 +648,68 @@ class VK {
 
                 $vkuser->save();
             }
-             echo("parse user complete");
+            // echo("parse user complete - id ".$vkuser->vkuser_id."\n");
+             $user->delete();
             return true;
         } else {
-            echo("parse user failed");
+            $user->delete();
+           // echo("parse user complete - id ".$vkuser->vkuser_id."\n");
+            return false;
+        }
+    }
+    
+     function parseUsers(VKLinks $users) {
+
+        $query = file_get_contents("https://api.vk.com/method/users.get?v=5.60&&fields=can_write_private_message,connections,contacts,city,deactivated&user_ids=" . $user->vkuser_id);
+        $usertmp = json_decode($query, true);
+        $usertmp = $usertmp["response"][0];
+        //dd($usertmp);
+        if (empty($usertmp["deactivated"])) {
+
+            $phones = "";
+            $skype = "";
+            $city = "";
+            if (!empty($usertmp["home_phone"])) {
+                $phones .= $usertmp["home_phone"] . ",";
+            }
+            if (!empty($usertmp["mobile_phone"])) {
+                $phones .= $usertmp["mobile_phone"] . ",";
+            }
+
+            if (!empty($usertmp["skype"])) {
+                $skype = $usertmp["skype"];
+            }
+            if (!empty($usertmp["city"])) {
+                $city = $usertmp["city"]["title"];
+            }
+
+
+
+            $search = $search = SearchQueries::where(['link' => $user->link, 'task_id' => $user->task_id])->first();
+//dd($user->link);
+
+            if (empty($search) && $usertmp["can_write_private_message"] == "1") {
+
+
+                $vkuser = new SearchQueries;
+                $vkuser->link = $user->link;
+                $vkuser->mails = '';
+                $vkuser->phones = $phones;
+                $vkuser->skypes = $skype;
+                $vkuser->task_id = $user->task_id;
+                $vkuser->vk_id = $user->vkuser_id;
+                $vkuser->vk_name = $usertmp["first_name"] . " " . $usertmp["last_name"];
+                $vkuser->vk_city = $city;
+
+
+                $vkuser->save();
+            }
+            // echo("parse user complete - id ".$vkuser->vkuser_id."\n");
+             $user->delete();
+            return true;
+        } else {
+            $user->delete();
+           // echo("parse user complete - id ".$vkuser->vkuser_id."\n");
             return false;
         }
     }
