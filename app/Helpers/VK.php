@@ -246,6 +246,7 @@ print_r($data);
                 //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
         );
         $data = $request->getBody()->getContents();
+        print_r($data);
         return true;
     }
 
