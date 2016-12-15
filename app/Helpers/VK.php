@@ -93,7 +93,7 @@ class VK {
             //$data = $request->getBody()->getContents();
 //print_r($data);
             preg_match("/hash\: '(.*?) /s", $data, $security_check_location);
-            print_r($security_check_location);
+            //print_r($security_check_location);
 
             $hash = substr($security_check_location[1], 0, strripos($security_check_location[1], "}") - 1);
 
@@ -111,8 +111,8 @@ class VK {
             );
             sleep(2);
             $data = $request->getBody()->getContents();
-            echo "\n\n\n-----";
-            print_r($data);
+            
+            //print_r($data);
             echo "--Comlpete\n";
         }
 
@@ -225,7 +225,7 @@ class VK {
             break;
         }
         $chas = substr($data, strpos($data, "toData: "), 400);
-        //dd($chas);
+        echo "\n---".($chas);
         preg_match("/hash\: '(.*?).... /s", $data, $chas);
 
         //  preg_match("/hash\:  /sg", $data, $hash);
