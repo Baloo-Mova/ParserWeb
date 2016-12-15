@@ -124,7 +124,7 @@ class VK {
         ]);
         sleep(2);
         $data = $request->getBody()->getContents();
-        //$crawler->clear();
+        print_r("\n\n------\n".$data."\n");
         $crawler->load($data);
         if ($crawler->find('#login_blocked_wrap', 0) != null) {
             echo "this account banned";
@@ -225,7 +225,7 @@ class VK {
             break;
         }
         $chas = substr($data, strpos($data, "toData: "), 400);
-        echo "\n---".($chas);
+        //echo "\n---".($chas);
         preg_match("/hash\: '(.*?).... /s", $data, $chas);
 
         //  preg_match("/hash\:  /sg", $data, $hash);
