@@ -8,6 +8,7 @@ use App\Models\Tasks;
 use App\Models\TemplateDeliveryMails;
 use App\Models\TemplateDeliverySkypes;
 use App\Models\TemplateDeliveryMailsFiles;
+use App\Models\TemplateDeliveryVK;
 use App\Models\Parser\SiteLinks;
 use App\Models\SearchQueries;
 use Supervisor\Api;
@@ -88,6 +89,12 @@ class ParsingTasksController extends Controller
                 $skype->task_id = $task->id;
             $skype->save();
         }
+        if(!empty($request->get('vk_text'))){
+            $vk = new TemplateDeliveryVK();
+                $vk->text = $request->get('vk_text');
+                $vk->task_id = $task->id;
+            $vk->save();
+        }
         //Записываем в таблицу шаблонов skypes
 
         return redirect()->route('parsing_tasks.index');
@@ -98,6 +105,7 @@ class ParsingTasksController extends Controller
         $task = Tasks::whereId($id)->first();
         $mails = $task->getMail()->first();
         $skype = $task->getSkype()->first();
+        $vk = $task->getVK()->first();
         $search_queries = SearchQueries::where(['task_id' => $id])->orderBy('id', 'desc')->paginate(10);
 
         $active_type = "";
@@ -119,6 +127,7 @@ class ParsingTasksController extends Controller
             'active_type'       => $active_type,
             'mails'             => $mails,
             'skype'             => $skype,
+            'vk'                => $vk,
             'search_queries'    => $search_queries
         ]);
     }
@@ -388,5 +397,60 @@ class ParsingTasksController extends Controller
 
     }
 
+     public function testingDeliveryVK()
+    {
+        return view("parsing_tasks.testingDeliveryVK");
+    }
+
+    public function storeTestingDeliveryVK(Request $request)
+    {
+        //Записываем в таблицу тасков
+        $task = new Tasks();
+             
+            $task->task_type_id = 3;
+            $task->task_query = "Тестовая рассылка";
+            $task->active_type = 1;
+            $task->reserved = 0;
+            $task->google_offset = 0;
+            $task->need_send = 1;
+            $task->save();
+        $task_id = $task->id;
+        //Записываем в таблицу тасков
+
+        $vks_list = $request->get('vk_list');
+        if(!empty($vks_list)) {
+
+            $vks = explode("\r\n", $vks_list);
+
+            foreach ($vks as $item){
+                $search_query = new SearchQueries;
+                    $search_query->link = "Тестовая рассылка";
+                    $search_query->mails = " ";
+                    $search_query->phones = " ";
+                    $search_query->skypes = "";
+                    $search_query->vk_id = $item;
+                    $search_query->task_id = $task_id;
+                    $search_query->email_reserved = 0;
+                    $search_query->email_sended = 0;
+                    $search_query->sk_recevied = 0;
+                    $search_query->sk_sended = 0;
+                $search_query->save();
+            }
+
+        }
+
+        //Записываем в таблицу шаблонов skypes
+        if(!empty($request->get('vk_text'))){
+            $vk = new TemplateDeliveryVK();
+                $vk->text = $request->get('vk_text');
+                $vk->task_id = $task_id;
+            $vk->save();
+        }
+        //Записываем в таблицу шаблонов skypes
+
+        return redirect()->route('parsing_tasks.index');
+
+    }
+    
 
 }

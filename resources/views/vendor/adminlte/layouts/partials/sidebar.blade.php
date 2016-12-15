@@ -47,6 +47,10 @@
                             <i class='fa fa-envelope-o'></i>
                             <span>Emails</span>
                         </a>
+                        <a href="{{ route('parsing_tasks.testingDeliveryVK') }}" class="{{ Request::path() == 'parsing_tasks/parsing_tasks.testingDeliveryVK' ? 'link_active' : ''}}">
+                            <i class='fa fa-vk'></i>
+                            <span>VK</span>
+                        </a>
                     </li>
                 </ul>
             </li>

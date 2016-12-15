@@ -94,6 +94,8 @@ Route::group(['prefix' => 'parsing-tasks', 'middleware' => 'auth'], function () 
     Route::post('/testing-delivery-mails', ['uses' => 'ParsingTasksController@storeTestingDeliveryMails', 'as' => 'parsing_tasks.storeTestingDeliveryMails']);
     Route::get('/testing-delivery-skypes', ['uses' => 'ParsingTasksController@testingDeliverySkypes', 'as' => 'parsing_tasks.testingDeliverySkypes']);
     Route::post('/testing-delivery-skypes', ['uses' => 'ParsingTasksController@storeTestingDeliverySkypes', 'as' => 'parsing_tasks.storeTestingDeliverySkypes']);
+    Route::get('/testing-delivery-vk', ['uses' => 'ParsingTasksController@testingDeliveryVK', 'as' => 'parsing_tasks.testingDeliveryVK']);
+    Route::post('/testing-delivery-vk', ['uses' => 'ParsingTasksController@storeTestingDeliveryVK', 'as' => 'parsing_tasks.storeTestingDeliveryVK']);
 });
 
 Route::group(['prefix' => 'skypes-accounts', 'middleware' => 'auth'], function () {

@@ -120,14 +120,29 @@
                                         <tr>
                                             <th>Mail subject</th>
                                             <th>Mail text</th>
-                                            <th>Skype text</th>
+                                           
                                         </tr>
                                         </thead>
                                         <tbody>
                                             {{ csrf_field() }}
-                                            <td><input type="text" class="form-control" name="mail_subject" value="{{ empty($mails) ? "-" : $mails->subject }}"></td>
+                                        <td><textarea type="text" class="form-control" name="mail_subject" cols="30" rows="3" >{{ empty($mails) ? "-" : $mails->subject }}</textarea></td>
                                             <td><textarea name="mail_text" class="form-control" cols="30" rows="3">{{ empty($mails) ? "-" : $mails->text }}</textarea></td>
+                                            
+                                            <input type="hidden" name="delivery_id" value="{{ $data->id }}">
+                                        </tbody>
+                                    </table>
+                                     <table class="table table-bordered">
+                                        <thead>
+                                        <tr>
+                                            <th>Skype text</th>
+                                            <th>VK text</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                            {{ csrf_field() }}
+                                           
                                             <td><textarea name="skype_text" class="form-control" cols="30" rows="3">{{ empty($skype) ? "-" : $skype->text }}</textarea></td>
+                                            <td><textarea name="vk_text" class="form-control" cols="30" rows="3">{{ empty($vk) ? "-" : $vk->text }}</textarea></td>
                                             <input type="hidden" name="delivery_id" value="{{ $data->id }}">
                                         </tbody>
                                     </table>

@@ -13,6 +13,7 @@ class Tasks extends Model
     public $fillable = [
         'task_type_id',
         'task_query',
+        'vk_reserved',
     ];
 
     public function tasksType()
@@ -26,5 +27,9 @@ class Tasks extends Model
     public function getSkype()
     {
         return $this->belongsTo(TemplateDeliverySkypes::class, 'id', 'task_id');
+    }
+    public function getVK()
+    {
+        return $this->belongsTo(TemplateDeliveryVK::class, 'id', 'task_id');
     }
 }

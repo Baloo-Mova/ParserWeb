@@ -16,6 +16,7 @@ class AccountsData extends Model
         'type_id',
         'user_id',
         'count_sended_messages',
+        'vk_cookie',
     ];
 
     public function accountType()

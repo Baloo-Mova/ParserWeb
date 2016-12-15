@@ -19,6 +19,12 @@ class SearchQueries extends Model
         'phones',
         'skypes',
         'query',
+        'task_id',
+        'vk_id',
+        'vk_city',
+        'vk_name',
+        'vk_reserved',
+        'vk_sended',
         'sk_recevied',
         'sk_sended'
         
