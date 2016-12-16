@@ -49,9 +49,9 @@ class VK {
         $ip_h = $crawler->find('input[name=ip_h]', 0)->value;
         $lg_h = $crawler->find('input[name=lg_h]', 0)->value;
 
-        print_r($ip_h . "\n");
-        print_r($lg_h . "\n");
-        print_r($vk_login . "\n");
+       // print_r($ip_h . "\n");
+       // print_r($lg_h . "\n");
+       // print_r($vk_login . "\n");
         //dd(urlencode($login));
         $request = $this->client->request("POST", "https://login.vk.com/?act=login", [
             'form_params' => [
@@ -70,9 +70,9 @@ class VK {
         );
         sleep(2);
         $data = $request->getBody()->getContents();
-        print_r($request->getStatusCode() . "\n");
+     //   print_r($request->getStatusCode() . "\n");
         //$cookie = $request->getHeader('set-cookie');
-        print_r($data . "\n");
+     //   print_r($data . "\n");
         //dd($request);
         if (strripos($data, "onLoginFailed")) {
             echo "----Login false\n";
@@ -88,16 +88,18 @@ class VK {
         $data = $request->getBody()->getContents();
         //dd(substr($phone,1,strlen($phone)-3));
         if (preg_match('/act=security\_check/s', $data)) {
-            echo "----want write number\n";
+          //  echo "----want write number\n";
 
-            $data = $request->getBody()->getContents();
-print_r($data);
+            //$data = $request->getBody()->getContents();
+//print_r($data);
+          //  \Illuminate\Support\Facades\Storage::put("text.txt",$data);
             preg_match("/hash\: '(.*?) /s", $data, $security_check_location);
             print_r($security_check_location);
-
+            
             $hash = substr($security_check_location[1], 0, strripos($security_check_location[1], "}") - 1);
-
-            $request = $this->client->post("https://login.vk.com/?act=security_check", [
+            echo("\n".$hash);
+            $request = $this->client->post("https://vk.com/login.php?act=security_check", [
+               
                 'form_params' => [
                     'al' => 1,
                     'al_page' => 3,
@@ -109,8 +111,10 @@ print_r($data);
                     ]
                     //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
             );
-            sleep(2);
+            
             $data = $request->getBody()->getContents();
+          
+            //print_r($data);
             echo "--Comlpete\n";
         }
 
@@ -122,7 +126,10 @@ print_r($data);
         ]);
         sleep(2);
         $data = $request->getBody()->getContents();
-        //$crawler->clear();
+          
+        
+        
+        
         $crawler->load($data);
         if ($crawler->find('#login_blocked_wrap', 0) != null) {
             echo "this account banned";
@@ -210,20 +217,21 @@ print_r($data);
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://vk.com/id" . $to_userId, [
-                'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                    
                     ]
                   
             );
             sleep(2);
             $data = $request->getBody()->getContents();
+            
             if (strpos($data, "quick_login_button")) {
                 continue;
             };
             break;
         }
         $chas = substr($data, strpos($data, "toData: "), 400);
-        //dd($chas);
+        //echo "\n---".($chas);
         preg_match("/hash\: '(.*?).... /s", $data, $chas);
 
         //  preg_match("/hash\:  /sg", $data, $hash);
@@ -241,11 +249,12 @@ print_r($data);
                 'title' => '',
                 'to_ids' => $to_userId,
             ],
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
                 ]
                 //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
         );
         $data = $request->getBody()->getContents();
+        //print_r($data);
         return true;
     }
 
@@ -359,7 +368,7 @@ print_r($data);
 
         //$this->login($sender->login, $sender->password);
         $request = $this->client->request("POST", "https://vk.com/groups?act=catalog", [
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
             'form_params' => [
                 'al' => 1,
                 'c[q]' => $find,
@@ -378,7 +387,7 @@ print_r($data);
             // if($counter>=$summary) break;
             if ($counter != 0) {
                 $request = $this->client->request("POST", "https://vk.com/al_search.php", [
-                    'proxy' => '127.0.0.1:8888',
+                 //  'proxy' => '127.0.0.1:8888',
                     'form_params' => [
                         'al' => 1,
                         'al_ad' => 0,

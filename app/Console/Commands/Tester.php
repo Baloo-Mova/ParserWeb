@@ -41,6 +41,8 @@ class Tester extends Command
     public function handle()
     {
        $test = new VK();
+      
+     
        $test->sendRandomMessage("134923343", "sdsdssddsds");        
        // SkypeClassFacade::sendRandom("bear_balooo", "test");
     }
