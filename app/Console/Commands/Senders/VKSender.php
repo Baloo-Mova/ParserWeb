@@ -85,7 +85,7 @@ class VKSender extends Command
 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->message = $ex->getMessage() . " line:" . __LINE__;
+                $log->message = $ex->getTraceAsString();
                 $log->task_id = 0;
                 $log->save();
             }
