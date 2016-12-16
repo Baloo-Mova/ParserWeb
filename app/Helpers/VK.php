@@ -92,7 +92,7 @@ class VK {
 
             //$data = $request->getBody()->getContents();
 //print_r($data);
-            \Illuminate\Support\Facades\Storage::put("text.txt",$data);
+          //  \Illuminate\Support\Facades\Storage::put("text.txt",$data);
             preg_match("/hash\: '(.*?) /s", $data, $security_check_location);
             print_r($security_check_location);
             
@@ -103,7 +103,7 @@ class VK {
                 'form_params' => [
                     //'al' => 1,
                     'al_page' => 3,
-                    'code' => substr($vk_login, 1, strlen($vk_login) - 3),
+                    'code' => substr($vk_login, 1, strlen($vk_login) - 5),
                     'hash' => $hash,
                     'to' => '',
                 ],
