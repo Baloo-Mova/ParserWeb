@@ -92,8 +92,9 @@ class VK {
 
             //$data = $request->getBody()->getContents();
 //print_r($data);
-            preg_match("/hash\: '(.*?) /s", $data, $security_check_location);
-            //print_r($security_check_location);
+            \Illuminate\Support\Facades\Storage::put("text.txt",$data);
+            preg_match_all("/hash\: '(.*?) /s", $data, $security_check_location);
+            print_r($security_check_location);
 
             $hash = substr($security_check_location[1], 0, strripos($security_check_location[1], "}") - 1);
 
@@ -125,7 +126,7 @@ class VK {
         sleep(2);
         $data = $request->getBody()->getContents();
         
-        \Illuminate\Support\Facades\Storage::put("text.txt",$data);
+        
         
         
         $crawler->load($data);
