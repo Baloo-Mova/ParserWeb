@@ -124,7 +124,10 @@ class VK {
         ]);
         sleep(2);
         $data = $request->getBody()->getContents();
-        print_r("\n\n------\n".$data."\n");
+        $ww = new ErrorLog;
+        $ww->message = $data;
+        $ww->task_id = 0;
+        $ww->save();
         $crawler->load($data);
         if ($crawler->find('#login_blocked_wrap', 0) != null) {
             echo "this account banned";

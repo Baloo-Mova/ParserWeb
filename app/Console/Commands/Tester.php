@@ -40,8 +40,10 @@ class Tester extends Command
      */
     public function handle()
     {
-       $test = new VK();
-       $test->sendRandomMessage("134923343", "sdsdssddsds");        
+       //$test = new VK();
+      $vk_login="79258076842";
+      echo substr($vk_login, 1, strlen($vk_login) - 3);
+      // $test->sendRandomMessage("134923343", "sdsdssddsds");        
        // SkypeClassFacade::sendRandom("bear_balooo", "test");
     }
 }
