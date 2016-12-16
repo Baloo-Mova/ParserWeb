@@ -146,6 +146,21 @@
                                             <input type="hidden" name="delivery_id" value="{{ $data->id }}">
                                         </tbody>
                                     </table>
+                                    <table class="table table-bordered">
+                                        <thead>
+                                        <tr>
+                                            <th>OK text</th>
+                                            <th></th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {{ csrf_field() }}
+
+                                        <td><textarea name="ok_text" class="form-control" cols="30" rows="3">{{ empty($ok) ? "-" : $ok->text }}</textarea></td>
+                                        <td><textarea name="" class="form-control" cols="30" rows="3"></textarea></td>
+                                        <input type="hidden" name="delivery_id" value="{{ $data->id }}">
+                                        </tbody>
+                                    </table>
                                     <input type="submit" class="btn btn-primary" value="Изменить">
                                 </form>
                             </div>

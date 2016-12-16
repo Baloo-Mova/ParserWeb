@@ -32,4 +32,8 @@ class Tasks extends Model
     {
         return $this->belongsTo(TemplateDeliveryVK::class, 'id', 'task_id');
     }
+    public function getOK()
+    {
+        return $this->belongsTo(TemplateDeliveryOK::class, 'id', 'task_id');
+    }
 }

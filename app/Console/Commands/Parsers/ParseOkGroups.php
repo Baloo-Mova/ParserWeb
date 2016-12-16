@@ -49,9 +49,9 @@ class ParseOkGroups extends Command
 
             $query_data = OkGroups::where([
                 ['offset', '<>', -1]
-            ])->offset(0)->limit(100)->get(); // Забираем все группы для этого таска
+            ])->offset(0)->limit(100)->get(); // Забираем 100 групп для этого таска
 
-            if ($query_data == null) {
+            if (count($query_data) == 0) {
                 sleep(10);
                 continue;
             }
@@ -71,6 +71,8 @@ class ParseOkGroups extends Command
                 $password = $from->password;
                 $mails = [];
                 $skypes = [];
+                $fio = "";
+                $user_info = "";
 
                 $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
                 $i = 0;
@@ -140,6 +142,7 @@ class ParseOkGroups extends Command
 
                 foreach ($query_data as $item) {
 
+                    $task_id = $item->task_id;
 
                     if($item->type == 1){ // Это группа, парсим данные, достаем всех пользователей
 
@@ -183,32 +186,7 @@ class ParseOkGroups extends Command
                             $skypes = [];
                         }
 
-
-
-                        if (count($mails) > 0 || count($skypes) > 0) { // Если нашли, записываем
-
-                            /*
-                             * Сохраняем мыла и скайпы
-                             */
-                            $search_query = new SearchQueries;
-                            $search_query->link = null;
-                            $search_query->mails = count($mails) != 0 ? implode(",", $mails) : null;
-                            $search_query->phones = null;
-                            $search_query->skypes = count($skypes) != 0 ? implode(",", $skypes) : null;
-                            $search_query->task_id = $task_id;
-                            $search_query->email_reserved = 0;
-                            $search_query->email_sended = 0;
-                            $search_query->sk_recevied = 0;
-                            $search_query->sk_sended = 0;
-                            $search_query->ok_user_id = 0;
-                            $search_query->save();
-
-                        }
-
-
                         $counter = $item->offset;
-
-
 
                         if($counter == 1) {
 
@@ -244,6 +222,18 @@ class ParseOkGroups extends Command
                         }
 
                         if($counter > 1) {
+                            $groups_data = $client->request('GET', 'http://ok.ru' . $gr_url . "/members", [
+                                "proxy" => "127.0.0.1:8888"
+                            ]);
+
+                            $html_doc = $groups_data->getBody()->getContents();
+                            $crawler->clear();
+                            $crawler->load($html_doc);
+
+                            $people_numb = str_replace("&nbsp;", "", urldecode($crawler->find("#groupMembersCntEl", 0)->innertext));
+                            $peoples_url_list = [];
+
+                            $gr_id = str_replace(['"', '='], "", substr($html_doc, strripos($html_doc, "groupId") + 7, 15));
                             /*
                              * Получаем участников сообщества из остальных страниц, сохраняем линки туда же, в $peoples_url_list
                              * Если закоменчено, это для тестирования (сохранения юзеров только с 1 страницы)
@@ -258,6 +248,8 @@ class ParseOkGroups extends Command
                                     ],
                                     "proxy" => "127.0.0.1:8888"
                                 ]);
+
+
 
                                 $gr_doc = $groups_data->getBody()->getContents();
                                 $crawler->clear();
@@ -278,9 +270,9 @@ class ParseOkGroups extends Command
 
                                 $item->offset = $counter;
                                 $item->save();
+                                sleep(rand(10,15));
 
-                                sleep(rand(1,3));
-                            } while (!empty($gr_doc));
+                            } while (strlen($gr_doc) > 200);
 
                             $item->delete();    // Получили всех пользователей, удаляем группу
 
@@ -295,10 +287,13 @@ class ParseOkGroups extends Command
                         ]);
 
                         $html_doc = $groups_data->getBody()->getContents();
-
+                        
                         $crawler->clear();
                         $crawler->load($html_doc);
+
                         $html_doc = $crawler->find('body', 0);
+
+
 
                         $people_id_tmp = substr($html_doc, strripos($html_doc, "st.friendId=") + 12, 20);
 
@@ -325,25 +320,15 @@ class ParseOkGroups extends Command
                         }
 
 
-                        if (count($mails) > 0 || count($skypes) > 0) { // Если нашли, записываем
+                        $fio = $html_doc->find("h1.mctc_name_tx", 0)->plaintext;
+                        $user_info_tmp = $html_doc->find("span.mctc_infoContainer_not_block", 0)->plaintext;
 
-                            /*
-                             * Сохраняем мыла и скайпы
-                             */
-                            $search_query = new SearchQueries;
-                            $search_query->link = null;
-                            $search_query->mails = count($mails) != 0 ? implode(",", $mails) : null;
-                            $search_query->phones = null;
-                            $search_query->skypes = count($skypes) != 0 ? implode(",", $skypes) : null;
-                            $search_query->task_id = $task_id;
-                            $search_query->email_reserved = 0;
-                            $search_query->email_sended = 0;
-                            $search_query->sk_recevied = 0;
-                            $search_query->sk_sended = 0;
-                            $search_query->ok_user_id = $people_id;
-                            $search_query->save();
-
+                        if(preg_match('/[0-9]/', $user_info_tmp)){
+                            $user_info = substr($user_info_tmp, strpos($user_info_tmp, ",") + 1);
+                        }else{
+                            $user_info = $user_info_tmp;
                         }
+
 
                         $item->delete();
 
@@ -351,23 +336,34 @@ class ParseOkGroups extends Command
 
                     }
 
+                    /*
+                     * Сохраняем мыла и скайпы
+                     */
                     $search_query = new SearchQueries;
-                    $search_query->link = null;
-                    $search_query->mails = null;
+                    $search_query->link = "https://ok.ru".$item->group_url;
+                    $search_query->vk_name = strlen($fio) > 0 && strlen($fio) < 500 ? $this->clearstr($fio) : "";
+                    $search_query->vk_city = strlen($user_info) > 0 && strlen($user_info) < 500 ? $user_info : null;
+                    $search_query->mails = count($mails) != 0 ? implode(",", $mails) : null;
                     $search_query->phones = null;
-                    $search_query->skypes = null;
+                    $search_query->skypes = count($skypes) != 0 ? implode(",", $skypes) : null;
                     $search_query->task_id = $task_id;
                     $search_query->email_reserved = 0;
                     $search_query->email_sended = 0;
                     $search_query->sk_recevied = 0;
                     $search_query->sk_sended = 0;
-                    $search_query->ok_user_id = $people_id;
+                    $search_query->ok_user_id = isset($people_id) ? $people_id : null;
                     $search_query->save();
+
+                    $mails = [];
+                    $skypes = [];
+
 
                     //unset($mails);
                     //unset($skypes);
                     $mails = [];
                     $skypes = [];
+                    $fio = "";
+                    $user_info = "";
 
                     sleep(rand(1,4));
 
@@ -434,5 +430,46 @@ class ParseOkGroups extends Command
         }
 
         return (substr($haystack, -$length) === $needle);
+    }
+
+    function utf8_str_split($str) {
+        // place each character of the string into and array
+        $split=1;
+        $array = array();
+        for ( $i=0; $i < strlen( $str ); ){
+            $value = ord($str[$i]);
+            if($value > 127){
+                if($value >= 192 && $value <= 223)
+                    $split=2;
+                elseif($value >= 224 && $value <= 239)
+                    $split=3;
+                elseif($value >= 240 && $value <= 247)
+                    $split=4;
+            }else{
+                $split=1;
+            }
+            $key = NULL;
+            for ( $j = 0; $j < $split; $j++, $i++ ) {
+                $key .= $str[$i];
+            }
+            array_push( $array, $key );
+        }
+        return $array;
+    }
+
+    function clearstr($str){
+        $sru = 'ёйцукенгшщзхъфывапролджэячсмитьбю';
+        $s1 = array_merge($this->utf8_str_split($sru), $this->utf8_str_split(strtoupper($sru)), range('A', 'Z'), range('a','z'), range('0', '9'), array('&',' ','#',';','%','?',':','(',')','-','_','=','+','[',']',',','.','/','\\'));
+        $codes = array();
+        for ($i=0; $i<count($s1); $i++){
+            $codes[] = ord($s1[$i]);
+        }
+        $str_s = $this->utf8_str_split($str);
+        for ($i=0; $i<count($str_s); $i++){
+            if (!in_array(ord($str_s[$i]), $codes)){
+                $str = str_replace($str_s[$i], '', $str);
+            }
+        }
+        return $str;
     }
 }

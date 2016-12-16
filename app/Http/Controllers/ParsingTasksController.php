@@ -9,6 +9,7 @@ use App\Models\TemplateDeliveryMails;
 use App\Models\TemplateDeliverySkypes;
 use App\Models\TemplateDeliveryMailsFiles;
 use App\Models\TemplateDeliveryVK;
+use App\Models\TemplateDeliveryOK;
 use App\Models\Parser\SiteLinks;
 use App\Models\SearchQueries;
 use Supervisor\Api;
@@ -95,6 +96,12 @@ class ParsingTasksController extends Controller
                 $vk->task_id = $task->id;
             $vk->save();
         }
+        if(!empty($request->get('ok_text'))){
+            $vk = new TemplateDeliveryOK();
+            $vk->text = $request->get('ok_text');
+            $vk->task_id = $task->id;
+            $vk->save();
+        }
         //Записываем в таблицу шаблонов skypes
 
         return redirect()->route('parsing_tasks.index');
@@ -106,6 +113,7 @@ class ParsingTasksController extends Controller
         $mails = $task->getMail()->first();
         $skype = $task->getSkype()->first();
         $vk = $task->getVK()->first();
+        $ok = $task->getOK()->first();
         $search_queries = SearchQueries::where(['task_id' => $id])->orderBy('id', 'desc')->paginate(10);
 
         $active_type = "";
@@ -128,6 +136,7 @@ class ParsingTasksController extends Controller
             'mails'             => $mails,
             'skype'             => $skype,
             'vk'                => $vk,
+            'ok'                => $ok,
             'search_queries'    => $search_queries
         ]);
     }
@@ -182,6 +191,8 @@ class ParsingTasksController extends Controller
         $skype_text = $request->get("skype_text");
         $mail_subj = $request->get("mail_subject");
         $mail_text = $request->get("mail_text");
+        $ok_text = $request->get("ok_text");
+
 
         if(isset($skype_text)){
             $skype = TemplateDeliverySkypes::where("task_id", "=", $request->get("delivery_id"))->first();
@@ -191,6 +202,16 @@ class ParsingTasksController extends Controller
             }
             $skype->text = $skype_text;
             $skype->save();
+        }
+
+        if(isset($ok_text)){
+            $ok = TemplateDeliveryOK::where("task_id", "=", $request->get("delivery_id"))->first();
+            if(empty($ok)){
+                $ok = new TemplateDeliveryOK;
+                $ok->task_id = $request->get("delivery_id");
+            }
+            $ok->text = $ok_text;
+            $ok->save();
         }
 
         if(isset($mail_subj)){
@@ -444,6 +465,62 @@ class ParsingTasksController extends Controller
             $vk = new TemplateDeliveryVK();
                 $vk->text = $request->get('vk_text');
                 $vk->task_id = $task_id;
+            $vk->save();
+        }
+        //Записываем в таблицу шаблонов skypes
+
+        return redirect()->route('parsing_tasks.index');
+
+    }
+
+    public function testingDeliveryOK()
+    {
+        return view("parsing_tasks.testingDeliveryOK");
+    }
+
+    public function storeTestingDeliveryOK(Request $request)
+    {
+        //Записываем в таблицу тасков
+        $task = new Tasks();
+
+        $task->task_type_id = 3;
+        $task->task_query = "Тестовая рассылка";
+        $task->active_type = 1;
+        $task->reserved = 0;
+        $task->google_offset = 0;
+        $task->need_send = 1;
+        $task->save();
+        $task_id = $task->id;
+        //Записываем в таблицу тасков
+
+        $oks_list = $request->get('ok_list');
+        if(!empty($oks_list)) {
+
+            $oks = explode("\r\n", $oks_list);
+
+            foreach ($oks as $item){
+                $search_query = new SearchQueries;
+                $search_query->link = "Тестовая рассылка";
+                $search_query->mails = " ";
+                $search_query->phones = " ";
+                $search_query->skypes = "";
+                $search_query->vk_id = null;
+                $search_query->ok_user_id = $item;
+                $search_query->task_id = $task_id;
+                $search_query->email_reserved = 0;
+                $search_query->email_sended = 0;
+                $search_query->sk_recevied = 0;
+                $search_query->sk_sended = 0;
+                $search_query->save();
+            }
+
+        }
+
+        //Записываем в таблицу шаблонов ok
+        if(!empty($request->get('ok_text'))){
+            $vk = new TemplateDeliveryOK();
+            $vk->text = $request->get('ok_text');
+            $vk->task_id = $task_id;
             $vk->save();
         }
         //Записываем в таблицу шаблонов skypes
