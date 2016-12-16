@@ -364,8 +364,10 @@ class ParseOkGroups extends Command
                     $search_query->ok_user_id = $people_id;
                     $search_query->save();
 
-                    unset($mails);
-                    unset($skypes);
+                    //unset($mails);
+                    //unset($skypes);
+                    $mails = [];
+                    $skypes = [];
 
                     sleep(rand(1,4));
 
