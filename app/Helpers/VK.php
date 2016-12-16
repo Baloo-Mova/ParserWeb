@@ -126,7 +126,7 @@ class VK {
         ]);
         sleep(2);
         $data = $request->getBody()->getContents();
-          \Illuminate\Support\Facades\Storage::put("text.txt",$reguest->getHeaders());
+          \Illuminate\Support\Facades\Storage::put("text.txt",  json_encode($reguest->getHeaders()));
         
         
         
