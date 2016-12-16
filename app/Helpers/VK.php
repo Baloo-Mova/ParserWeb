@@ -113,7 +113,7 @@ class VK {
             );
             
             $data = $request->getBody()->getContents();
-            \Illuminate\Support\Facades\Storage::put("text.txt",$data);
+          
             //print_r($data);
             echo "--Comlpete\n";
         }
@@ -126,7 +126,7 @@ class VK {
         ]);
         sleep(2);
         $data = $request->getBody()->getContents();
-        
+          \Illuminate\Support\Facades\Storage::put("text.txt",$reguest->getHeaders());
         
         
         
