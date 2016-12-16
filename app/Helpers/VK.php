@@ -99,11 +99,9 @@ class VK {
             $hash = substr($security_check_location[1], 0, strripos($security_check_location[1], "}") - 1);
             echo("\n".$hash);
             $request = $this->client->post("https://login.vk.com/?act=security_check", [
-                'headers'=>[
-                  'X-Requested-With' => 'XMLHttpRequest',  
-                ],
+               
                 'form_params' => [
-                    'al' => 1,
+                    //'al' => 1,
                     'al_page' => 3,
                     'code' => substr($vk_login, 1, strlen($vk_login) - 3),
                     'hash' => $hash,
@@ -115,7 +113,7 @@ class VK {
             );
             sleep(2);
             $data = $request->getBody()->getContents();
-            
+            \Illuminate\Support\Facades\Storage::put("text.txt",$data);
             //print_r($data);
             echo "--Comlpete\n";
         }
@@ -226,7 +224,7 @@ class VK {
             );
             sleep(2);
             $data = $request->getBody()->getContents();
-            \Illuminate\Support\Facades\Storage::put("text.txt",$data);
+            
             if (strpos($data, "quick_login_button")) {
                 continue;
             };
