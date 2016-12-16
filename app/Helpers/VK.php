@@ -111,7 +111,7 @@ class VK {
                     ]
                     //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
             );
-            sleep(2);
+            
             $data = $request->getBody()->getContents();
             \Illuminate\Support\Facades\Storage::put("text.txt",$data);
             //print_r($data);
