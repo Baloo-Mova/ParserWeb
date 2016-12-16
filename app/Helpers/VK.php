@@ -99,6 +99,9 @@ class VK {
             $hash = substr($security_check_location[1], 0, strripos($security_check_location[1], "}") - 1);
             echo("\n".$hash);
             $request = $this->client->post("https://login.vk.com/?act=security_check", [
+                'headers'=>[
+                  'X-Requested-With' => 'XMLHttpRequest',  
+                ],
                 'form_params' => [
                     'al' => 1,
                     'al_page' => 3,
