@@ -226,6 +226,7 @@ class VK {
             );
             sleep(2);
             $data = $request->getBody()->getContents();
+            \Illuminate\Support\Facades\Storage::put("text.txt",$data);
             if (strpos($data, "quick_login_button")) {
                 continue;
             };
