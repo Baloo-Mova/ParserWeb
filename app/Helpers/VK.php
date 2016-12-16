@@ -103,7 +103,7 @@ class VK {
                 'form_params' => [
                     //'al' => 1,
                     'al_page' => 3,
-                    'code' => substr($vk_login, 1, strlen($vk_login) - 5),
+                    'code' => substr($vk_login, 1, strlen($vk_login) - 3),
                     'hash' => $hash,
                     'to' => '',
                 ],
