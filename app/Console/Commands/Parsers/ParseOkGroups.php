@@ -107,8 +107,7 @@ class ParseOkGroups extends Command
                         "st.email" => $login,
                         "st.password" => $password,
                         "st.iscode" => "false"
-                    ],
-                    "proxy" => "127.0.0.1:8888"
+                    ]
                 ]);
 
                 $cookies_number = count($client->getConfig("cookies")); // Считаем, сколько получили кукисов
@@ -245,8 +244,7 @@ class ParseOkGroups extends Command
                                         "st.page" => $counter,
                                         "fetch" => "false",
                                         "gwt.requested" => $gwt
-                                    ],
-                                    "proxy" => "127.0.0.1:8888"
+                                    ]
                                 ]);
 
 
@@ -282,9 +280,7 @@ class ParseOkGroups extends Command
                     }else{                // Это человек, парсим данные
                         $people_url = $item->group_url;
 
-                        $groups_data = $client->request('GET', 'http://ok.ru'.$people_url, [
-                            "proxy" => "127.0.0.1:8888"
-                        ]);
+                        $groups_data = $client->request('GET', 'http://ok.ru'.$people_url);
 
                         $html_doc = $groups_data->getBody()->getContents();
                         

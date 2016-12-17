@@ -103,8 +103,7 @@ class OkSender extends Command
                         "st.email" => $login,
                         "st.password" => $password,
                         "st.iscode" => "false"
-                    ],
-                    "proxy" => "127.0.0.1:8888"
+                    ]
                 ]);
 
                 $cookies_number = count($client->getConfig("cookies")); // Считаем, сколько получили кукисов
@@ -138,9 +137,7 @@ class OkSender extends Command
                 /*
                  * Залогинились, теперь получаем токен
                  */
-                $data1 = $client->request('POST', 'https://www.ok.ru/', [
-                    "proxy" => "127.0.0.1:8888",
-                ]);
+                $data1 = $client->request('POST', 'https://www.ok.ru/');
 
                  $tkn2 = $data1->getHeader("TKN");
 
@@ -160,8 +157,7 @@ class OkSender extends Command
                             "st.txt" => $message->text,
                             "st.uuid" => time(),
                             "st.posted" => $gwt
-                        ],
-                        "proxy" => "127.0.0.1:8888"
+                        ]
                     ]);
 
                     $tkn2 = $data->getHeader("TKN");

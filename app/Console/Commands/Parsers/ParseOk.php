@@ -111,8 +111,7 @@ class ParseOk extends Command
                         "st.email" => $login,
                         "st.password" => $password,
                         "st.iscode" => "false"
-                    ],
-                    "proxy" => "127.0.0.1:8888"
+                    ]
                 ]);
 
                 $cookies_number = count($client->getConfig("cookies")); // Считаем, сколько получили кукисов
@@ -152,8 +151,7 @@ class ParseOk extends Command
                             "st.posted" => "set",
                             "st.mode" => "Groups",
                             "st.grmode" => "Groups"
-                        ],
-                        "proxy" => "127.0.0.1:8888"
+                        ]
                     ]);
 
                     $html_doc = $groups_data->getBody()->getContents();
@@ -191,8 +189,7 @@ class ParseOk extends Command
                                 "fetch" => "false",
                                 "st.page" => $counter,
                                 "st.loaderid" => "PortalSearchResultsLoader"
-                            ],
-                            "proxy" => "127.0.0.1:8888"
+                            ]
                         ]);
 
                         $html_doc = $groups_data->getBody()->getContents();
