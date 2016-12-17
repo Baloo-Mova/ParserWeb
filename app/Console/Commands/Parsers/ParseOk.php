@@ -12,6 +12,9 @@ Use App\Models\Tasks;
 use App\Models\Parser\OkGroups;
 use App\Models\TasksType;
 use GuzzleHttp;
+use GuzzleHttp\Client;
+use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Cookie\SetCookie;
 
 class ParseOk extends Command
 {
@@ -77,69 +80,125 @@ class ParseOk extends Command
             $tkn = "";
             $task_id = $task->id;
             $quer = $task->task_query;
+            $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
+            $i = 0;
+            $data = "";
+
+            $client = new GuzzleHttp\Client([
+                'verify' => false,
+                'cookies' => true,
+                'headers' => [
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Encoding' => 'gzip, deflate, br',
+                    'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3',
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0'
+                ]
+            ]);
+
+
 
             try {
-                $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
-                $i = 0;
 
-                $client = new GuzzleHttp\Client([
-                    'verify' => false,
-                    'cookies' => true,
-                    'headers' => [
-                        'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                        'Accept-Encoding' => 'gzip, deflate, br',
-                        'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3',
-                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0'
-                    ]
-                ]);
+                if (empty($from->ok_cookie)) {
 
-                $data = "";
+                    /**
+                     * Делаем попытку логина
+                     */
+                    $data = $client->request('POST', 'https://www.ok.ru/https', [
+                        'form_params' => [
+                            "st.redirect" => "",
+                            "st.asr" => "",
+                            "st.posted" => "set",
+                            "st.originalaction" => "https://www.ok.ru/dk?cmd=AnonymLogin&st.cmd=anonymLogin",
+                            "st.fJS" => "on",
+                            "st.st.screenSize" => "1920 x 1080",
+                            "st.st.browserSize" => "947",
+                            "st.st.flashVer" => "23.0.0",
+                            "st.email" => $login,
+                            "st.password" => $password,
+                            "st.iscode" => "false"
+                        ]
+                    ]);
 
-                /**
-                 * Делаем попытку логина
-                 */
-                $data = $client->request('POST', 'https://www.ok.ru/https', [
-                    'form_params' => [
-                        "st.redirect" => "",
-                        "st.asr" => "",
-                        "st.posted" => "set",
-                        "st.originalaction" => "https://www.ok.ru/dk?cmd=AnonymLogin&st.cmd=anonymLogin",
-                        "st.fJS" => "on",
-                        "st.st.screenSize" => "1920 x 1080",
-                        "st.st.browserSize" => "947",
-                        "st.st.flashVer" => "23.0.0",
-                        "st.email" => $login,
-                        "st.password" => $password,
-                        "st.iscode" => "false"
-                    ]
-                ]);
+                    $cookies_number = count($client->getConfig("cookies")); // Считаем, сколько получили кукисов
 
-                $cookies_number = count($client->getConfig("cookies")); // Считаем, сколько получили кукисов
+                    $html_doc = $data->getBody()->getContents();
 
-                $html_doc = $data->getBody()->getContents();
+                    if($cookies_number > 2){ // Куков больше 2, возможно залогинились
 
-                if($cookies_number > 2){ // Куков больше 2, возможно залогинились
+                        $crawler->clear();
+                        $crawler->load($html_doc);
 
-                    $crawler->clear();
-                    $crawler->load($html_doc);
+                        if(count($crawler->find('Мы отправили')) > 0){ // Вывелось сообщение безопасности, значит не залогинились
+                            $from->delete(); // Аккаунт плохой - удаляем
+                            sleep(rand(1,4));
+                            continue;
 
-                    if(count($crawler->find('Мы отправили')) > 0){ // Вывелось сообщение безопасности, значит не залогинились
+                        }else{
+                            $gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
+                            $tkn = substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
+
+                            $from->ok_user_gwt = $gwt;
+                            $from->ok_user_tkn = $tkn;
+
+                            $cookie = $client->getConfig('cookies');
+                            $gg = new CookieJar($cookie);
+                            $json = json_encode($cookie->toArray());
+
+                            if (!empty($from)) {
+                                $from->ok_cookie = $json;
+                                $from->save();
+                            }
+                        }
+                    }else{  // Точно не залогинись
                         $from->delete(); // Аккаунт плохой - удаляем
-                    }else{
-                        $gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
-                        $tkn = substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
-
-                        $from->ok_user_gwt = $gwt;
-                        $from->ok_user_tkn = $tkn;
-                        $from->save();
+                        sleep(rand(1,4));
+                        continue;
                     }
-                }else{  // Точно не залогинись
-                    $from->delete(); // Аккаунт плохой - удаляем
+
+                    $cook = $client->getConfig("cookies")->toArray();
+
+                    $bci = $cook[0]["Value"];
+
                 }
+
+                $json = json_decode($from->ok_cookie);
+                $cookies = json_decode($from->ok_cookie);
+                $array = new CookieJar();
+
+                foreach ($cookies as $cookie) {
+                    $set = new SetCookie();
+                    $set->setDomain($cookie->Domain);
+                    $set->setExpires($cookie->Expires);
+                    $set->setName($cookie->Name);
+                    $set->setValue($cookie->Value);
+                    $set->setPath($cookie->Path);
+                    $array->setCookie($set);
+                }
+                $cookiejar = new CookieJar($json);
+
+                unset($client);
+
+                $client = new Client([
+                    'headers' => [
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                        'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
+                        'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+                    ],
+                    'verify' => false,
+                    'cookies' => $array->count() > 0 ? $array : true,
+                    'allow_redirects' => true,
+                    'timeout' => 10,
+                ]);
 
                 $cook = $client->getConfig("cookies")->toArray();
 
                 $bci = $cook[0]["Value"];
+
+                $gwt = $from->ok_user_gwt;
+                $tkn = $from->ok_user_tkn;
+
 
                 $counter = $page_numb;
 
@@ -182,6 +241,16 @@ class ParseOk extends Command
                 }
 
                 if($page_numb > 1){
+
+                    $groups_data = $client->request('POST', 'http://ok.ru/search?cmd=PortalSearchResults&gwt.requested='.$gwt.'&p_sId='.$bci, [
+                        'form_params' => [
+                            "gwt.requested" => $gwt,
+                            "st.query" => $quer,
+                            "st.posted" => "set",
+                            "st.mode" => "Groups",
+                            "st.grmode" => "Groups"
+                        ]
+                    ]);
 
                     do { // Вытаскиваем линки групп на всех остальных страницах
                         $groups_data = $client->request('POST', 'http://ok.ru/search?cmd=PortalSearchResults&gwt.requested=' . $gwt . '&st.cmd=searchResult&st.mode=Groups&st.query=' . $quer . '&st.grmode=Groups&st.posted=set&', [
