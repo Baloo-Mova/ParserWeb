@@ -299,7 +299,7 @@ class ParseOk extends Command
 
                         sleep(rand(1,5));
 
-
+                        dd($html_doc);
 
                     } while (strlen($html_doc) > 200);
 
