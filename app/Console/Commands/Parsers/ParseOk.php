@@ -240,9 +240,10 @@ class ParseOk extends Command
 
                 }
 
-                echo $gwt." ".$bci." ".$counter." ".$page_numb;
 
                 if($page_numb > 1){
+
+                    echo $gwt." ".$bci." ".$counter." ".$page_numb." ".$quer." ".$task_id;
 
                     $groups_data = $client->request('POST', 'http://ok.ru/search?cmd=PortalSearchResults&gwt.requested='.$gwt.'&p_sId='.$bci, [
                         'form_params' => [
