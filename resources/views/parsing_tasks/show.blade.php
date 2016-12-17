@@ -100,7 +100,7 @@
                                     {{--</tr>--}}
                                     {{--@endforelse--}}
                                     <tr class="no_results_class">
-                                        <td colspan="5" class="text-center"> Ожидание результатов ...</td>
+                                        <td colspan="7" class="text-center"> Ожидание результатов ...</td>
                                     </tr>
                                     </tbody>
                                 </table>
