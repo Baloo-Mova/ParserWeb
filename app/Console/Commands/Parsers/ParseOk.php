@@ -299,7 +299,9 @@ class ParseOk extends Command
 
                         sleep(rand(1,5));
 
-                    } while (!empty($html_doc));
+
+
+                    } while (strlen($html_doc) > 200);
 
                     $task = Tasks::where('id','=',$task->id)->first();
                     $task->ok_offset = -1;
