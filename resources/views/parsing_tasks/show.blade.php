@@ -74,8 +74,10 @@
                                 <table class="table table-bordered task_result_table">
                                     <thead>
                                     <tr>
-                                        <th>#</th>
+                                        <th class="small__th">#</th>
                                         <th>Link</th>
+                                        <th>Name</th>
+                                        <th>City</th>
                                         <th>Mails</th>
                                         <th>Phones</th>
                                         <th>Skypes</th>
@@ -324,6 +326,8 @@
                                     $(".task_result_table").append("<tr>" +
                                             "<td  data-id='" + item.id + "' data-task-id='" + item.task_id + "' data-list-number='"+ ((data.number - page * 10) + 10 - i ) +"'>" + ((data.number - page * 10) + 10 - i ) + "</td>" +
                                             "<td width='400px'><div style=\"max-width:400px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.link+"\">" + item.link + "</div></td>" +
+                                            "<td>" + item.vk_name + "</td>" +
+                                            "<td>" + item.vk_city + "</td>" +
                                             "<td>" + item.mails + "</td>" +
                                             "<td>" + item.phones + "</td>" +
                                             "<td>" + item.skypes + "</td>" +

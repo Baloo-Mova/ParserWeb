@@ -26,7 +26,7 @@ class APIController extends Controller
         $countQueue = SiteLinks::where('task_id', '=', $taskId)->count()+  VKLinks::where('task_id', '=', $taskId)->count()+  OkGroups::where('task_id', '=', $taskId)->count();
         $countSended = SearchQueries::where([
             'task_id'=> $taskId
-        ])->select(DB::raw('SUM(email_sended) + SUM(sk_sended)+SUM(vk_sended) as total'))->first()->total;
+        ])->select(DB::raw('SUM(email_sended) + SUM(sk_sended)+SUM(vk_sended)+SUM(ok_sended) as total'))->first()->total;
 
         return json_encode([
             'success'=>true,
