@@ -240,6 +240,8 @@ class ParseOk extends Command
 
                 }
 
+                echo $gwt." ".$bci." ".$counter." ".$page_numb;
+
                 if($page_numb > 1){
 
                     $groups_data = $client->request('POST', 'http://ok.ru/search?cmd=PortalSearchResults&gwt.requested='.$gwt.'&p_sId='.$bci, [
@@ -299,7 +301,7 @@ class ParseOk extends Command
 
                         sleep(rand(1,5));
 
-                        dd($html_doc);
+
 
                     } while (strlen($html_doc) > 200);
 
