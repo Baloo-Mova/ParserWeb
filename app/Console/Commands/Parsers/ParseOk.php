@@ -243,8 +243,6 @@ class ParseOk extends Command
 
                 if($page_numb > 1){
 
-                    echo $gwt." ".$bci." ".$counter." ".$page_numb." ".$quer." ".$task_id;
-
                     $groups_data = $client->request('POST', 'http://ok.ru/search?cmd=PortalSearchResults&gwt.requested='.$gwt.'&p_sId='.$bci, [
                         'form_params' => [
                             "gwt.requested" => $gwt,
@@ -256,6 +254,9 @@ class ParseOk extends Command
                     ]);
 
                     do { // Вытаскиваем линки групп на всех остальных страницах
+
+                        echo $gwt." ".$bci." ".$counter." ".$page_numb." ".$quer." ".$task_id;
+
                         $groups_data = $client->request('POST', 'http://ok.ru/search?cmd=PortalSearchResults&gwt.requested=' . $gwt . '&st.cmd=searchResult&st.mode=Groups&st.query=' . $quer . '&st.grmode=Groups&st.posted=set&', [
                             "form_params" => [
                                 "fetch" => "false",
