@@ -255,8 +255,6 @@ class ParseOk extends Command
 
                     do { // Вытаскиваем линки групп на всех остальных страницах
 
-                        echo $gwt." ".$bci." ".$counter." ".$page_numb." ".$quer." ".$task_id;
-
                         $groups_data = $client->request('POST', 'http://ok.ru/search?cmd=PortalSearchResults&gwt.requested=' . $gwt . '&st.cmd=searchResult&st.mode=Groups&st.query=' . $quer . '&st.grmode=Groups&st.posted=set&', [
                             "form_params" => [
                                 "fetch" => "false",
@@ -302,6 +300,8 @@ class ParseOk extends Command
                         }
 
                         sleep(rand(1,5));
+
+                        print_r($html_doc);
 
 
 
