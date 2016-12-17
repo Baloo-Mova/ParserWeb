@@ -199,6 +199,18 @@ class ParseOk extends Command
                 $gwt = $from->ok_user_gwt;
                 $tkn = $from->ok_user_tkn;
 
+                $data1 = $client->request('POST', 'https://www.ok.ru/');
+
+                $html_ = $data1->getBody()->getContents();
+                $crawler->clear();
+                $crawler->load($html_);
+
+                if(count($crawler->find('Кажется, пропала связь')) > 0 || count($crawler->find('логин, адрес почты или телефон')) > 0) { // Вывелось сообщение безопасности, значит не залогинились
+                    $from->delete(); // Аккаунт плохой - удаляем
+                    sleep(rand(1, 4));
+                    continue;
+                }
+
 
                 $counter = $page_numb;
 
@@ -300,9 +312,6 @@ class ParseOk extends Command
                         }
 
                         sleep(rand(1,5));
-
-                        print_r($html_doc);
-
 
 
                     } while (strlen($html_doc) > 200);
