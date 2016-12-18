@@ -202,7 +202,7 @@ class ParseOkGroups extends Command
                 $gwt = $from->ok_user_gwt;
                 $tkn = $from->ok_user_tkn;
 
-                $data1 = $client->request('POST', 'https://www.ok.ru/',["proxy" => "127.0.0.1:8888"]);
+                /*$data1 = $client->request('POST', 'https://www.ok.ru/',["proxy" => "127.0.0.1:8888"]);
 
                 $html_ = $data1->getBody()->getContents();
                 $crawler->clear();
@@ -212,7 +212,7 @@ class ParseOkGroups extends Command
                     $from->delete(); // Аккаунт плохой - удаляем
                     sleep(rand(1, 4));
                     continue;
-                }
+                }*/
 
 
                 if($query_data->type == 1){ // Это группа, парсим данные, достаем всех пользователей

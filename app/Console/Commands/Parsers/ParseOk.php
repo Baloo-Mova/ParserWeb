@@ -117,7 +117,8 @@ class ParseOk extends Command
                             "st.email" => $login,
                             "st.password" => $password,
                             "st.iscode" => "false"
-                        ]
+                        ],
+                        "proxy" => "127.0.0.1:8888"
                     ]);
 
                     $cookies_number = count($client->getConfig("cookies")); // Считаем, сколько получили кукисов
@@ -199,17 +200,20 @@ class ParseOk extends Command
                 $gwt = $from->ok_user_gwt;
                 $tkn = $from->ok_user_tkn;
 
-                $data1 = $client->request('POST', 'https://www.ok.ru/');
+
+                $data1 = $client->request('POST', 'https://www.ok.ru/', ["proxy" => "127.0.0.1:8888"]);
 
                 $html_ = $data1->getBody()->getContents();
                 $crawler->clear();
                 $crawler->load($html_);
 
-                if(count($crawler->find('Кажется, пропала связь')) > 0 || count($crawler->find('логин, адрес почты или телефон')) > 0) { // Вывелось сообщение безопасности, значит не залогинились
+
+
+                /*if(count($crawler->find('Кажется, пропала связь')) > 0 || count($crawler->find('логин, адрес почты или телефон')) > 0) { // Вывелось сообщение безопасности, значит не залогинились
                     $from->delete(); // Аккаунт плохой - удаляем
                     sleep(rand(1, 4));
                     continue;
-                }
+                }*/
 
 
                 $counter = $page_numb;
@@ -222,7 +226,8 @@ class ParseOk extends Command
                             "st.posted" => "set",
                             "st.mode" => "Groups",
                             "st.grmode" => "Groups"
-                        ]
+                        ],
+                        "proxy" => "127.0.0.1:8888"
                     ]);
 
                     $html_doc = $groups_data->getBody()->getContents();
@@ -262,7 +267,8 @@ class ParseOk extends Command
                             "st.posted" => "set",
                             "st.mode" => "Groups",
                             "st.grmode" => "Groups"
-                        ]
+                        ],
+                        "proxy" => "127.0.0.1:8888"
                     ]);
 
                     do { // Вытаскиваем линки групп на всех остальных страницах
@@ -272,7 +278,8 @@ class ParseOk extends Command
                                 "fetch" => "false",
                                 "st.page" => $counter,
                                 "st.loaderid" => "PortalSearchResultsLoader"
-                            ]
+                            ],
+                            "proxy" => "127.0.0.1:8888"
                         ]);
 
                         $html_doc = $groups_data->getBody()->getContents();
