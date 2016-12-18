@@ -16,6 +16,10 @@ use GuzzleHttp\Cookie\SetCookie;
 
 class ParseOkGroups extends Command
 {
+    public $client  = null;
+    public $crawler = null;
+    public $gwt     = "";
+    public $tkn     = "";
     /**
      * The name and signature of the console command.
      *
@@ -47,184 +51,95 @@ class ParseOkGroups extends Command
      */
     public function handle()
     {
+        $this->crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
 
         while (true) {
-
-            $query_data = OkGroups::where([
-                ['offset', '<>', -1],
-                ['reserved', '=', 0]
-            ])->first(); // Забираем 1 групп для этого таска
-
-
-            if (empty($query_data)) {
-                sleep(10);
-                continue;
-            }
-
-
-            $task_id = $query_data->task_id;
-            $page_numb = $query_data->offset;
-
-            $query_data->reserved = 1;
-            $query_data->save();
 
 
             try {
 
-                $from = AccountsData::where(['type_id' => '2'])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
+                $query_data = OkGroups::where([
+                    ['offset', '<>', -1],
+                    ['reserved', '=', 0]
+                ])->first(); // Забираем 1 групп для этого таска
 
-                if ($from == null) {
+
+                if (!isset($query_data)) {
                     sleep(10);
                     continue;
                 }
 
-                $login = $from->login;
-                $password = $from->password;
+                $query_data->reserved = 1;
+                $query_data->save();
+
+                $page_numb = $query_data->offset;
+                $from      = null;
                 $mails = [];
                 $skypes = [];
-                $fio = "";
-                $user_info = "";
 
-                $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
-                $i = 0;
+                while (true) {
+                    $from = AccountsData::where(['type_id' => '2'])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
 
-                $client = new GuzzleHttp\Client([
-                    'verify' => false,
-                    'cookies' => true,
-                    'headers' => [
-                        'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                        'Accept-Encoding' => 'gzip, deflate, br',
-                        'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3',
-                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0'
-                    ]
-                ]);
-
-                $data = "";
-
-                if (empty($from->ok_cookie)) {
-
-                    /**
-                     * Делаем попытку логина
-                     */
-                    $data = $client->request('POST', 'https://www.ok.ru/https', [
-                        'form_params' => [
-                            "st.redirect" => "",
-                            "st.asr" => "",
-                            "st.posted" => "set",
-                            "st.originalaction" => "https://www.ok.ru/dk?cmd=AnonymLogin&st.cmd=anonymLogin",
-                            "st.fJS" => "on",
-                            "st.st.screenSize" => "1920 x 1080",
-                            "st.st.browserSize" => "947",
-                            "st.st.flashVer" => "23.0.0",
-                            "st.email" => $login,
-                            "st.password" => $password,
-                            "st.iscode" => "false"
-                        ]
-                    ]);
-
-
-                    $cookies_number = count($client->getConfig("cookies")); // Считаем, сколько получили кукисов
-
-                    $html_doc = $data->getBody()->getContents();
-
-                    if($cookies_number > 2){ // Куков больше 2, возможно залогинились
-
-                        $crawler->clear();
-                        $crawler->load($html_doc);
-
-                        if(count($crawler->find('Мы отправили')) > 0){ // Вывелось сообщение безопасности, значит не залогинились
-                            $from->delete(); // Аккаунт плохой - удаляем
-                            sleep(rand(1,4));
-                            continue;
-
-                        }else{
-                            $gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
-                            $tkn = substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
-
-                            $from->ok_user_gwt = $gwt;
-                            $from->ok_user_tkn = $tkn;
-
-                            $cookie = $client->getConfig('cookies');
-                            $gg = new CookieJar($cookie);
-                            $json = json_encode($cookie->toArray());
-
-                            if (!empty($from)) {
-                                $from->ok_cookie = $json;
-                                $from->save();
-                            }
-                        }
-                    }else{  // Точно не залогинись
-                        $from->delete(); // Аккаунт плохой - удаляем
-                        sleep(rand(1,4));
+                    if ( ! isset($from)) {
+                        sleep(10);
                         continue;
                     }
 
-                    $cook = $client->getConfig("cookies")->toArray();
+                    $cookies = json_decode($from->ok_cookie);
+                    $array   = new CookieJar();
 
-                    $bci = $cook[0]["Value"];
+                    if (isset($cookies)) {
+                        foreach ($cookies as $cookie) {
+                            $set = new SetCookie();
+                            $set->setDomain($cookie->Domain);
+                            $set->setExpires($cookie->Expires);
+                            $set->setName($cookie->Name);
+                            $set->setValue($cookie->Value);
+                            $set->setPath($cookie->Path);
+                            $array->setCookie($set);
+                        }
+                    }
 
+                    $this->client = new Client([
+                        'headers'         => [
+                            'User-Agent'      => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                            'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                            'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
+                            'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+                        ],
+                        'verify'          => false,
+                        'cookies'         => $array->count() > 0 ? $array : true,
+                        'allow_redirects' => true,
+                        'timeout'         => 20,
+                    ]);
+
+                    if ($array->count() < 1) {
+                        if ($this->login($from->login, $from->password)) {
+                            $from->ok_user_gwt = $this->gwt;
+                            $from->ok_user_tkn = $this->tkn;
+                            $from->ok_cookie   = json_encode($this->client->getConfig('cookies')->toArray());
+                            $from->save();
+                            break;
+                        } else {
+                            $from->delete();
+                        }
+                    } else {
+                        $this->gwt = $from->ok_user_gwt;
+                        $this->tkn = $from->ok_user_tkn;
+                        break;
+                    }
                 }
-
-
-
-                $json = json_decode($from->ok_cookie);
-                $cookies = json_decode($from->ok_cookie);
-                $array = new CookieJar();
-
-                foreach ($cookies as $cookie) {
-                    $set = new SetCookie();
-                    $set->setDomain($cookie->Domain);
-                    $set->setExpires($cookie->Expires);
-                    $set->setName($cookie->Name);
-                    $set->setValue($cookie->Value);
-                    $set->setPath($cookie->Path);
-                    $array->setCookie($set);
-                }
-                $cookiejar = new CookieJar($json);
-
-                unset($client);
-
-                $client = new Client([
-                    'headers' => [
-                        'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
-                        'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
-                        'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
-                    ],
-                    'verify' => false,
-                    'cookies' => $array->count() > 0 ? $array : true
-                ]);
-
-                $cook = $client->getConfig("cookies")->toArray();
-
-                $bci = $cook[0]["Value"];
-
-                $gwt = $from->ok_user_gwt;
-                $tkn = $from->ok_user_tkn;
-
-                /*$data1 = $client->request('POST', 'https://www.ok.ru/',["proxy" => "127.0.0.1:8888"]);
-
-                $html_ = $data1->getBody()->getContents();
-                $crawler->clear();
-                $crawler->load($html_);
-
-                if(count($crawler->find('Кажется, пропала связь')) > 0 || count($crawler->find('логин, адрес почты или телефон')) > 0) { // Вывелось сообщение безопасности, значит не залогинились
-                    $from->delete(); // Аккаунт плохой - удаляем
-                    sleep(rand(1, 4));
-                    continue;
-                }*/
-
 
                 if($query_data->type == 1){ // Это группа, парсим данные, достаем всех пользователей
 
                     $gr_url = $query_data->group_url;
 
 
-                    $groups_data = $client->request('GET', 'http://ok.ru' . $gr_url);
+                    $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url, ["proxy" => "127.0.0.1:8888"]);
 
                     $html_doc = $groups_data->getBody()->getContents();
-                    $crawler->clear();
-                    $crawler->load($html_doc);
+                    $this->crawler->clear();
+                    $this->crawler->load($html_doc);
 
 
                     //Ищем все мыла на странице, сохраняем в $mails[]
@@ -255,121 +170,81 @@ class ParseOkGroups extends Command
                         $skypes = [];
                     }
 
-                    $counter = $page_numb;
+
+                    $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url . "/members", ["proxy" => "127.0.0.1:8888"]);
+
+                    $html_doc = $groups_data->getBody()->getContents();
+                    $this->crawler->clear();
+                    $this->crawler->load($html_doc);
+
+                    $gr_id = str_replace(['"', '=',":"], "", substr($html_doc, strripos($html_doc, "groupId") + 8, 15));
 
 
 
-                    //if($page_numb > 1) {
+                    if($query_data->offset == 1) {
+                        $this->parsePage($html_doc, $query_data->task_id);
+                    }
 
-                        $groups_data = $client->request('GET', 'http://ok.ru' . $gr_url . "/members");
+                    /*
+                     * Получаем участников сообщества из остальных страниц, сохраняем линки туда же, в $peoples_url_list
+                     * Если закоменчено, это для тестирования (сохранения юзеров только с 1 страницы)
+                     */
+                    do {
 
-                        $html_doc = $groups_data->getBody()->getContents();
-                        $crawler->clear();
-                        $crawler->load($html_doc);
 
-                        $people_numb = str_replace("&nbsp;", "", urldecode($crawler->find("#groupMembersCntEl", 0)->innertext));
-                        $peoples_url_list = [];
+                        $groupname = str_replace(["/"], "", $gr_url);
 
-                        $gr_id = str_replace(['"', '=',":"], "", substr($html_doc, strripos($html_doc, "groupId") + 8, 15));
-
-                        if($counter == 1) {
-
-                            foreach ($crawler->find("a.photoWrapper") as $query_data1) {
-
-                                $ok_group = new OkGroups();
-                                $ok_group->group_url = substr($query_data1->href, 0, strripos($query_data1->href, "?st."));
-                                $ok_group->task_id = $task_id;
-                                $ok_group->type = 2;
-                                $ok_group->reserved = 0;
-                                $ok_group->save();
-
-                            }
-
-                            $counter++;
+                        if(strpos($gr_url, "/group") !== false){
+                            $groupname = substr($gr_url, 7);
+                            $group_members_query = 'https://ok.ru'.$gr_url.'/members?cmd=GroupMembersResultsBlock&gwt.requested='.$this->gwt.'&st.cmd=altGroupMembers&st.groupId='.$gr_id.'&st.vpl.mini=false&';
+                        }else{
+                            $groupname = substr($gr_url, 1);
+                            $group_members_query = 'https://ok.ru'.$gr_url.'/members?cmd=GroupMembersResultsBlock&gwt.requested='.$this->gwt.'&st.cmd=altGroupMembers&st.groupId='.$gr_id.'&st.referenceName='.$groupname.'&st.vpl.mini=false&';
                         }
 
-                        $data1 = $client->request('POST', 'https://www.ok.ru/');
 
-                        $tkn2 = $data1->getHeader("TKN");
+                        $groups_data = $this->client->request('POST',  $group_members_query, [
+                            'headers' => [
+                                'Referer' => 'https://ok.ru/',
+                                'TKN' => $this->tkn
+                            ],
+                            "form_params" => [
+                                "fetch" => "false",
+                                "st.page" => $page_numb++,
+                                "st.loaderid" => "GroupMembersResultsBlockLoader"
 
-                        $tkn = $tkn2[0];
+                            ],
+                            "proxy"       => "127.0.0.1:8888"
+                        ]);
 
-                        /*
-                         * Получаем участников сообщества из остальных страниц, сохраняем линки туда же, в $peoples_url_list
-                         * Если закоменчено, это для тестирования (сохранения юзеров только с 1 страницы)
-                         */
-                        do {
+                        if ( ! empty($groups_data->getHeaderLine('TKN'))) {
+                            $this->tkn = $groups_data->getHeaderLine('TKN');
+                        }
 
-
-                            $groupname = str_replace(["/"], "", $gr_url);
-
-                            if(strpos($gr_url, "/group") !== false){
-                                $groupname = substr($gr_url, 7);
-                                $group_members_query = 'https://ok.ru'.$gr_url.'/members?cmd=GroupMembersResultsBlock&gwt.requested='.$gwt.'&st.cmd=altGroupMembers&st.groupId='.$gr_id.'&st.vpl.mini=false&';
-                            }else{
-                                $groupname = substr($gr_url, 1);
-                                $group_members_query = 'https://ok.ru'.$gr_url.'/members?cmd=GroupMembersResultsBlock&gwt.requested='.$gwt.'&st.cmd=altGroupMembers&st.groupId='.$gr_id.'&st.referenceName='.$groupname.'&st.vpl.mini=false&';
-                            }
-
-                            $groups_data = $client->request('POST',  $group_members_query, [
-                                'headers' => [
-                                    'Referer' => 'https://ok.ru/',
-                                    'TKN' => $tkn
-                                ],
-                                "form_params" => [
-                                    "fetch" => "false",
-                                    "st.page" => $counter,
-                                    "st.loaderid" => "GroupMembersResultsBlockLoader"
-
-                                ]
-                            ]);
+                        $gr_doc = $groups_data->getBody()->getContents();
+                        $this->parsePage($gr_doc, $query_data->task_id);
 
 
-                            $gr_doc = $groups_data->getBody()->getContents();
-                            $crawler->clear();
-                            $crawler->load($gr_doc);
+                        $query_data->offset = $page_numb;
+                        $query_data->save();
+                        sleep(rand(10,15));
 
-                            $tkn2 = $groups_data->getHeader("TKN");
+                    } while (strlen($gr_doc) > 200);
 
-                            $tkn = $tkn2[0];
+                    $this->saveInfo($gr_url, null, null, $mails, $skypes, $query_data->task_id, null);
 
-
-                            foreach ($crawler->find("a.photoWrapper") as $query_data2) {
-
-                                $ok_group = new OkGroups();
-                                $ok_group->group_url = substr($query_data2->href, 0, strripos($query_data2->href, "?st._aid=GroupMembers_VisitMember"));
-                                $ok_group->task_id = $task_id;
-                                $ok_group->type = 2;
-                                $ok_group->reserved = 0;
-                                $ok_group->save();
-
-                            }
-
-                            $counter++;
-
-                            $query_data->offset = $counter;
-                            $query_data->save();
-                            sleep(rand(10,15));
-
-                        } while (strlen($gr_doc) > 200);
-
-                        $query_data->delete();    // Получили всех пользователей, удаляем группу
-
-
-                    //}
+                    $query_data->delete();    // Получили всех пользователей, удаляем группу
 
                 }else{                // Это человек, парсим данные
-                    $people_url = $query_data->group_url;
 
-                    $groups_data = $client->request('GET', 'http://ok.ru'.$people_url);
+                    $groups_data = $this->client->request('GET', 'http://ok.ru'.$query_data->group_url, ["proxy" => "127.0.0.1:8888"]);
 
                     $html_doc = $groups_data->getBody()->getContents();
 
-                    $crawler->clear();
-                    $crawler->load($html_doc);
+                    $this->crawler->clear();
+                    $this->crawler->load($html_doc);
 
-                    $html_doc = $crawler->find('body', 0);
-
+                    $html_doc = $this->crawler->find('body', 0);
 
 
                     $people_id_tmp = substr($html_doc, strripos($html_doc, "st.friendId=") + 12, 20);
@@ -406,54 +281,48 @@ class ParseOkGroups extends Command
                         $user_info = $user_info_tmp;
                     }
 
+                    $this->saveInfo($query_data->group_url, $fio, $user_info, $mails, $skypes, $query_data->task_id, $people_id);
 
                     $query_data->delete();
 
-                    sleep(rand(1, 4));
+                    sleep(rand(2, 8));
 
                 }
 
-                /*
-                 * Сохраняем мыла и скайпы
-                 */
-                $search_query = new SearchQueries;
-                $search_query->link = "https://ok.ru".$query_data->group_url;
-                $search_query->vk_name = strlen($fio) > 0 && strlen($fio) < 500 ? $this->clearstr($fio) : "";
-                $search_query->vk_city = strlen($user_info) > 0 && strlen($user_info) < 500 ? $user_info : null;
-                $search_query->mails = count($mails) != 0 ? implode(",", $mails) : null;
-                $search_query->phones = null;
-                $search_query->skypes = count($skypes) != 0 ? implode(",", $skypes) : null;
-                $search_query->task_id = $task_id;
-                $search_query->email_reserved = 0;
-                $search_query->email_sended = 0;
-                $search_query->sk_recevied = 0;
-                $search_query->sk_sended = 0;
-                $search_query->ok_user_id = isset($people_id) ? $people_id : null;
-                $search_query->save();
 
-                $mails = [];
-                $skypes = [];
-
-
-                //unset($mails);
-                //unset($skypes);
-                $mails = [];
-                $skypes = [];
-                $fio = "";
-                $user_info = "";
-
-                sleep(rand(1,4));
 
             } catch (\Exception $ex) {
                 $log = new ErrorLog();
-                $log->task_id = $task_id;
-                $log->message = $ex->getMessage() . " line:" . __LINE__;
+                $log->task_id = 0;
+                $log->message = $ex->getTraceAsString();
                 $log->save();
             }
 
         }
+
     }
 
+    public function saveInfo($gr_url, $fio, $user_info, $mails, $skypes, $task_id, $people_id)
+    {
+
+        /*
+         * Сохраняем мыла и скайпы
+         */
+        $search_query = new SearchQueries;
+        $search_query->link = "https://ok.ru".$gr_url;
+        $search_query->vk_name = isset($fio) && strlen($fio) > 0 && strlen($fio) < 500 ? $this->clearstr($fio) : "";
+        $search_query->vk_city = isset($user_info) && strlen($user_info) > 0 && strlen($user_info) < 500 ? $user_info : null;
+        $search_query->mails = count($mails) != 0 ? implode(",", $mails) : null;
+        $search_query->phones = null;
+        $search_query->skypes = count($skypes) != 0 ? implode(",", $skypes) : null;
+        $search_query->task_id = $task_id;
+        $search_query->email_reserved = 0;
+        $search_query->email_sended = 0;
+        $search_query->sk_recevied = 0;
+        $search_query->sk_sended = 0;
+        $search_query->ok_user_id = isset($people_id) ? $people_id : null;
+        $search_query->save();
+    }
 
     public function extractEmails($data, $before = [])
     {
@@ -495,6 +364,63 @@ class ParseOkGroups extends Command
         }
 
         return $before;
+    }
+
+    public function parsePage($data, $task_id)
+    {
+        $this->crawler->clear();
+        $this->crawler->load($data);
+
+        foreach ($this->crawler->find("a.photoWrapper") as $query_data2) {
+
+            $ok_group = new OkGroups();
+            $ok_group->group_url = substr($query_data2->href, 0, strripos($query_data2->href, "?st."));
+            $ok_group->task_id = $task_id;
+            $ok_group->type = 2;
+            $ok_group->reserved = 0;
+            $ok_group->save();
+
+        }
+    }
+
+    public function login($login, $password)
+    {
+
+        $data = $this->client->request('POST', 'https://www.ok.ru/https', [
+            'form_params' => [
+                "st.redirect"       => "",
+                "st.asr"            => "",
+                "st.posted"         => "set",
+                "st.originalaction" => "https://www.ok.ru/dk?cmd=AnonymLogin&st.cmd=anonymLogin",
+                "st.fJS"            => "on",
+                "st.st.screenSize"  => "1920 x 1080",
+                "st.st.browserSize" => "947",
+                "st.st.flashVer"    => "23.0.0",
+                "st.email"          => $login,
+                "st.password"       => $password,
+                "st.iscode"         => "false"
+            ],
+            "proxy"       => "127.0.0.1:8888"
+        ]);
+
+        $html_doc = $data->getBody()->getContents();
+
+        if ($this->client->getConfig("cookies")->count() > 2) { // Куков больше 2, возможно залогинились
+
+            $this->crawler->clear();
+            $this->crawler->load($html_doc);
+
+            if (count($this->crawler->find('Мы отправили')) > 0) { // Вывелось сообщение безопасности, значит не залогинились
+                return false;
+            }
+
+            $this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
+            $this->tkn = substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
+
+            return true;
+        } else {  // Точно не залогинись
+            return false;
+        }
     }
 
     function endsWith($haystack, $needle)
