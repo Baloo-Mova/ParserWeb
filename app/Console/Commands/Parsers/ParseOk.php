@@ -134,8 +134,7 @@ class ParseOk extends Command
                             "st.posted"     => "set",
                             "st.mode"       => "Groups",
                             "st.grmode"     => "Groups"
-                        ],
-                        "proxy"       => "127.0.0.1:8888"
+                        ]
                     ]);
 
                 if ( ! empty($groups_data->getHeaderLine('TKN'))) {
@@ -158,8 +157,7 @@ class ParseOk extends Command
                                 "fetch"       => "false",
                                 "st.page"     => $page_numb,
                                 "st.loaderid" => "PortalSearchResultsLoader"
-                            ],
-                            "proxy"       => "127.0.0.1:8888"
+                            ]
                         ]);
 
                     if ( ! empty($groups_data->getHeaderLine('TKN'))) {
@@ -205,8 +203,7 @@ class ParseOk extends Command
                 "st.email"          => $login,
                 "st.password"       => $password,
                 "st.iscode"         => "false"
-            ],
-            "proxy"       => "127.0.0.1:8888"
+            ]
         ]);
 
         $html_doc = $data->getBody()->getContents();

@@ -141,8 +141,7 @@ class OkSender extends Command
                         "st.txt" => $message->text,
                         "st.uuid" => time(),
                         "st.posted" => $this->gwt
-                    ],
-                    "proxy" => "127.0.0.1:8888"
+                    ]
                 ]);
 
                 if ( ! empty($data->getHeaderLine('TKN'))) {
@@ -180,8 +179,7 @@ class OkSender extends Command
                 "st.email"          => $login,
                 "st.password"       => $password,
                 "st.iscode"         => "false"
-            ],
-            "proxy"       => "127.0.0.1:8888"
+            ]
         ]);
 
         $html_doc = $data->getBody()->getContents();

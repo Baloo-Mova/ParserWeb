@@ -135,7 +135,7 @@ class ParseOkGroups extends Command
                     $gr_url = $query_data->group_url;
 
 
-                    $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url, ["proxy" => "127.0.0.1:8888"]);
+                    $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url);
 
                     $html_doc = $groups_data->getBody()->getContents();
                     $this->crawler->clear();
@@ -171,7 +171,7 @@ class ParseOkGroups extends Command
                     }
 
 
-                    $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url . "/members", ["proxy" => "127.0.0.1:8888"]);
+                    $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url . "/members");
 
                     $html_doc = $groups_data->getBody()->getContents();
                     $this->crawler->clear();
@@ -213,8 +213,7 @@ class ParseOkGroups extends Command
                                 "st.page" => $page_numb++,
                                 "st.loaderid" => "GroupMembersResultsBlockLoader"
 
-                            ],
-                            "proxy"       => "127.0.0.1:8888"
+                            ]
                         ]);
 
                         if ( ! empty($groups_data->getHeaderLine('TKN'))) {
@@ -237,7 +236,7 @@ class ParseOkGroups extends Command
 
                 }else{                // Это человек, парсим данные
 
-                    $groups_data = $this->client->request('GET', 'http://ok.ru'.$query_data->group_url, ["proxy" => "127.0.0.1:8888"]);
+                    $groups_data = $this->client->request('GET', 'http://ok.ru'.$query_data->group_url);
 
                     $html_doc = $groups_data->getBody()->getContents();
 
@@ -399,8 +398,7 @@ class ParseOkGroups extends Command
                 "st.email"          => $login,
                 "st.password"       => $password,
                 "st.iscode"         => "false"
-            ],
-            "proxy"       => "127.0.0.1:8888"
+            ]
         ]);
 
         $html_doc = $data->getBody()->getContents();

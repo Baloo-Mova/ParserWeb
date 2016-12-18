@@ -480,7 +480,7 @@ class ParsingTasksController extends Controller
 
     public function storeTestingDeliveryOK(Request $request)
     {
-        
+
         //Записываем в таблицу тасков
         $task = new Tasks();
 
