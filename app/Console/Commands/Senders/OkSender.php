@@ -15,6 +15,10 @@ use GuzzleHttp\Cookie\SetCookie;
 
 class OkSender extends Command
 {
+    public $client  = null;
+    public $crawler = null;
+    public $gwt     = "";
+    public $tkn     = "";
     /**
      * The name and signature of the console command.
      *
@@ -46,6 +50,8 @@ class OkSender extends Command
      */
     public function handle()
     {
+        $this->crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
+
         while (true) {
             try {
                 $ok_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
@@ -73,180 +79,80 @@ class OkSender extends Command
                     continue;
                 }
 
-                $from = AccountsData::where(['type_id' => '2'])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
+                while (true) {
+                    $from = AccountsData::where(['type_id' => '2'])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
 
-                if ($from == null) {
-                    sleep(10);
-                    continue;
-                }
-
-                $login = $from->login;
-                $password = $from->password;
-
-                $uuid = "";
-
-                $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
-
-                $client = new GuzzleHttp\Client([
-                    'verify' => false,
-                    'cookies' => true,
-                    'headers' => [
-                        'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                        'Accept-Encoding' => 'gzip, deflate, br',
-                        'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3',
-                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0'
-                    ]
-                ]);
-//
-                if (empty($from->ok_cookie)) {
-
-                    /**
-                     * Делаем попытку логина
-                     */
-                    $data = $client->request('POST', 'https://www.ok.ru/https', [
-                        'form_params' => [
-                            "st.redirect" => "",
-                            "st.asr" => "",
-                            "st.posted" => "set",
-                            "st.originalaction" => "https://www.ok.ru/dk?cmd=AnonymLogin&st.cmd=anonymLogin",
-                            "st.fJS" => "on",
-                            "st.st.screenSize" => "1920 x 1080",
-                            "st.st.browserSize" => "947",
-                            "st.st.flashVer" => "23.0.0",
-                            "st.email" => $login,
-                            "st.password" => $password,
-                            "st.iscode" => "false"
-                        ]
-                    ]);
-
-                    $cookies_number = count($client->getConfig("cookies")); // Считаем, сколько получили кукисов
-
-                    $html_doc = $data->getBody()->getContents();
-
-                    if($cookies_number > 2){ // Куков больше 2, возможно залогинились
-
-                        $crawler->clear();
-                        $crawler->load($html_doc);
-
-                        if(count($crawler->find('Мы отправили')) > 0){ // Вывелось сообщение безопасности, значит не залогинились
-                            $from->delete(); // Аккаунт плохой - удаляем
-                            sleep(rand(1,4));
-                            continue;
-
-                        }else{
-                            $gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
-                            $tkn = substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
-
-                            $from->ok_user_gwt = $gwt;
-                            $from->ok_user_tkn = $tkn;
-
-                            $cookie = $client->getConfig('cookies');
-                            $gg = new CookieJar($cookie);
-                            $json = json_encode($cookie->toArray());
-
-                            if (!empty($from)) {
-                                $from->ok_cookie = $json;
-                                $from->save();
-                            }
-                        }
-                    }else{  // Точно не залогинись
-                        $from->delete(); // Аккаунт плохой - удаляем
-                        sleep(rand(1,4));
+                    if ( ! isset($from)) {
+                        sleep(10);
                         continue;
                     }
 
-                    $cook = $client->getConfig("cookies")->toArray();
+                    $cookies = json_decode($from->ok_cookie);
+                    $array   = new CookieJar();
 
-                    $bci = $cook[0]["Value"];
+                    if (isset($cookies)) {
+                        foreach ($cookies as $cookie) {
+                            $set = new SetCookie();
+                            $set->setDomain($cookie->Domain);
+                            $set->setExpires($cookie->Expires);
+                            $set->setName($cookie->Name);
+                            $set->setValue($cookie->Value);
+                            $set->setPath($cookie->Path);
+                            $array->setCookie($set);
+                        }
+                    }
 
-                }
-
-                $json = json_decode($from->ok_cookie);
-                $cookies = json_decode($from->ok_cookie);
-                $array = new CookieJar();
-
-                foreach ($cookies as $cookie) {
-                    $set = new SetCookie();
-                    $set->setDomain($cookie->Domain);
-                    $set->setExpires($cookie->Expires);
-                    $set->setName($cookie->Name);
-                    $set->setValue($cookie->Value);
-                    $set->setPath($cookie->Path);
-                    $array->setCookie($set);
-                }
-                $cookiejar = new CookieJar($json);
-
-                unset($client);
-
-                $client = new Client([
-                    'headers' => [
-                        'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
-                        'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
-                        'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
-                    ],
-                    'verify' => false,
-                    'cookies' => $array->count() > 0 ? $array : true,
-                    'allow_redirects' => true,
-                    'timeout' => 10,
-                ]);
-
-                $cook = $client->getConfig("cookies")->toArray();
-
-                $bci = $cook[0]["Value"];
-
-                $gwt = $from->ok_user_gwt;
-                $tkn = $from->ok_user_tkn;
-
-                $data1 = $client->request('POST', 'https://www.ok.ru/');
-
-                $html_ = $data1->getBody()->getContents();
-                $crawler->clear();
-                $crawler->load($html_);
-
-                if(count($crawler->find('Кажется, пропала связь')) > 0 || count($crawler->find('логин, адрес почты или телефон')) > 0) { // Вывелось сообщение безопасности, значит не залогинились
-                    $from->delete(); // Аккаунт плохой - удаляем
-                    sleep(rand(1, 4));
-                    continue;
-                }
-//
-
-                /*
-                 * Залогинились, теперь получаем токен
-                 */
-                $data1 = $client->request('POST', 'https://www.ok.ru/');
-
-                 $tkn2 = $data1->getHeader("TKN");
-
-                $tkn = $tkn2[0];
-
-
-                //foreach($ok_query as $ok_item){
-
-                    $user_id = $ok_query->ok_user_id;
-
-                    $data = $client->request('POST', 'https://www.ok.ru/dk?cmd=MessagesController&st.convId=PRIVATE_'.$user_id.'&st.cmd=userMain&st.openPanel=messages', [
-                        'headers' => [
-                            'Referer' => 'https://ok.ru/',
-                            'TKN' => $tkn
+                    $this->client = new Client([
+                        'headers'         => [
+                            'User-Agent'      => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                            'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                            'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
+                            'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
                         ],
-                        'form_params' => [
-                            "st.txt" => $message->text,
-                            "st.uuid" => time(),
-                            "st.posted" => $gwt
-                        ]
+                        'verify'          => false,
+                        'cookies'         => $array->count() > 0 ? $array : true,
+                        'allow_redirects' => true,
+                        'timeout'         => 20,
                     ]);
 
-                    $tkn2 = $data->getHeader("TKN");
+                    if ($array->count() < 1) {
+                        if ($this->login($from->login, $from->password)) {
+                            $from->ok_user_gwt = $this->gwt;
+                            $from->ok_user_tkn = $this->tkn;
+                            $from->ok_cookie   = json_encode($this->client->getConfig('cookies')->toArray());
+                            $from->save();
+                            break;
+                        } else {
+                            $from->delete();
+                        }
+                    } else {
+                        $this->gwt = $from->ok_user_gwt;
+                        $this->tkn = $from->ok_user_tkn;
+                        break;
+                    }
+                }
 
-                    $tkn = $tkn2[0];
+                $data = $this->client->request('POST', 'https://www.ok.ru/dk?cmd=MessagesController&st.convId=PRIVATE_'.$ok_query->ok_user_id.'&st.cmd=userMain&st.openPanel=messages', [
+                    'headers' => [
+                        'Referer' => 'https://ok.ru/',
+                        'TKN' => $this->tkn
+                    ],
+                    'form_params' => [
+                        "st.txt" => $message->text,
+                        "st.uuid" => time(),
+                        "st.posted" => $this->gwt
+                    ],
+                    "proxy" => "127.0.0.1:8888"
+                ]);
 
-                    $ok_query->ok_sended = 1;
-                    $ok_query->save();
+                if ( ! empty($data->getHeaderLine('TKN'))) {
+                    $this->tkn = $data->getHeaderLine('TKN');
+                }
 
-                    sleep(rand(1, 5));
+                $ok_query->ok_sended = 1;
+                $ok_query->save();
 
-                //}
+                sleep(rand(1, 5));
 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
@@ -256,6 +162,46 @@ class OkSender extends Command
             }
         }
 
+    }
+
+    public function login($login, $password)
+    {
+
+        $data = $this->client->request('POST', 'https://www.ok.ru/https', [
+            'form_params' => [
+                "st.redirect"       => "",
+                "st.asr"            => "",
+                "st.posted"         => "set",
+                "st.originalaction" => "https://www.ok.ru/dk?cmd=AnonymLogin&st.cmd=anonymLogin",
+                "st.fJS"            => "on",
+                "st.st.screenSize"  => "1920 x 1080",
+                "st.st.browserSize" => "947",
+                "st.st.flashVer"    => "23.0.0",
+                "st.email"          => $login,
+                "st.password"       => $password,
+                "st.iscode"         => "false"
+            ],
+            "proxy"       => "127.0.0.1:8888"
+        ]);
+
+        $html_doc = $data->getBody()->getContents();
+
+        if ($this->client->getConfig("cookies")->count() > 2) { // Куков больше 2, возможно залогинились
+
+            $this->crawler->clear();
+            $this->crawler->load($html_doc);
+
+            if (count($this->crawler->find('Мы отправили')) > 0) { // Вывелось сообщение безопасности, значит не залогинились
+                return false;
+            }
+
+            $this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
+            $this->tkn = substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
+
+            return true;
+        } else {  // Точно не залогинись
+            return false;
+        }
     }
 
 }
