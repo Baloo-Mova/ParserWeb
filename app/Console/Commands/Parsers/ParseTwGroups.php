@@ -2,37 +2,35 @@
 
 namespace App\Console\Commands\Parsers;
 
-use App\Models\Parser\OkGroups;
 use Illuminate\Console\Command;
-use App\Helpers\SimpleHtmlDom;
+use App\Models\Parser\ErrorLog;
 use App\Models\AccountsData;
 use App\Models\SearchQueries;
-use App\Models\Parser\ErrorLog;
-
-use GuzzleHttp;
+use App\Models\Parser\TwLinks;
+use App\Helpers\SimpleHtmlDom;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 
-class ParseOkGroups extends Command
+class ParseTwGroups extends Command
 {
     public $client  = null;
     public $crawler = null;
-    public $gwt     = "";
     public $tkn     = "";
+    public $max_position = "";
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'parse:okgroups';
+    protected $signature = 'parse:twgroups';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Parse ok groups';
+    protected $description = 'Parse Twitter groups and it members';
 
     /**
      * Create a new command instance.
@@ -55,16 +53,23 @@ class ParseOkGroups extends Command
 
         while (true) {
 
-
             try {
 
-                $query_data = OkGroups::where([
+                $query_data = TwLinks::where([
                     ['offset', '<>', -1],
-                    ['reserved', '=', 0]
-                ])->first(); // Забираем 1 групп для этого таска
-
+                    ['reserved', '=', 0],
+                    ['type', '=', 2]
+                ])->first(); // Забираем людей для этого таска
 
                 if (!isset($query_data)) {
+                    $query_data = TwLinks::where([
+                        ['offset', '<>', -1],
+                        ['reserved', '=', 0],
+                        ['type', '=', 1]
+                    ])->first(); // Если нет людей, берем группу
+                }
+
+                if (!isset($query_data)) { // Если нет и групп, ждем, когда появятся
                     sleep(10);
                     continue;
                 }
@@ -78,15 +83,15 @@ class ParseOkGroups extends Command
                 $skypes = [];
 
                 while (true) {
-                    $from = AccountsData::where(['type_id' => '2'])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
+                    $from = AccountsData::where(['type_id' => 4])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
 
-                    if ( ! isset($from)) {
+                    if (!isset($from)) {
                         sleep(10);
                         continue;
                     }
 
-                    $cookies = json_decode($from->ok_cookie);
-                    $array   = new CookieJar();
+                    $cookies = json_decode($from->tw_cookie);
+                    $array = new CookieJar();
 
                     if (isset($cookies)) {
                         foreach ($cookies as $cookie) {
@@ -101,51 +106,47 @@ class ParseOkGroups extends Command
                     }
 
                     $this->client = new Client([
-                        'headers'         => [
-                            'User-Agent'      => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
-                            'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'headers' => [
+                            'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                             'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
                             'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
                         ],
-                        'verify'          => false,
-                        'cookies'         => $array->count() > 0 ? $array : true,
+                        'verify' => false,
+                        'cookies' => $array->count() > 0 ? $array : true,
                         'allow_redirects' => true,
-                        'timeout'         => 20,
+                        'timeout' => 20,
                     ]);
 
                     if ($array->count() < 1) {
                         if ($this->login($from->login, $from->password)) {
-                            $from->ok_user_gwt = $this->gwt;
-                            $from->ok_user_tkn = $this->tkn;
-                            $from->ok_cookie   = json_encode($this->client->getConfig('cookies')->toArray());
+                            $from->tw_tkn = $this->tkn;
+                            $from->tw_cookie = json_encode($this->client->getConfig('cookies')->toArray());
                             $from->save();
                             break;
                         } else {
                             $from->delete();
                         }
                     } else {
-                        $this->gwt = $from->ok_user_gwt;
-                        $this->tkn = $from->ok_user_tkn;
+                        $this->tkn = $from->tw_tkn;
                         break;
                     }
+
                 }
 
-                if($query_data->type == 1){ // Это группа, парсим данные, достаем всех пользователей
+                if($query_data->type == 1) { // Это группа, парсим данные, достаем всех пользователей
 
-                    $gr_url = $query_data->group_url;
+                    $gr_url = $query_data->url;
 
-
-                    $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url);
+                    $groups_data = $this->client->request('GET', 'https://twitter.com' . $gr_url);
 
                     $html_doc = $groups_data->getBody()->getContents();
                     $this->crawler->clear();
                     $this->crawler->load($html_doc);
 
-
                     //Ищем все мыла на странице, сохраняем в $mails[]
 
                     $mails_group = $this->extractEmails($html_doc);
-
 
                     if (!empty($mails_group)) {
 
@@ -170,86 +171,62 @@ class ParseOkGroups extends Command
                         $skypes = [];
                     }
 
-
-
-                    $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url . "/members");
+                    $groups_data = $this->client->request('GET', 'https://twitter.com' . $gr_url . '/followers');
 
                     $html_doc = $groups_data->getBody()->getContents();
                     $this->crawler->clear();
                     $this->crawler->load($html_doc);
 
-                    $gr_id = str_replace(['"', '=',":"], "", substr($html_doc, strripos($html_doc, "groupId") + 8, 15));
+                    $dt = $this->crawler->find("div.GridTimeline-items", 0);
 
-
+                    if (isset($dt->attr['data-min-position'])) {
+                        $this->max_position = $dt->attr['data-min-position'];
+                    }
 
                     if($query_data->offset == 1) {
                         $this->parsePage($html_doc, $query_data->task_id);
                     }
 
-                    /*
-                     * Получаем участников сообщества из остальных страниц, сохраняем линки туда же, в $peoples_url_list
-                     * Если закоменчено, это для тестирования (сохранения юзеров только с 1 страницы)
-                     */
-                    do {
+                    do { // Вытаскиваем линки групп на всех остальных страницах
+
+                        $groups_data = $this->client->request('GET', 'https://twitter.com'
+                            .$gr_url.'/followers/users?include_available_features=1&include_entities=1&max_position='.
+                            $this->max_position.'&reset_error_state=false');
 
 
-                        $groupname = str_replace(["/"], "", $gr_url);
+                        $html_doc = $groups_data->getBody()->getContents();
 
-                        if(strpos($gr_url, "/group") !== false){
-                            $groupname = substr($gr_url, 7);
-                            $group_members_query = 'https://ok.ru'.$gr_url.'/members?cmd=GroupMembersResultsBlock&gwt.requested='.$this->gwt.'&st.cmd=altGroupMembers&st.groupId='.$gr_id.'&st.vpl.mini=false&';
-                        }else{
-                            $groupname = substr($gr_url, 1);
-                            $group_members_query = 'https://ok.ru'.$gr_url.'/members?cmd=GroupMembersResultsBlock&gwt.requested='.$this->gwt.'&st.cmd=altGroupMembers&st.groupId='.$gr_id.'&st.referenceName='.$groupname.'&st.vpl.mini=false&';
+                        $group_json = json_decode($html_doc);
+
+                        if($group_json->has_more_items == true) {
+                            $this->parsePage($group_json->items_html, $query_data->task_id);
                         }
 
+                        $this->max_position = $group_json->min_position;
 
-                        $groups_data = $this->client->request('POST',  $group_members_query, [
-                            'headers' => [
-                                'Referer' => 'https://ok.ru/',
-                                'TKN' => $this->tkn
-                            ],
-                            "form_params" => [
-                                "fetch" => "false",
-                                "st.page" => $page_numb++,
-                                "st.loaderid" => "GroupMembersResultsBlockLoader"
-
-                            ]
-                        ]);
-
-                        if ( ! empty($groups_data->getHeaderLine('TKN'))) {
-                            $this->tkn = $groups_data->getHeaderLine('TKN');
-                        }
-
-                        $gr_doc = $groups_data->getBody()->getContents();
-                        $this->parsePage($gr_doc, $query_data->task_id);
-
-
-                        $query_data->offset = $page_numb;
+                        $query_data->offset = $this->max_position;
                         $query_data->save();
-                        sleep(rand(10,15));
 
-                    } while (strlen($gr_doc) > 200);
+                        sleep(rand(5, 20));
+                    } while ($group_json->has_more_items == true);
 
                     $this->saveInfo($gr_url, null, null, $mails, $skypes, $query_data->task_id, null);
 
                     $query_data->delete();    // Получили всех пользователей, удаляем группу
+                    sleep(rand(1, 3));
 
-                }else{                // Это человек, парсим данные
+                }else{  // Это человек, парсим данные
 
-                    $groups_data = $this->client->request('GET', 'http://ok.ru'.$query_data->group_url);
+                    $groups_data = $this->client->request('GET', 'https://twitter.com'.$query_data->url);
 
                     $html_doc = $groups_data->getBody()->getContents();
 
                     $this->crawler->clear();
                     $this->crawler->load($html_doc);
 
-                    $html_doc = $this->crawler->find('body', 0);
-
-
-                    $people_id_tmp = substr($html_doc, strripos($html_doc, "st.friendId=") + 12, 20);
-
-                    $people_id = preg_replace('~\D+~','',$people_id_tmp);
+                    $user_url = $this->crawler->find("a.ProfileHeaderCard-nameLink", 0);
+                    $user_id = "@".$this->crawler->find("span.u-linkComplex-target", 0)->plaintext;
+                    $user_info = $this->crawler->find("span.ProfileHeaderCard-locationText", 0)->plaintext;
 
                     $mails_users = $this->extractEmails($html_doc);
 
@@ -271,35 +248,42 @@ class ParseOkGroups extends Command
 
                     }
 
-
-                    $fio = $html_doc->find("h1.mctc_name_tx", 0)->plaintext;
-                    $user_info_tmp = $html_doc->find("span.mctc_infoContainer_not_block", 0)->plaintext;
-
-                    if(preg_match('/[0-9]/', $user_info_tmp)){
-                        $user_info = substr($user_info_tmp, strpos($user_info_tmp, ",") + 1);
-                    }else{
-                        $user_info = $user_info_tmp;
-                    }
-
-                    $this->saveInfo($query_data->group_url, $fio, $user_info, $mails, $skypes, $query_data->task_id, $people_id);
+                    $this->saveInfo($query_data->url, $user_url->plaintext, $user_info, $mails, $skypes, $query_data->task_id, $user_id);
 
                     $query_data->delete();
 
                     sleep(rand(2, 8));
 
+
                 }
 
 
-
             } catch (\Exception $ex) {
-                $log = new ErrorLog();
-                $log->task_id = 0;
-                $log->message = $ex->getTraceAsString();
-                $log->save();
+                $err = new ErrorLog();
+                $err->message = $ex->getTraceAsString();
+                $err->task_id = 0;
+                $err->save();
             }
 
         }
 
+    }
+
+    public function parsePage($data, $task_id)
+    {
+        $this->crawler->clear();
+        $this->crawler->load($data);
+
+        foreach ($this->crawler->find("a.ProfileCard-screennameLink") as $link) {
+
+            $tw_link            = new TwLinks();
+            $tw_link->url       = $link->href;
+            $tw_link->task_id   = $task_id;
+            $tw_link->type      = 2;
+            $tw_link->reserved  = 0;
+            $tw_link->save();
+
+        }
     }
 
     public function saveInfo($gr_url, $fio, $user_info, $mails, $skypes, $task_id, $people_id)
@@ -309,7 +293,7 @@ class ParseOkGroups extends Command
          * Сохраняем мыла и скайпы
          */
         $search_query = new SearchQueries;
-        $search_query->link = "https://ok.ru".$gr_url;
+        $search_query->link = "https://twitter.com".$gr_url;
         $search_query->vk_name = isset($fio) && strlen($fio) > 0 && strlen($fio) < 500 ? $this->clearstr($fio) : "";
         $search_query->vk_city = isset($user_info) && strlen($user_info) > 0 && strlen($user_info) < 500 ? $user_info : null;
         $search_query->mails = count($mails) != 0 ? implode(",", $mails) : null;
@@ -320,8 +304,42 @@ class ParseOkGroups extends Command
         $search_query->email_sended = 0;
         $search_query->sk_recevied = 0;
         $search_query->sk_sended = 0;
-        $search_query->ok_user_id = isset($people_id) ? $people_id : null;
+        $search_query->tw_user_id = isset($people_id) ? $people_id : null;
         $search_query->save();
+    }
+
+    public function login($login, $password)
+    {
+        $auth_token_query = $this->client->request('GET', 'https://twitter.com');
+
+        $auth_token_query_data = $auth_token_query->getBody()->getContents();
+
+        $this->tkn = substr($auth_token_query_data,
+            stripos($auth_token_query_data, "formAuthenticityToken&quot;:&quot;") + 34, 40);
+
+        $data = $this->client->request('POST', 'https://twitter.com/sessions', [
+            'form_params' => [
+                "session[username_or_email]"    => $login,
+                "session[password]"             => $password,
+                "remember_me"                   => "1",
+                "return_to_ssl"                 => "true",
+                "scribe_log"                    => "",
+                "redirect_after_login"          => "/?lang=ru",
+                "authenticity_token"            => $this->tkn
+            ]
+        ]);
+
+        $html_doc = $data->getBody()->getContents();
+
+        if ($this->client->getConfig("cookies")->count() > 2) { // Куков больше 2, возможно залогинились
+
+            $this->crawler->clear();
+            $this->crawler->load($html_doc);
+
+            return true;
+        } else {  // Точно не залогинись
+            return false;
+        }
     }
 
     public function extractEmails($data, $before = [])
@@ -364,62 +382,6 @@ class ParseOkGroups extends Command
         }
 
         return $before;
-    }
-
-    public function parsePage($data, $task_id)
-    {
-        $this->crawler->clear();
-        $this->crawler->load($data);
-
-        foreach ($this->crawler->find("a.photoWrapper") as $query_data2) {
-
-            $ok_group = new OkGroups();
-            $ok_group->group_url = substr($query_data2->href, 0, strripos($query_data2->href, "?st."));
-            $ok_group->task_id = $task_id;
-            $ok_group->type = 2;
-            $ok_group->reserved = 0;
-            $ok_group->save();
-
-        }
-    }
-
-    public function login($login, $password)
-    {
-
-        $data = $this->client->request('POST', 'https://www.ok.ru/https', [
-            'form_params' => [
-                "st.redirect"       => "",
-                "st.asr"            => "",
-                "st.posted"         => "set",
-                "st.originalaction" => "https://www.ok.ru/dk?cmd=AnonymLogin&st.cmd=anonymLogin",
-                "st.fJS"            => "on",
-                "st.st.screenSize"  => "1920 x 1080",
-                "st.st.browserSize" => "947",
-                "st.st.flashVer"    => "23.0.0",
-                "st.email"          => $login,
-                "st.password"       => $password,
-                "st.iscode"         => "false"
-            ]
-        ]);
-
-        $html_doc = $data->getBody()->getContents();
-
-        if ($this->client->getConfig("cookies")->count() > 2) { // Куков больше 2, возможно залогинились
-
-            $this->crawler->clear();
-            $this->crawler->load($html_doc);
-
-            if (count($this->crawler->find('Мы отправили')) > 0) { // Вывелось сообщение безопасности, значит не залогинились
-                return false;
-            }
-
-            $this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
-            $this->tkn = substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
-
-            return true;
-        } else {  // Точно не залогинись
-            return false;
-        }
     }
 
     function endsWith($haystack, $needle)

@@ -11,6 +11,7 @@ use App\Console\Commands\Parsers\ParseVKGetGroups;
 use App\Console\Commands\Parsers\ParseVKGetUsers;
 use App\Console\Commands\Parsers\ParseVK;
 use App\Console\Commands\Parsers\ParseTw;
+use App\Console\Commands\Parsers\ParseTwGroups;
 use App\Console\Commands\Senders\VKSender;
 use App\Console\Commands\Senders\EmailSender;
 use App\Console\Commands\Tester;
@@ -34,6 +35,7 @@ class Kernel extends ConsoleKernel
          ParseSite::class,
          ParseVKGetGroups::class,
          ParseVKGetUsers::class,
+         ParseTwGroups::class,
          ParseVK::class,
          ParseTw::class,
          VKSender::class,

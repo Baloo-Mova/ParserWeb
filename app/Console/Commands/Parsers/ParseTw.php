@@ -120,8 +120,7 @@ class ParseTw extends Command
                     }
                 }
 
-                $get_groups_query = $this->client->request('GET', 'https://twitter.com/search?f=users&q='
-                    .urlencode($task->task_query), ["proxy" => "127.0.0.1:8888"]); // Совершаем поиск
+                $get_groups_query = $this->client->request('GET', 'https://twitter.com/search?f=users&q='.urlencode($task->task_query)); // Совершаем поиск
 
                 if ($page_numb == 1) {
 
@@ -138,15 +137,12 @@ class ParseTw extends Command
                     $this->parsePage($content, $task->id);
                 }
 
-                //$get_groups_query_res = $get_groups_query->getBody()->getContents(); // Вытаскиваем результат
-
-
 
                 do { // Вытаскиваем линки групп на всех остальных страницах
 
-
-
-                    $groups_data = $this->client->request('GET', 'https://twitter.com/i/search/timeline?f=users&vertical=default&q='.urlencode($task->task_query).'&include_available_features=1&include_entities=1&max_position='.$this->max_position.'&reset_error_state=false', ["proxy" => "127.0.0.1:8888"]);
+                    $groups_data = $this->client->request('GET', 'https://twitter.com/i/search/timeline?f=users&vertical=default&q='
+                        .urlencode($task->task_query).'&include_available_features=1&include_entities=1&max_position='
+                        .$this->max_position.'&reset_error_state=false');
 
 
                     $html_doc = $groups_data->getBody()->getContents();
@@ -181,7 +177,7 @@ class ParseTw extends Command
 
     public function login($login, $password)
     {
-        $auth_token_query = $this->client->request('GET', 'https://twitter.com', ["proxy" => "127.0.0.1:8888"]);
+        $auth_token_query = $this->client->request('GET', 'https://twitter.com');
 
         $auth_token_query_data = $auth_token_query->getBody()->getContents();
 
@@ -197,8 +193,7 @@ class ParseTw extends Command
                 "scribe_log"                    => "",
                 "redirect_after_login"          => "/?lang=ru",
                 "authenticity_token"            => $this->tkn
-            ],
-            "proxy" => "127.0.0.1:8888"
+            ]
         ]);
 
         $html_doc = $data->getBody()->getContents();

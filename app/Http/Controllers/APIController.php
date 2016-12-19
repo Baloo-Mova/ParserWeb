@@ -7,6 +7,7 @@ use App\Models\SearchQueries;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Parser\VKLinks;
+use App\Models\Parser\TwLinks;
 use App\Models\Parser\OkGroups;
 
 class APIController extends Controller
@@ -23,7 +24,10 @@ class APIController extends Controller
         }
 
         $count = SearchQueries::where('task_id', '=', $taskId)->count();
-        $countQueue = SiteLinks::where('task_id', '=', $taskId)->count()+  VKLinks::where('task_id', '=', $taskId)->count()+  OkGroups::where('task_id', '=', $taskId)->count();
+        $countQueue = SiteLinks::where('task_id', '=', $taskId)->count()
+            +  VKLinks::where('task_id', '=', $taskId)->count()
+            +  OkGroups::where('task_id', '=', $taskId)->count()
+            +  TwLinks::where('task_id', '=', $taskId)->count();
         $countSended = SearchQueries::where([
             'task_id'=> $taskId
         ])->select(DB::raw('SUM(email_sended) + SUM(sk_sended)+SUM(vk_sended)+SUM(ok_sended) as total'))->first()->total;
@@ -51,7 +55,10 @@ class APIController extends Controller
             $maxId = $results[0]->id;
         }
 
-        $countQueue = SiteLinks::where('task_id', '=', $taskId)->count()+VKLinks::where('task_id', '=', $taskId)->count()+  OkGroups::where('task_id', '=', $taskId)->count();
+        $countQueue = SiteLinks::where('task_id', '=', $taskId)->count()
+            +  VKLinks::where('task_id', '=', $taskId)->count()
+            +  OkGroups::where('task_id', '=', $taskId)->count()
+            +  TwLinks::where('task_id', '=', $taskId)->count();
 
         return json_encode([
             'success'=>true,

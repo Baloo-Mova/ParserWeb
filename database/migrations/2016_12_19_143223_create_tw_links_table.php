@@ -19,7 +19,7 @@ class CreateTwLinksTable extends Migration
             $table->integer('task_id');
             $table->boolean('reserved')->default(0);
             $table->integer('type');
-            $table->integer('offset')->default(1);
+            $table->string('offset', 255)->default("1");
             $table->timestamps();
         });
     }
