@@ -47,6 +47,18 @@ class AccountsDataController extends Controller
     }
 
     /**
+     * Вывод всех записей типа TWITTER
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function tw()
+    {
+        $data = AccountsData::tw()->paginate(config('config.accountsdatapaginate'));
+
+        return view('accounts_data.tw', ['data' => $data]);
+    }
+
+    /**
      * Вывод всех записей типа MAILS
      *
      * @return \Illuminate\Http\Response
@@ -120,6 +132,10 @@ class AccountsDataController extends Controller
 
             case 3:
                 return redirect()->route('accounts_data.emails');
+                break;
+
+            case 4:
+                return redirect()->route('accounts_data.tw');
                 break;
         }
     }
@@ -259,6 +275,20 @@ class AccountsDataController extends Controller
         DB::table('accounts_data')->where('type_id', '=', 2)->delete();
 
         return redirect()->route('accounts_data.ok');
+    }
+
+    /**
+     * Удаление всех записей типа Twitter
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function destroyTw()
+    {
+
+        DB::table('accounts_data')->where('type_id', '=', 4)->delete();
+
+        return redirect()->route('accounts_data.tw');
     }
 
     /**

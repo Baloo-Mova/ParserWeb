@@ -99,6 +99,12 @@
                         </a>
                     </li>
                     <li class="">
+                        <a href="{{ route('accounts_data.tw') }}" class="{{ Request::path() == 'accounts-data/tw' ? 'link_active' : ''}}">
+                            <i class='fa fa-twitter'></i>
+                            <span>Twitter Аккаунты</span>
+                        </a>
+                    </li>
+                    <li class="">
                         <a href="{{ route('smtpbase.index') }}" class="{{ Request::path() == 'smtp-base' ? 'link_active' : ''}}">
                             <i class='fa fa-envelope'></i>
                             <span>Default SMTP</span>

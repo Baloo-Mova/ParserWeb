@@ -24,6 +24,9 @@ class AccountsDataTypesSeeder extends Seeder
             ],
             [
                 'type_name' => 'SMTP'
+            ],
+            [
+                'type_name' => 'Twitter'
             ]
         ]);
     }
