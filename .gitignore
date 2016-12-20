@@ -1,5 +1,6 @@
 /node_modules
 /public/storage
+/public/search_queries_result.csv
 /vendor
 /.idea
 Homestead.json
