@@ -68,6 +68,11 @@
                                         <label for="ok_text" class="control-label">Текст Сообщения OK</label>
                                         <textarea class="form-control" rows="5" name="ok_text" id="ok_text"></textarea>
                                     </div>
+                                    <hr>
+                                    <div class="form-group has-feedback">
+                                        <label for="tw_text" class="control-label">Текст Сообщения Twitter</label>
+                                        <textarea class="form-control" rows="5" name="tw_text" id="tw_text" maxlength="100"></textarea>
+                                    </div>
                                 </div>
                         </div>
                         <div class="box-footer">

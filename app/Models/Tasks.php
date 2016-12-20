@@ -36,4 +36,8 @@ class Tasks extends Model
     {
         return $this->belongsTo(TemplateDeliveryOK::class, 'id', 'task_id');
     }
+    public function getTW()
+    {
+        return $this->belongsTo(TemplateDeliveryTw::class, 'id', 'task_id');
+    }
 }

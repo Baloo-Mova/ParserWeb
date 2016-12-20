@@ -30,7 +30,7 @@ class APIController extends Controller
             +  TwLinks::where('task_id', '=', $taskId)->count();
         $countSended = SearchQueries::where([
             'task_id'=> $taskId
-        ])->select(DB::raw('SUM(email_sended) + SUM(sk_sended)+SUM(vk_sended)+SUM(ok_sended) as total'))->first()->total;
+        ])->select(DB::raw('SUM(email_sended) + SUM(sk_sended)+SUM(vk_sended)+SUM(ok_sended)+SUM(tw_sended) as total'))->first()->total;
 
         return json_encode([
             'success'=>true,

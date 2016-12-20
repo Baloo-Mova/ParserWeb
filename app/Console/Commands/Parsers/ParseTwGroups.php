@@ -207,13 +207,13 @@ class ParseTwGroups extends Command
                         $query_data->offset = $this->max_position;
                         $query_data->save();
 
-                        sleep(rand(5, 20));
+                        sleep(rand(2, 5));
                     } while ($group_json->has_more_items == true);
 
                     $this->saveInfo($gr_url, null, null, $mails, $skypes, $query_data->task_id, null);
 
                     $query_data->delete();    // Получили всех пользователей, удаляем группу
-                    sleep(rand(1, 3));
+                    sleep(rand(1, 2));
 
                 }else{  // Это человек, парсим данные
 
@@ -252,7 +252,7 @@ class ParseTwGroups extends Command
 
                     $query_data->delete();
 
-                    sleep(rand(2, 8));
+                    sleep(rand(2, 4));
 
 
                 }

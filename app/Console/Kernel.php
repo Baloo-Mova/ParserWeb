@@ -13,6 +13,7 @@ use App\Console\Commands\Parsers\ParseVK;
 use App\Console\Commands\Parsers\ParseTw;
 use App\Console\Commands\Parsers\ParseTwGroups;
 use App\Console\Commands\Senders\VKSender;
+use App\Console\Commands\Senders\TwitterSender;
 use App\Console\Commands\Senders\EmailSender;
 use App\Console\Commands\Tester;
 use App\Console\Commands\Senders\SkypeSender;
@@ -39,6 +40,7 @@ class Kernel extends ConsoleKernel
          ParseVK::class,
          ParseTw::class,
          VKSender::class,
+         TwitterSender::class,
          ParseOk::class,
          ParseOkGroups::class,
          EmailSender::class,

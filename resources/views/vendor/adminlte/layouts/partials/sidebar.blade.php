@@ -55,6 +55,10 @@
                             <i class='fa fa-odnoklassniki'></i>
                             <span>OK</span>
                         </a>
+                        <a href="{{ route('parsing_tasks.testingDeliveryTW') }}" class="{{ Request::path() == 'parsing_tasks/parsing_tasks.testingDeliveryTW' ? 'link_active' : ''}}">
+                            <i class='fa fa-twitter'></i>
+                            <span>Twitter</span>
+                        </a>
                     </li>
                 </ul>
             </li>
