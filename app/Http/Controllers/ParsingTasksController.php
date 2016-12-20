@@ -261,6 +261,7 @@ class ParsingTasksController extends Controller
             $table = SearchQueries::where('task_id', '=', $id)->get()->toArray();
 
             if(count($table) > 0){
+                chmod("search_queries_result.csv", 0755);
                 $file = fopen('search_queries_result.csv', 'w');
                 foreach ($table as $row) {
 
