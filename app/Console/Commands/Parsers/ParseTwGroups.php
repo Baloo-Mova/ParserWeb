@@ -180,7 +180,7 @@ class ParseTwGroups extends Command
 
                     $is_protec = $this->crawler->find("div.user-actions ", 0)->attr['data-protected'];
 
-                    if($is_protec === true){
+                    if($is_protec == "true"){
                         $query_data->delete();    // Группа закрыта, удаляем группу
                         sleep(rand(1, 2));
                         continue;
