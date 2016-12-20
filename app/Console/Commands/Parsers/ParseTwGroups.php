@@ -174,8 +174,17 @@ class ParseTwGroups extends Command
                     $groups_data = $this->client->request('GET', 'https://twitter.com' . $gr_url . '/followers');
 
                     $html_doc = $groups_data->getBody()->getContents();
+
                     $this->crawler->clear();
                     $this->crawler->load($html_doc);
+
+                    $is_protec = $this->crawler->find("div.user-actions ", 0)->attr['data-protected'];
+
+                    if($is_protec === true){
+                        $query_data->delete();    // Группа закрыта, удаляем группу
+                        sleep(rand(1, 2));
+                        continue;
+                    }
 
                     $dt = $this->crawler->find("div.GridTimeline-items", 0);
 
