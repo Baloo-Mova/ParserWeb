@@ -39,6 +39,11 @@ class AccountsData extends Model
         $query->where('type_id', '=', 4)->orderBy('id', 'desc');
     }
 
+    static function scopeIns($query)
+    {
+        $query->where('type_id', '=', 5)->orderBy('id', 'desc');
+    }
+
     static function scopeEmails($query)
     {
         $query->where('type_id', '=', 3)->orderBy('id', 'desc');

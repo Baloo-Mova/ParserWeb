@@ -28,6 +28,7 @@
                                     <option value="2" {{ $data->type_id == 2 ? "selected" : ""}}>OK</option>
                                     <option value="3" {{ $data->type_id == 3 ? "selected" : ""}}>SMTP</option>
                                     <option value="4" {{ $data->type_id == 4 ? "selected" : ""}}>Twitter</option>
+                                    <option value="5" {{ $data->type_id == 5 ? "selected" : ""}}>Instagram</option>
                                 </select>
                             </div>
                             @if($data->type_id == 3)

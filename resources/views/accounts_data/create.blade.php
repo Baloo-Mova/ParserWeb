@@ -180,7 +180,7 @@
                             </div>
                         </div>
                         <div class="box-body">
-                            <form action="{{ url('/accounts-data/mails-upload') }}" method="post">
+                            <form action="{{ url('/accounts-data/tw-upload') }}" method="post">
                                 {{ csrf_field() }}
                                 <div class="form-group has-feedback">
                                     <textarea name="text" class="form-control" cols="30" rows="8"></textarea>
@@ -201,7 +201,51 @@
                             </div>
                         </div>
                         <div class="box-body">
-                            <form action="{{ url('/accounts-data/mails-upload') }}" enctype="multipart/form-data"  method="post">
+                            <form action="{{ url('/accounts-data/tw-upload') }}" enctype="multipart/form-data"  method="post">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="user_id" value="{{ $user->id }}">
+                                <div class="form-group">
+                                    <label for="text_file">Загрузить Файл</label>
+                                    <input type="file" class="form-controll" id="text_file" name="text_file">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
+                            </form>
+                        </div>
+                    </div>
+                @endif
+
+                @if($type == 5)
+                    <div class="box box-primary collapsed-box">
+                        <div class="box-header">
+                            Массовое Добавление (Instagram)
+                            <div class="box-tools pull-right">
+                                <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse">
+                                    <i class="fa fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <div class="box-body">
+                            <form action="{{ url('/accounts-data/ins-upload') }}" method="post">
+                                {{ csrf_field() }}
+                                <div class="form-group has-feedback">
+                                    <textarea name="text" class="form-control" cols="30" rows="8"></textarea>
+                                </div>
+                                <input type="hidden" name="user_id" value="{{ $user->id }}">
+                                <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
+                            </form>
+                        </div>
+                    </div>
+
+
+                    <div class="box box-primary collapsed-box">
+                        <div class="box-header">
+                            Массовое Добавление Из Файла(Instagram)
+                            <div class="box-tools pull-right">
+                                <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse">
+                                    <i class="fa fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <div class="box-body">
+                            <form action="{{ url('/accounts-data/ins-upload') }}" enctype="multipart/form-data"  method="post">
                                 {{ csrf_field() }}
                                 <input type="hidden" name="user_id" value="{{ $user->id }}">
                                 <div class="form-group">

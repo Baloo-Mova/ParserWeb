@@ -27,6 +27,9 @@ class AccountsDataTypesSeeder extends Seeder
             ],
             [
                 'type_name' => 'Twitter'
+            ],
+            [
+                'type_name' => 'Instagram'
             ]
         ]);
     }

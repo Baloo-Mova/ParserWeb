@@ -109,6 +109,12 @@
                         </a>
                     </li>
                     <li class="">
+                        <a href="{{ route('accounts_data.ins') }}" class="{{ Request::path() == 'accounts-data/ins' ? 'link_active' : ''}}">
+                            <i class='fa fa-instagram'></i>
+                            <span>Instagram Аккаунты</span>
+                        </a>
+                    </li>
+                    <li class="">
                         <a href="{{ route('smtpbase.index') }}" class="{{ Request::path() == 'smtp-base' ? 'link_active' : ''}}">
                             <i class='fa fa-envelope'></i>
                             <span>Default SMTP</span>
