@@ -863,21 +863,23 @@ class FB {
         preg_match("/href\=.(\S*).\ data-tab-key=.about.\>/s", $data, $req_link);
 
         $req_link = $req_link[1];
+        $req_link = str_replace("&amp;", "&", $req_link);
         //dd($req_link);
 
         $request = $this->client->request("GET", $req_link . "&section=contact-info&pnref=about", [
             //'proxy' => '127.0.0.1:8888'
                 ]
         );
+        
         $data = $request->getBody()->getContents();
-         \Illuminate\Support\Facades\Storage::put("data.html",$data);
-echo("pr1\n");
+         //\Illuminate\Support\Facades\Storage::put("data.html",$data);
+
         sleep(2);
        // $data = $request->getBody()->getContents();
 
 
         preg_match_all("/\<span\ dir\=.ltr.\>([0-9 ]*)/s", $data, $phones);
-echo("1\n");
+
         $phones = $phones[1];
         $phones_str = " ";
         if (!empty($phones)) {
@@ -895,14 +897,11 @@ echo("1\n");
             $txt_email = implode($emails, ', ');
             $txt_email = str_replace("%40", "@", $txt_email);
         }
-echo("2\n");
+
         $text = substr($data, strpos($data, "fb-timeline-cover-name"), 100);
         $text = substr($text, strpos($text, ">"), strpos($text, "</span>") - strpos($text, ">"));
         $text = str_replace(">", "", $text);
         //dd($text);
-
-
-echo("3\n");
 
 
         $search = SearchQueries::where(['link' => $user->link, 'task_id' => $user->task_id])->first();
@@ -922,7 +921,7 @@ echo("3\n");
 
             try {
                 $search_query->save();
-                echo("4\n");
+                
             } catch (\Exception $e) {
                 echo ($e->getMessage() . "\n");
             }

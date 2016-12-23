@@ -65,10 +65,10 @@ class ParseFB extends Command {
                     //$fblink->delete();
                     
                 } else if ($fblink->type == 1) {
-                    echo($fblink->user_id."\n");
+                   // echo($fblink->user_id."\n");
                     $web->parseUser($fblink);
-                    //$fblink->delete();
-                    echo($fblink->user_id."deleted\n");
+                    $fblink->delete();
+                    //echo($fblink->user_id."deleted\n");
                    // $fblink->reserved =0;
            // $fblink->save();
                 }
