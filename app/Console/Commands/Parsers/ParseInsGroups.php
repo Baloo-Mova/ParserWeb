@@ -58,7 +58,7 @@ class ParseInsGroups extends Command
 
                 sleep(rand(1,3));
 
-                $query_data = InsLinks::where([
+                /*$query_data = InsLinks::where([
                     ['offset', '<>', -1],
                     ['reserved', '=', 0],
                     ['type', '=', 2]
@@ -70,7 +70,12 @@ class ParseInsGroups extends Command
                         ['reserved', '=', 0],
                         ['type', '=', 1]
                     ])->first(); // Если нет людей, берем группу
-                }
+                }*/
+
+                $query_data = InsLinks::where([
+                    ['offset', '<>', -1],
+                    ['reserved', '=', 0]
+                ])->first();
 
                 if (!isset($query_data)) { // Если нет и групп, ждем, когда появятся
                     sleep(10);
