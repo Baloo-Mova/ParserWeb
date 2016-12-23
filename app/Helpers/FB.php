@@ -851,7 +851,7 @@ class FB {
             }
             break;
         }
-
+echo("1\n");
         sleep(1);
         //echo($user->user_id . "\n");
         // echo($sender->fb_user_id . "\n");
@@ -861,7 +861,7 @@ class FB {
         );
         $data = $request->getBody()->getContents();
         preg_match("/href\=.(\S*).\ data-tab-key=.about.\>/s", $data, $req_link);
-
+echo("2\n");
         $req_link = $req_link[1];
         //dd($req_link);
 
