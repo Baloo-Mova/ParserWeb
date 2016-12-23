@@ -863,17 +863,17 @@ class FB {
         preg_match("/href\=.(\S*).\ data-tab-key=.about.\>/s", $data, $req_link);
 
         $req_link = $req_link[1];
-        //dd($req_link);
+        dd($req_link);
 
         $request = $this->client->request("GET", $req_link . "&section=contact-info&pnref=about", [
             'proxy' => '127.0.0.1:8888'
                 ]
         );
-
+echo("pr1\n");
         sleep(2);
         $data = $request->getBody()->getContents();
 
-echo("pr1\n");
+
         preg_match_all("/\<span\ dir\=.ltr.\>([0-9 ]*)/s", $data, $phones);
 echo("1\n");
         $phones = $phones[1];
