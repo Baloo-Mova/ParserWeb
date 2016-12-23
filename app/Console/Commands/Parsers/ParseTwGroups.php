@@ -70,7 +70,7 @@ class ParseTwGroups extends Command
                 }
 
                 if (!isset($query_data)) { // Если нет и групп, ждем, когда появятся
-                    sleep(10);
+                    sleep(rand(7, 16));
                     continue;
                 }
 
