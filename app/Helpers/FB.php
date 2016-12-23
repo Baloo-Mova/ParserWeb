@@ -65,6 +65,7 @@ class FB {
         );
         sleep(2);
         $data = $request->getBody()->getContents();
+        \Illuminate\Support\Facades\Storage::put("text.txt",$data);
         //   print_r($request->getStatusCode() . "\n");
         //$cookie = $request->getHeader('set-cookie');
         //   print_r($data . "\n");
