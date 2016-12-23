@@ -866,7 +866,7 @@ class FB {
         //dd($req_link);
 
         $request = $this->client->request("GET", $req_link . "&section=contact-info&pnref=about", [
-            'proxy' => '127.0.0.1:8888'
+            //'proxy' => '127.0.0.1:8888'
                 ]
         );
         $data = $request->getBody()->getContents();
