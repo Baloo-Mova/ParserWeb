@@ -37,6 +37,7 @@ Route::group(['prefix' => 'accounts-data', 'middleware' => 'auth'], function () 
     Route::get('ok', ['uses' => 'AccountsDataController@ok', 'as' => 'accounts_data.ok']);
     Route::get('tw', ['uses' => 'AccountsDataController@tw', 'as' => 'accounts_data.tw']);
     Route::get('fb', ['uses' => 'AccountsDataController@fb', 'as' => 'accounts_data.fb']);
+    Route::get('ins', ['uses' => 'AccountsDataController@ins', 'as' => 'accounts_data.ins']);
     Route::get('emails', ['uses' => 'AccountsDataController@emails', 'as' => 'accounts_data.emails']);
     Route::get('/create/{type}', ['uses' => 'AccountsDataController@create', 'as' => 'accounts_data.create']);
     Route::post('/create/{type}', ['uses' => 'AccountsDataController@store', 'as' => 'accounts_data.store']);
@@ -47,10 +48,13 @@ Route::group(['prefix' => 'accounts-data', 'middleware' => 'auth'], function () 
     Route::get('/destroy-vk', ['uses'=>'AccountsDataController@destroyVk', 'as'=>'accounts_data.destroy.vk']);
     Route::get('/destroy-ok', ['uses'=>'AccountsDataController@destroyOk', 'as'=>'accounts_data.destroy.ok']);
     Route::get('/destroy-tw', ['uses'=>'AccountsDataController@destroyTw', 'as'=>'accounts_data.destroy.tw']);
-    Route::get('/destroy-tw', ['uses'=>'AccountsDataController@destroyFb', 'as'=>'accounts_data.destroy.fb']);
+    Route::get('/destroy-ins', ['uses'=>'AccountsDataController@destroyIns', 'as'=>'accounts_data.destroy.ins']);
+    Route::get('/destroy-fb', ['uses'=>'AccountsDataController@destroyFb', 'as'=>'accounts_data.destroy.fb']);
     Route::get('/destroy-emails', ['uses'=>'AccountsDataController@destroyEmails', 'as'=>'accounts_data.destroy.emails']);
     Route::post('/vk-upload', ['uses'=>'AccountsDataController@vkupload', 'as'=>'accounts_data.vk.upload']);
     Route::post('/ok-upload', ['uses'=>'AccountsDataController@okupload', 'as'=>'accounts_data.ok.upload']);
+    Route::post('/tw-upload', ['uses'=>'AccountsDataController@twupload', 'as'=>'accounts_data.tw.upload']);
+    Route::post('/ins-upload', ['uses'=>'AccountsDataController@insupload', 'as'=>'accounts_data.ins.upload']);
     Route::post('/mails-upload', ['uses'=>'AccountsDataController@mailsupload', 'as'=>'accounts_data.mails.upload']);
 });
 

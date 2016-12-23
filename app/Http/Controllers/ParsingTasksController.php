@@ -274,6 +274,7 @@ class ParsingTasksController extends Controller
             $table = SearchQueries::where('task_id', '=', $id)->get()->toArray();
 
             if(count($table) > 0){
+                chmod("search_queries_result.csv", 0755);
                 $file = fopen('search_queries_result.csv', 'w');
                 foreach ($table as $row) {
 
@@ -419,6 +420,7 @@ class ParsingTasksController extends Controller
             $task->google_offset = 0;
             $task->need_send = 1;
             $task->tw_offset  = "-1";
+            $task->fb_complete  = "1";
             $task->save();
         $task_id = $task->id;
         //Записываем в таблицу тасков
@@ -474,6 +476,7 @@ class ParsingTasksController extends Controller
             $task->google_offset = 0;
             $task->need_send = 1;
             $task->tw_offset  = "-1";
+            $task->fb_complete  = "1";
             $task->save();
         $task_id = $task->id;
         //Записываем в таблицу тасков
@@ -531,6 +534,7 @@ class ParsingTasksController extends Controller
         $task->google_offset = 0;
         $task->need_send = 1;
         $task->tw_offset  = "-1";
+        $task->fb_complete  = "1";
         $task->save();
         $task_id = $task->id;
         //Записываем в таблицу тасков
@@ -589,6 +593,7 @@ class ParsingTasksController extends Controller
         $task->google_offset = 0;
         $task->need_send = 1;
         $task->tw_offset  = "-1";
+        $task->fb_complete  = "1";
         $task->save();
         $task_id = $task->id;
         //Записываем в таблицу тасков
@@ -646,6 +651,7 @@ class ParsingTasksController extends Controller
             $task->google_offset = 0;
             $task->need_send = 1;
             $task->tw_offset  = "-1";
+            $task->fb_complete  = "1";
             $task->save();
         $task_id = $task->id;
         //Записываем в таблицу тасков

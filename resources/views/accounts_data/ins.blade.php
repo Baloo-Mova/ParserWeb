@@ -1,7 +1,7 @@
 @extends('adminlte::layouts.app')
 
 @section('contentheader_title')
-    База Аккаунтов Facebook
+    База Аккаунтов Instagram
 @endsection
 
 @section('main-content')
@@ -9,16 +9,15 @@
         <div class="row">
             <div class="box box-primary">
                 <div class="box-body">
-                    <a href="{!! route("accounts_data.create",["type" => 6]) !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>
+                    <a href="{!! route("accounts_data.create",["type" => 5]) !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>
                     <a href="{{ route('accounts_data.destroy') }}"
-                       onclick="return confirm('Вы точно хотите очистить БД? Данное действие удалит записи всех типов (VK, OK, Emails)')"
+                       onclick="return confirm('Вы точно хотите очистить БД? Данное действие удалит записи всех типов (VK, OK, Emails, Tw, Ins)')"
                        class="btn btn-danger btn-flat pull-right add__button"
-                       title="Данное действие удалит записи всех типов (VK, OK, Emails)">Очистить БД</a>
-                    <a href="{{ route('accounts_data.destroy.fb') }}"
-                       onclick="return confirm('Вы точно хотите удалить все записи типа Facebook?')"
+                       title="Данное действие удалит записи всех типов (VK, OK, Tw, Inst, Emails)">Очистить БД</a>
+                    <a href="{{ route('accounts_data.destroy.ins') }}"
+                       onclick="return confirm('Вы точно хотите удалить все записи типа Instagram?')"
                        class="btn btn-danger btn-flat pull-right add__button delete__button"
-                       title="Данное действие удалит записи типа Facebook">Удалить все</a>
-                    <table class="table table-bordered table-striped">
+                       title="Данное действие удалит записи типа Ins">Удалить все</a><table class="table table-bordered table-striped">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -35,7 +34,6 @@
                                     <td>{{ $item->login }}</td>
                                     <td>{{ $item->password }}</td>
                                     <td>{{ $item->accountType->type_name }}</td>
-                                    
                                     <td>
                                         <a href="{{ route('accounts_data.edit',['id'=>$item['id']]) }}"
                                            class="btn btn-default" title="Update"><span class="glyphicon glyphicon-pencil"></span></a>

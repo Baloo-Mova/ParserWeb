@@ -41,9 +41,14 @@ class AccountsData extends Model
     {
         $query->where('type_id', '=', 4)->orderBy('id', 'desc');
     }
-    static function scopeFb($query)
+   
+    static function scopeIns($query)
     {
         $query->where('type_id', '=', 5)->orderBy('id', 'desc');
+    }
+     static function scopeFb($query)
+    {
+        $query->where('type_id', '=', 6)->orderBy('id', 'desc');
     }
 
     static function scopeEmails($query)

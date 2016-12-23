@@ -10,7 +10,8 @@ class AccountsDataTypes extends Model
     const OK    = 2;
     const SMTP  = 3;
     const TW    = 4;
-    const FB    = 5;
+    const INS    = 5;
+    const FB    = 6;
 
     protected $table = 'accounts_data_types';
     public $timestamps = false;

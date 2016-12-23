@@ -61,6 +61,18 @@ class AccountsDataController extends Controller {
     }
 
     /**
+     * Вывод всех записей типа Instagram
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function ins()
+    {
+        $data = AccountsData::ins()->paginate(config('config.accountsdatapaginate'));
+
+        return view('accounts_data.ins', ['data' => $data]);
+    }
+
+    /**
      * Вывод всех записей типа MAILS
      *
      * @return \Illuminate\Http\Response
@@ -136,8 +148,11 @@ class AccountsDataController extends Controller {
             case 4:
                 return redirect()->route('accounts_data.tw');
                 break;
-            
+
             case 5:
+                return redirect()->route('accounts_data.ins');
+                break;
+            case 6:
                 return redirect()->route('accounts_data.fb');
                 break;
         }
@@ -229,6 +244,17 @@ class AccountsDataController extends Controller {
             case 3:
                 return redirect()->route('accounts_data.emails');
                 break;
+
+            case 4:
+                return redirect()->route('accounts_data.tw');
+                break;
+
+            case 5:
+                return redirect()->route('accounts_data.ins');
+                break;
+            case 6:
+                return redirect()->route('accounts_data.fb');
+                break;
         }
 
         return redirect()->back();
@@ -297,6 +323,20 @@ class AccountsDataController extends Controller {
         DB::table('accounts_data')->where('type_id', '=', 5)->delete();
 
         return redirect()->route('accounts_data.fb');
+    }
+
+    /**
+     * Удаление всех записей типа Twitter
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function destroyIns()
+    {
+
+        DB::table('accounts_data')->where('type_id', '=', 5)->delete();
+
+        return redirect()->route('accounts_data.ins');
     }
 
     /**
@@ -387,6 +427,52 @@ class AccountsDataController extends Controller {
         }
 
         return redirect()->route('accounts_data.ok');
+    }
+
+    /**
+     * Массовая загрузка TW
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function twupload(Request $request)
+    {
+        if ( ! (empty($request->get('text')))) {
+            $accounts = explode("\r\n", $request->get('text'));
+            $this->vkokParse($accounts, $request->get('user_id'), 4);
+        } else {
+            if ($request->hasFile('text_file')) {
+                $filename = uniqid('ok_file', true) . '.' . $request->file('text_file')->getClientOriginalExtension();
+                $request->file('text_file')->storeAs('tmp_files', $filename);
+                $file = file(storage_path(config('config.tmp_folder')) . $filename);
+                $this->vkokParse($file, $request->get('user_id'), 4);
+            }
+        }
+
+        return redirect()->route('accounts_data.tw');
+    }
+
+    /**
+     * Массовая загрузка Ins
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function insupload(Request $request)
+    {
+        if ( ! (empty($request->get('text')))) {
+            $accounts = explode("\r\n", $request->get('text'));
+            $this->vkokParse($accounts, $request->get('user_id'), 5);
+        } else {
+            if ($request->hasFile('text_file')) {
+                $filename = uniqid('ok_file', true) . '.' . $request->file('text_file')->getClientOriginalExtension();
+                $request->file('text_file')->storeAs('tmp_files', $filename);
+                $file = file(storage_path(config('config.tmp_folder')) . $filename);
+                $this->vkokParse($file, $request->get('user_id'), 5);
+            }
+        }
+
+        return redirect()->route('accounts_data.ins');
     }
 
     /**

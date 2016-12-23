@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Parser\VKLinks;
 use App\Models\Parser\TwLinks;
 use App\Models\Parser\FBLinks;
+use App\Models\Parser\InsLinks;
 use App\Models\Parser\OkGroups;
 
 class APIController extends Controller
@@ -28,7 +29,8 @@ class APIController extends Controller
         $countQueue = SiteLinks::where('task_id', '=', $taskId)->count()
             +  VKLinks::where('task_id', '=', $taskId)->count()
             +  OkGroups::where('task_id', '=', $taskId)->count()
-            +  TwLinks::where('task_id', '=', $taskId)->count();
+            +  TwLinks::where('task_id', '=', $taskId)->count()
+            +  InsLinks::where('task_id', '=', $taskId)->count()
             +  FBLinks::where('task_id', '=', $taskId)->count();
         $countSended = SearchQueries::where([
             'task_id'=> $taskId
@@ -60,7 +62,8 @@ class APIController extends Controller
         $countQueue = SiteLinks::where('task_id', '=', $taskId)->count()
             +  VKLinks::where('task_id', '=', $taskId)->count()
             +  OkGroups::where('task_id', '=', $taskId)->count()
-            +  TwLinks::where('task_id', '=', $taskId)->count();
+            +  TwLinks::where('task_id', '=', $taskId)->count()
+            +  InsLinks::where('task_id', '=', $taskId)->count()
             +  FBLinks::where('task_id', '=', $taskId)->count();
 
         return json_encode([

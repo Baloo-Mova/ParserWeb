@@ -3,34 +3,35 @@
 namespace App\Console\Commands\Parsers;
 
 use Illuminate\Console\Command;
-use App\Models\Parser\ErrorLog;
 use App\Models\AccountsData;
 use App\Models\SearchQueries;
-use App\Models\Parser\TwLinks;
 use App\Helpers\SimpleHtmlDom;
+use App\Models\Parser\ErrorLog;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
+use App\Models\Parser\InsLinks;
 
-class ParseTwGroups extends Command
+class ParseInsGroups extends Command
 {
-    public $client  = null;
-    public $crawler = null;
-    public $tkn     = "";
-    public $max_position = "";
+    public $client          = null;
+    public $crawler         = null;
+    public $tkn             = "";
+    public $owner_id        = "";
+    public $max_position    = "";
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'parse:twgroups';
+    protected $signature = 'parse:insgroups';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Parse Twitter groups and it members';
+    protected $description = 'Parse Instagram groups and it members';
 
     /**
      * Create a new command instance.
@@ -55,14 +56,14 @@ class ParseTwGroups extends Command
 
             try {
 
-                $query_data = TwLinks::where([
+                $query_data = InsLinks::where([
                     ['offset', '<>', -1],
                     ['reserved', '=', 0],
                     ['type', '=', 2]
                 ])->first(); // Забираем людей для этого таска
 
-                if (!isset($query_data)) {
-                    $query_data = TwLinks::where([
+               if (!isset($query_data)) {
+                    $query_data = InsLinks::where([
                         ['offset', '<>', -1],
                         ['reserved', '=', 0],
                         ['type', '=', 1]
@@ -70,7 +71,7 @@ class ParseTwGroups extends Command
                 }
 
                 if (!isset($query_data)) { // Если нет и групп, ждем, когда появятся
-                    sleep(rand(7, 16));
+                    sleep(rand(8, 15));
                     continue;
                 }
 
@@ -83,14 +84,15 @@ class ParseTwGroups extends Command
                 $skypes = [];
 
                 while (true) {
-                    $from = AccountsData::where(['type_id' => 4])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
+
+                    $from = AccountsData::where(['type_id' => 5])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
 
                     if (!isset($from)) {
                         sleep(10);
                         continue;
                     }
 
-                    $cookies = json_decode($from->tw_cookie);
+                    $cookies = json_decode($from->ins_cookie);
                     $array = new CookieJar();
 
                     if (isset($cookies)) {
@@ -120,29 +122,41 @@ class ParseTwGroups extends Command
 
                     if ($array->count() < 1) {
                         if ($this->login($from->login, $from->password)) {
-                            $from->tw_tkn = $this->tkn;
-                            $from->tw_cookie = json_encode($this->client->getConfig('cookies')->toArray());
+                            $from->ins_cookie = json_encode($this->client->getConfig('cookies')->toArray());
+                            $from->ins_tkn = $this->tkn;
                             $from->save();
                             break;
                         } else {
                             $from->delete();
                         }
                     } else {
-                        $this->tkn = $from->tw_tkn;
+                        $this->tkn = $from->ins_tkn;
                         break;
                     }
-
                 }
 
                 if($query_data->type == 1) { // Это группа, парсим данные, достаем всех пользователей
 
-                    $gr_url = $query_data->url;
+                    $get_groups_query = $this->client->request('GET', 'https://www.instagram.com/'.$query_data->url); // Переходим в группу
 
-                    $groups_data = $this->client->request('GET', 'https://twitter.com' . $gr_url);
+                    $tkn_tmp = $this->client->getConfig("cookies")->toArray();
 
-                    $html_doc = $groups_data->getBody()->getContents();
+                    foreach($tkn_tmp as $cook){
+                        if($cook["Name"] == "csrftoken"){
+                            $this->tkn = $cook["Value"];
+                        }
+                    }
+
+                    $html_doc = $get_groups_query->getBody()->getContents();
+
+                    $owner_id_tmp = substr($html_doc,
+                        stripos($html_doc, '"owner": {"id"') + 17, 32);
+
+                    $this->owner_id = substr($owner_id_tmp, 0, stripos($owner_id_tmp, "}") - 1);
+
                     $this->crawler->clear();
                     $this->crawler->load($html_doc);
+
 
                     //Ищем все мыла на странице, сохраняем в $mails[]
 
@@ -171,73 +185,141 @@ class ParseTwGroups extends Command
                         $skypes = [];
                     }
 
-                    $groups_data = $this->client->request('GET', 'https://twitter.com' . $gr_url . '/followers');
+                    $group_followers = $this->client->request('GET', 'https://www.instagram.com/'.$query_data->url.'/followers');
 
-                    $html_doc = $groups_data->getBody()->getContents();
-
-                    $this->crawler->clear();
-                    $this->crawler->load($html_doc);
-
-                    $is_protec = $this->crawler->find("div.user-actions ", 0)->attr['data-protected'];
-
-                    if($is_protec == "true"){
-                        $query_data->delete();    // Группа закрыта, удаляем группу
+                    if($this->owner_id == "!--[if lt IE 7]>      <html lan"){
+                        $query_data->delete();
                         sleep(rand(1, 2));
                         continue;
                     }
 
-                    $dt = $this->crawler->find("div.GridTimeline-items", 0);
+                    $data = $this->client->request('POST', 'https://www.instagram.com/query/', [
+                        'headers' => [
+                            "Referer"   => "https://www.instagram.com/".$query_data->url."/",
+                            "X-CSRFToken" => $this->tkn,
+                            "X-Instagram-AJAX" => 1
+                        ],
+                        'form_params' => [
+                            "q"=> "ig_user(".$this->owner_id.") {
+                                          follows.first(100) {
+                                            count,
+                                            page_info {
+                                              end_cursor,
+                                              has_next_page
+                                            },
+                                            nodes {
+                                              id,
+                                              is_verified,
+                                              followed_by_viewer,
+                                              requested_by_viewer,
+                                              full_name,
+                                              profile_pic_url,
+                                              username
+                                            }
+                                          }
+                                        }
+                                        ",
+                            "ref"    => "relationships::follow_list",
+                            "query_id"    => ""
+                        ]
+                    ]);
 
-                    if (isset($dt->attr['data-min-position'])) {
-                        $this->max_position = $dt->attr['data-min-position'];
+                    $json_resp =json_decode($data->getBody()->getContents());
+
+                    if(!isset($json_resp)){
+                        $query_data->delete();
+                        sleep(rand(2, 4));
+                        continue;
                     }
+
 
                     if($query_data->offset == 1) {
-                        $this->parsePage($html_doc, $query_data->task_id);
+                        $this->parsePage($json_resp->follows->nodes, $query_data->task_id);
                     }
 
-                    do { // Вытаскиваем линки групп на всех остальных страницах
+                    $this->max_position = $json_resp->follows->page_info->end_cursor;
 
-                        $groups_data = $this->client->request('GET', 'https://twitter.com'
-                            .$gr_url.'/followers/users?include_available_features=1&include_entities=1&max_position='.
-                            $this->max_position.'&reset_error_state=false');
+                    if($json_resp->follows->page_info->has_next_page == 0 || $json_resp->status != "ok"){
+                        $query_data->delete();
+                        sleep(rand(1, 2));
+                        continue;
+                    }
 
+                    $query_data->offset = $this->max_position;
+                    $query_data->save();
 
-                        $html_doc = $groups_data->getBody()->getContents();
+                    do{
 
-                        $group_json = json_decode($html_doc);
+                        $group_members = $this->client->request('POST', 'https://www.instagram.com/query/', [
+                            'headers' => [
+                                "Referer"   => "https://www.instagram.com/".$query_data->url."/",
+                                "X-CSRFToken" => $this->tkn,
+                                "X-Instagram-AJAX" => 1
+                            ],
+                            'form_params' => [
+                                "q"=> "ig_user(".$this->owner_id.") {
+                                          followed_by.after(".$this->max_position.", 100) {
+                                            count,
+                                            page_info {
+                                              end_cursor,
+                                              has_next_page
+                                            },
+                                            nodes {
+                                              id,
+                                              is_verified,
+                                              followed_by_viewer,
+                                              requested_by_viewer,
+                                              full_name,
+                                              profile_pic_url,
+                                              username
+                                            }
+                                          }
+                                        }
+                                        ",
+                                "ref"    => "relationships::follow_list",
+                                "query_id"    => ""
+                            ]
+                        ]);
 
-                        if($group_json->has_more_items == true) {
-                            $this->parsePage($group_json->items_html, $query_data->task_id);
+                        $json_resp =json_decode($group_members->getBody()->getContents());
+
+                        if(!isset($json_resp)){
+                            $query_data->delete();
+                            sleep(rand(2, 4));
+                            continue;
                         }
 
-                        $this->max_position = $group_json->min_position;
+                        $this->parsePage($json_resp->followed_by->nodes, $query_data->task_id);
 
-                        $query_data->offset = $this->max_position;
-                        $query_data->save();
+                        $this->max_position = $json_resp->followed_by->page_info->end_cursor;
 
-                        sleep(rand(2, 5));
-                    } while ($group_json->has_more_items == true);
+                        sleep(rand(2,3));
 
-                    $this->saveInfo($gr_url, null, null, $mails, $skypes, $query_data->task_id, null);
+                    }while($json_resp->followed_by->page_info->has_next_page == 1);
 
-                    $query_data->delete();    // Получили всех пользователей, удаляем группу
+                    $this->saveInfo($query_data->url, null, null, $mails, $skypes, $query_data->task_id, null);
+
+                    $query_data->delete();
                     sleep(rand(1, 2));
 
-                }else{  // Это человек, парсим данные
+                }else{
 
-                    $groups_data = $this->client->request('GET', 'https://twitter.com'.$query_data->url);
+                    $people_data = $this->client->request('GET', 'https://www.instagram.com/'.$query_data->url.'/?__a=1');
 
-                    $html_doc = $groups_data->getBody()->getContents();
+                    $json_resp = json_decode($people_data->getBody()->getContents());
 
-                    $this->crawler->clear();
-                    $this->crawler->load($html_doc);
+                    if(!isset($json_resp)){
+                        $query_data->delete();
+                        sleep(rand(2, 4));
+                        continue;
+                    }
 
-                    $user_url = $this->crawler->find("a.ProfileHeaderCard-nameLink", 0);
-                    $user_id = "@".$this->crawler->find("span.u-linkComplex-target", 0)->plaintext;
-                    $user_info = $this->crawler->find("span.ProfileHeaderCard-locationText", 0)->plaintext;
+                    $user_url = $json_resp->user->username;
+                    $user_id = $json_resp->user->id;
+                    $user_fio = $json_resp->user->full_name;
+                    $user_info = strlen($json_resp->user->biography) > 499 ? substr($json_resp->user->biography, 0, 490) : $json_resp->user->biography;
 
-                    $mails_users = $this->extractEmails($html_doc);
+                    $mails_users = $this->extractEmails($json_resp->user->biography);
 
                     if(!empty($mails_users)) {
 
@@ -245,9 +327,13 @@ class ParseTwGroups extends Command
                             $mails[] = $m1;
                         }
 
+                    }else{
+
+                        $mails = [];
+
                     }
 
-                    $skypes_users = $this->extractSkype($html_doc);
+                    $skypes_users = $this->extractSkype($json_resp->user->biography);
 
                     if(!empty($skypes_users)) {
 
@@ -255,14 +341,17 @@ class ParseTwGroups extends Command
                             $skypes[] = $s1;
                         }
 
+                    }else{
+
+                        $skypes = [];
+
                     }
 
-                    $this->saveInfo($query_data->url, $user_url->plaintext, $user_info, $mails, $skypes, $query_data->task_id, $user_id);
+                    $this->saveInfo($user_url, $user_fio, $this->clearstr($user_info), $mails, $skypes, $query_data->task_id, $user_id);
 
                     $query_data->delete();
 
                     sleep(rand(2, 4));
-
 
                 }
 
@@ -275,34 +364,15 @@ class ParseTwGroups extends Command
             }
 
         }
-
-    }
-
-    public function parsePage($data, $task_id)
-    {
-        $this->crawler->clear();
-        $this->crawler->load($data);
-
-        foreach ($this->crawler->find("a.ProfileCard-screennameLink") as $link) {
-
-            $tw_link            = new TwLinks();
-            $tw_link->url       = $link->href;
-            $tw_link->task_id   = $task_id;
-            $tw_link->type      = 2;
-            $tw_link->reserved  = 0;
-            $tw_link->save();
-
-        }
     }
 
     public function saveInfo($gr_url, $fio, $user_info, $mails, $skypes, $task_id, $people_id)
     {
-
         /*
          * Сохраняем мыла и скайпы
          */
         $search_query = new SearchQueries;
-        $search_query->link = "https://twitter.com".$gr_url;
+        $search_query->link = "https://www.instagram.com/".$gr_url;
         $search_query->vk_name = isset($fio) && strlen($fio) > 0 && strlen($fio) < 500 ? $this->clearstr($fio) : "";
         $search_query->vk_city = isset($user_info) && strlen($user_info) > 0 && strlen($user_info) < 500 ? $user_info : null;
         $search_query->mails = count($mails) != 0 ? implode(",", $mails) : null;
@@ -313,28 +383,48 @@ class ParseTwGroups extends Command
         $search_query->email_sended = 0;
         $search_query->sk_recevied = 0;
         $search_query->sk_sended = 0;
-        $search_query->tw_user_id = isset($people_id) ? $people_id : null;
+        $search_query->ins_user_id = isset($people_id) ? $people_id : null;
         $search_query->save();
+    }
+
+    public function parsePage($data, $task_id)
+    {
+
+        foreach ($data as $item) {
+
+            $ins_link            = new InsLinks();
+            $ins_link->url       = $item->username;
+            $ins_link->task_id   = $task_id;
+            $ins_link->type      = 2;
+            $ins_link->reserved  = 0;
+            $ins_link->save();
+
+        }
     }
 
     public function login($login, $password)
     {
-        $auth_token_query = $this->client->request('GET', 'https://twitter.com');
+        $auth_token_query = $this->client->request('GET', 'https://www.instagram.com');
 
         $auth_token_query_data = $auth_token_query->getBody()->getContents();
 
         $this->tkn = substr($auth_token_query_data,
-            stripos($auth_token_query_data, "formAuthenticityToken&quot;:&quot;") + 34, 40);
+            stripos($auth_token_query_data, "csrf_token") + 14, 32);
 
-        $data = $this->client->request('POST', 'https://twitter.com/sessions', [
+        $data = $this->client->request('POST', 'https://www.instagram.com/accounts/login/ajax/', [
+            'headers' => [
+                "csrftoken" =>  $this->tkn,
+                "ig_pr"     => 1,
+                "ig_vw"     => "1920",
+                "s_network" => "",
+
+                "Referer"   => "https://www.instagram.com/",
+                "X-CSRFToken" => $this->tkn,
+                "X-Instagram-AJAX" => 1
+            ],
             'form_params' => [
-                "session[username_or_email]"    => $login,
-                "session[password]"             => $password,
-                "remember_me"                   => "1",
-                "return_to_ssl"                 => "true",
-                "scribe_log"                    => "",
-                "redirect_after_login"          => "/?lang=ru",
-                "authenticity_token"            => $this->tkn
+                "username"    => $login,
+                "password"    => $password
             ]
         ]);
 
@@ -443,4 +533,5 @@ class ParseTwGroups extends Command
         }
         return $str;
     }
+
 }

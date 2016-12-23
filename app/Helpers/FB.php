@@ -38,7 +38,7 @@ class FB {
         $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
 
         $request = $this->client->request("GET", "https://facebook.com", [
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
         ]);
         $data = $request->getBody()->getContents();
         $crawler->clear();
@@ -79,7 +79,7 @@ class FB {
         //check phone number
 
         $request = $this->client->request("GET", "https://www.facebook.com", [
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
                 //'cookie'=> $cookie
         ]);
         sleep(2);
@@ -103,7 +103,7 @@ class FB {
 
         $json = json_encode($cookie->toArray());
 
-        $account = AccountsData::where(['login' => $fb_login, 'type_id' => 5])->first();
+        $account = AccountsData::where(['login' => $fb_login, 'type_id' => 6])->first();
 
         if (!empty($account)) {
             $account->fb_cookie = $json;
@@ -134,7 +134,7 @@ class FB {
 
     public function sendRandomMessage($to_userId, $messages) {
         while (true) {
-            $sender = AccountsData::where(['type_id' => 5, 'valid' => 1])->orderByRaw('RAND()')->first();
+            $sender = AccountsData::where(['type_id' => 6, 'valid' => 1])->orderByRaw('RAND()')->first();
 
             if (!isset($sender)) {
                 sleep(10);
@@ -188,7 +188,7 @@ class FB {
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://www.facebook.com/" . $to_userId, [
-                'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                     ]
             );
             sleep(2);
@@ -240,7 +240,7 @@ class FB {
                 'ttstamp' => "26581696611195691031171055768586581694912010510411375528348",
                 'ui_push_phase' => 'C3',
             ],
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
                 ]
         );
         $data = $request->getBody()->getContents();
@@ -253,7 +253,7 @@ class FB {
 
 
         while (true) {
-            $sender = AccountsData::where(['type_id' => 5, 'valid' => 1])->orderByRaw('RAND()')->first();
+            $sender = AccountsData::where(['type_id' => 6, 'valid' => 1])->orderByRaw('RAND()')->first();
 
             if (!isset($sender)) {
                 sleep(10);
@@ -306,7 +306,7 @@ class FB {
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://www.facebook.com/", [
-                'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                     ]
             );
             sleep(2);
@@ -322,7 +322,7 @@ class FB {
 
         //$this->login($sender->login, $sender->password);
         $request = $this->client->get("https://www.facebook.com/search/groups/?q=" . urlencode($find), [
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
                 ]
         );
         sleep(2);
@@ -354,7 +354,7 @@ class FB {
 
     public function getGroupsWithApi($find, $task_id) {
         while (true) {
-            $sender = AccountsData::where(['type_id' => 5, 'valid' => 1])->orderByRaw('RAND()')->first();
+            $sender = AccountsData::where(['type_id' => 6, 'valid' => 1])->orderByRaw('RAND()')->first();
 
             if (!isset($sender)) {
                 sleep(10);
@@ -407,7 +407,7 @@ class FB {
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://www.facebook.com/", [
-                'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                     ]
             );
             sleep(2);
@@ -427,7 +427,7 @@ class FB {
                         . "access_token=" . $sender->fb_access_token
                         . "&pretty=0&q=" . urlencode($find) . "&type=group&limit=25&after=" . $after, [
                     'form_params' => [],
-                    'proxy' => '127.0.0.1:8888',
+                    //'proxy' => '127.0.0.1:8888',
                         ]
                 );
                 sleep(2);
@@ -447,7 +447,7 @@ class FB {
                         . "access_token=" . $sender->fb_access_token
                         . "&pretty=0&q=" . urlencode($find) . "&type=group&limit=25&after=" . $after, [
                     'form_params' => [],
-                    'proxy' => '127.0.0.1:8888',
+                    //'proxy' => '127.0.0.1:8888',
                         ]
                 );
                 sleep(2);
@@ -496,7 +496,7 @@ class FB {
     public function parseGroup(FBLinks $fblink) {
 
         while (true) {
-            $sender = AccountsData::where(['type_id' => 5, 'valid' => 1])->orderByRaw('RAND()')->first();
+            $sender = AccountsData::where(['type_id' => 6, 'valid' => 1])->orderByRaw('RAND()')->first();
 
             if (!isset($sender)) {
                 sleep(10);
@@ -549,7 +549,7 @@ class FB {
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://www.facebook.com/", [
-                'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                     ]
             );
             sleep(2);
@@ -565,7 +565,7 @@ class FB {
 
 
         $request = $this->client->request("GET", $fblink->link, [
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
                 ]
         );
         sleep(2);
@@ -615,7 +615,7 @@ class FB {
     public function getUsersOfGroup(FBLinks $group) {
         //$group->vkuser_id = "6138125";
         while (true) {
-            $sender = AccountsData::where(['type_id' => 5, 'valid' => 1])->orderByRaw('RAND()')->first();
+            $sender = AccountsData::where(['type_id' => 6, 'valid' => 1])->orderByRaw('RAND()')->first();
 
             if (!isset($sender)) {
                 sleep(10);
@@ -668,7 +668,7 @@ class FB {
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://www.facebook.com/", [
-                'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                     ]
             );
             sleep(2);
@@ -685,7 +685,7 @@ class FB {
 
 
         $request = $this->client->get("https://www.facebook.com/groups/" . $group->user_id . "/members/", [
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
                 ]
         );
         sleep(2);
@@ -738,7 +738,7 @@ class FB {
                     "&__pc=" . "PHASED:DEFAULT"
                     //"&__rev=".	"2753320".
                     , [
-                'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                     ]
             );
 
@@ -778,7 +778,7 @@ class FB {
     public function parseUser(FBLinks $user) {
 
         while (true) {
-            $sender = AccountsData::where(['type_id' => 5, 'valid' => 1])->orderByRaw('RAND()')->first();
+            $sender = AccountsData::where(['type_id' => 6, 'valid' => 1])->orderByRaw('RAND()')->first();
 
             if (!isset($sender)) {
                 sleep(10);
@@ -833,7 +833,7 @@ class FB {
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://www.facebook.com/", [
-                'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                     ]
             );
             sleep(2);
@@ -851,7 +851,7 @@ class FB {
         //echo($user->user_id . "\n");
         // echo($sender->fb_user_id . "\n");
         $request = $this->client->request("GET", "https://www.facebook.com/profile.php?id=" . $user->user_id, [
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
                 ]
         );
         $data = $request->getBody()->getContents();
@@ -927,7 +927,7 @@ class FB {
 
     public function getAccess(AccountsData $sender) {
         // while (true) {
-        //$sender = AccountsData::where(['type_id' => 5, 'valid' => 1])->orderByRaw('RAND()')->first();
+        //$sender = AccountsData::where(['type_id' => 6, 'valid' => 1])->orderByRaw('RAND()')->first();
         //echo($sender->login . "\n");
         if (empty($sender->fb_cookie)) {
             //echo "no coikie logining\n";
@@ -976,7 +976,7 @@ class FB {
 
         // $this->login($sender->login, $sender->password);
         $request = $this->client->request("GET", "https://www.facebook.com/", [
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
                 ]
         );
         sleep(2);
@@ -992,7 +992,7 @@ class FB {
         // }
 
         $request = $this->client->request("GET", "https://developers.facebook.com/tools/explorer", [
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
                 ]
         );
         sleep(2);
@@ -1009,12 +1009,12 @@ class FB {
 
         $request = $this->client->request("GET", "https://www.facebook.com/v2.8/dialog/oauth?response_type=token&display=popup&client_id=" . $app_id . "&redirect_uri=https%3A%2F%2Fdevelopers.facebook.com%2Ftools%2Fexplorer%2Fcallback&scope=", [
 
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
                 ]
         );
         $request = $this->client->request("GET", "https://developers.facebook.com/tools/explorer/" . $app_id . "", [
 
-            'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
                 ]
         );
         $data = $request->getBody()->getContents();
