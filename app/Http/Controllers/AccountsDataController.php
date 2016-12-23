@@ -10,15 +10,14 @@ use App\Models\SmtpBase;
 use Illuminate\Support\Facades\Storage;
 use PHPMailer;
 
-class AccountsDataController extends Controller
-{
+class AccountsDataController extends Controller {
+
     /**
      * Главный экшен. Перенаправление на список акков ВК
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
+    public function index() {
         return redirect()->route('accounts_data.vk');
     }
 
@@ -27,8 +26,7 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function vk()
-    {
+    public function vk() {
         $data = AccountsData::vk()->paginate(config('config.accountsdatapaginate'));
 
         return view('accounts_data.vk', ['data' => $data]);
@@ -39,8 +37,7 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function ok()
-    {
+    public function ok() {
         $data = AccountsData::ok()->paginate(config('config.accountsdatapaginate'));
 
         return view('accounts_data.ok', ['data' => $data]);
@@ -51,11 +48,16 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function tw()
-    {
+    public function tw() {
         $data = AccountsData::tw()->paginate(config('config.accountsdatapaginate'));
 
         return view('accounts_data.tw', ['data' => $data]);
+    }
+
+    public function fb() {
+        $data = AccountsData::fb()->paginate(config('config.accountsdatapaginate'));
+
+        return view('accounts_data.fb', ['data' => $data]);
     }
 
     /**
@@ -63,8 +65,7 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function emails()
-    {
+    public function emails() {
         $data = AccountsData::emails()->paginate(config('config.accountsdatapaginate'));
 
         return view('accounts_data.emails', ['data' => $data]);
@@ -75,8 +76,7 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create($type)
-    {
+    public function create($type) {
         return view('accounts_data.create', ["type" => $type]);
     }
 
@@ -87,33 +87,32 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
-    {
+    public function store(Request $request) {
         $data = new AccountsData;
         $data->fill($request->all());
         $type_id = $request->get("type_id");
-        if ( ! (empty($request->get("smtp_port")))) {
+        if (!(empty($request->get("smtp_port")))) {
             $data->smtp_port = $request->get("smtp_port");
         }
-        if ( ! (empty($request->get("smtp_address")))) {
+        if (!(empty($request->get("smtp_address")))) {
             $data->smtp_address = $request->get("smtp_address");
         }
         if ($type_id == 3 && (empty($data->smtp_address) || empty($data->smtp_port))) {
-            $domain    = substr($data->login, strrpos($data->login, '@') + 1);
+            $domain = substr($data->login, strrpos($data->login, '@') + 1);
             $smtp_data = SmtpBase::whereDomain($domain)->first();
-            if ( ! (empty($smtp_data))) {
-                $data->smtp_port    = $smtp_data->port;
+            if (!(empty($smtp_data))) {
+                $data->smtp_port = $smtp_data->port;
                 $data->smtp_address = $smtp_data->smtp;
             }
         }
 
         if ($type_id == 3) {//Проверяем имейл на валидность
             if ($this->testEmail([
-                "login"    => $data->login,
-                "password" => $data->password,
-                "smtp"     => $data->smtp_address,
-                "port"     => $data->smtp_port
-            ])
+                        "login" => $data->login,
+                        "password" => $data->password,
+                        "smtp" => $data->smtp_address,
+                        "port" => $data->smtp_port
+                    ])
             ) {
                 $data->save();
             }
@@ -137,30 +136,33 @@ class AccountsDataController extends Controller
             case 4:
                 return redirect()->route('accounts_data.tw');
                 break;
+            
+            case 5:
+                return redirect()->route('accounts_data.fb');
+                break;
         }
     }
 
-    public function testEmail($data)
-    {
+    public function testEmail($data) {
         try {
-            $mail            = new PHPMailer;
-           // $mail->SMTPDebug = 3;                               // Enable verbose debug output
+            $mail = new PHPMailer;
+            // $mail->SMTPDebug = 3;                               // Enable verbose debug output
             $mail->isSMTP();                                      // Set mailer to use SMTP
-            $mail->Host       = $data['smtp'];  // Specify main and backup SMTP servers
-            $mail->SMTPAuth   = true;                               // Enable SMTP authentication
-            $mail->Username   = $data['login'];                 // SMTP username
-            $mail->Password   = $data['password'];                           // SMTP password
+            $mail->Host = $data['smtp'];  // Specify main and backup SMTP servers
+            $mail->SMTPAuth = true;                               // Enable SMTP authentication
+            $mail->Username = $data['login'];                 // SMTP username
+            $mail->Password = $data['password'];                           // SMTP password
             $mail->SMTPSecure = 'ssl';                            // Enable TLS encryption, `ssl` also accepted
-            $mail->Port       = $data['port'];                                    // TCP port to connect to
-            $mail->CharSet    = 'UTF-8';
+            $mail->Port = $data['port'];                                    // TCP port to connect to
+            $mail->CharSet = 'UTF-8';
             $mail->setFrom($data['login']);
             $mail->addAddress($data['login']);     // Add a recipient
 
             $mail->Subject = "Работа";
-            $mail->Body    = "Завтра нужно принести по 100 грн каждому, на день рождение АНИ.";
+            $mail->Body = "Завтра нужно принести по 100 грн каждому, на день рождение АНИ.";
 
-            if ( ! $mail->send()) {
-                $log          = new ErrorLog();
+            if (!$mail->send()) {
+                $log = new ErrorLog();
                 $log->message = 'Mailer Error: ' . $mail->ErrorInfo;
                 $log->task_id = 0;
                 $log->save();
@@ -181,8 +183,7 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
-    {
+    public function edit($id) {
         $data = AccountsData::whereId($id)->first();
 
         return view("accounts_data.edit", ["data" => $data]);
@@ -196,22 +197,21 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
-    {
+    public function update(Request $request, $id) {
         $data = AccountsData::whereId($id)->first();
         $data->fill($request->all());
         $type_id = $request->get("type_id");
-        if ( ! (empty($request->get("smtp_port")))) {
+        if (!(empty($request->get("smtp_port")))) {
             $data->smtp_port = $request->get("smtp_port");
         }
-        if ( ! (empty($request->get("smtp_address")))) {
+        if (!(empty($request->get("smtp_address")))) {
             $data->smtp_address = $request->get("smtp_address");
         }
         if ($type_id == 3 && (empty($data->smtp_address) || empty($data->smtp_port))) {
-            $domain    = substr($data->login, strrpos($data->login, '@') + 1);
+            $domain = substr($data->login, strrpos($data->login, '@') + 1);
             $smtp_data = SmtpBase::whereDomain($domain)->first();
-            if ( ! (empty($smtp_data))) {
-                $data->smtp_port    = $smtp_data->port;
+            if (!(empty($smtp_data))) {
+                $data->smtp_port = $smtp_data->port;
                 $data->smtp_address = $smtp_data->smtp;
             }
         }
@@ -241,8 +241,7 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function delete($id)
-    {
+    public function delete($id) {
         $data = AccountsData::whereId($id)->first();
         $data->delete();
 
@@ -255,8 +254,7 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroyVk()
-    {
+    public function destroyVk() {
 
         DB::table('accounts_data')->where('type_id', '=', 1)->delete();
 
@@ -269,8 +267,7 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroyOk()
-    {
+    public function destroyOk() {
 
         DB::table('accounts_data')->where('type_id', '=', 2)->delete();
 
@@ -283,12 +280,23 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroyTw()
-    {
+    public function destroyTw() {
 
         DB::table('accounts_data')->where('type_id', '=', 4)->delete();
 
         return redirect()->route('accounts_data.tw');
+    }
+    /**
+     * Удаление всех записей типа Facebook
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function destroyFb() {
+
+        DB::table('accounts_data')->where('type_id', '=', 5)->delete();
+
+        return redirect()->route('accounts_data.fb');
     }
 
     /**
@@ -297,8 +305,7 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroyEmails()
-    {
+    public function destroyEmails() {
 
         DB::table('accounts_data')->where('type_id', '=', 3)->delete();
 
@@ -311,8 +318,7 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroy()
-    {
+    public function destroy() {
         DB::table('accounts_data')->truncate();
 
         return redirect()->back();
@@ -324,9 +330,8 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function vkupload(Request $request)
-    {
-        if ( ! (empty($request->get('text')))) {
+    public function vkupload(Request $request) {
+        if (!(empty($request->get('text')))) {
             $accounts = explode("\r\n", $request->get('text'));
             $this->vkokParse($accounts, $request->get('user_id'), 1);
         } else {
@@ -347,16 +352,15 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function vkokParse($data, $user, $type)
-    {
+    public function vkokParse($data, $user, $type) {
         foreach ($data as $line) {
-            $tmp     = explode(":", $line);
+            $tmp = explode(":", $line);
             $accData = new AccountsData;
 
-            $accData->login    = $tmp[0];
+            $accData->login = $tmp[0];
             $accData->password = $tmp[1];
-            $accData->type_id  = $type;
-            $accData->user_id  = $user;
+            $accData->type_id = $type;
+            $accData->user_id = $user;
             $accData->save();
 
             unset($tmp);
@@ -369,9 +373,8 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function okupload(Request $request)
-    {
-        if ( ! (empty($request->get('text')))) {
+    public function okupload(Request $request) {
+        if (!(empty($request->get('text')))) {
             $accounts = explode("\r\n", $request->get('text'));
             $this->vkokParse($accounts, $request->get('user_id'), 2);
         } else {
@@ -392,9 +395,8 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function mailsupload(Request $request)
-    {
-        if ( ! (empty($request->get('text')))) {
+    public function mailsupload(Request $request) {
+        if (!(empty($request->get('text')))) {
             $accounts = explode("\n", $request->get('text'));
             $this->mailsParse($accounts, $request->get('user_id'));
         } else {
@@ -415,16 +417,15 @@ class AccountsDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function mailsParse($data, $user)
-    {
+    public function mailsParse($data, $user) {
         foreach ($data as $line) {
-            $tmp     = explode(":", trim($line));
+            $tmp = explode(":", trim($line));
             $accData = new AccountsData;
             if (count($tmp) < 3) {
-                $domain    = substr($tmp[0], strrpos($tmp[0], '@') + 1);
+                $domain = substr($tmp[0], strrpos($tmp[0], '@') + 1);
                 $smtp_data = SmtpBase::whereDomain($domain)->first();
-                if ( ! (empty($smtp_data))) {
-                    $accData->smtp_port    = $smtp_data->port;
+                if (!(empty($smtp_data))) {
+                    $accData->smtp_port = $smtp_data->port;
                     $accData->smtp_address = $smtp_data->smtp;
                 } else {
                     continue;
@@ -432,12 +433,12 @@ class AccountsDataController extends Controller
             } else {
                 if (is_int($tmp[3])) {
                     $accData->smtp_address = $tmp[2];
-                    $accData->smtp_port    = $tmp[3];
+                    $accData->smtp_port = $tmp[3];
                 } else {
-                    $domain    = substr($tmp[0], strrpos($tmp[0], '@') + 1);
+                    $domain = substr($tmp[0], strrpos($tmp[0], '@') + 1);
                     $smtp_data = SmtpBase::whereDomain($domain)->first();
-                    if ( ! (empty($smtp_data))) {
-                        $accData->smtp_port    = $smtp_data->port;
+                    if (!(empty($smtp_data))) {
+                        $accData->smtp_port = $smtp_data->port;
                         $accData->smtp_address = $smtp_data->smtp;
                     } else {
                         continue;
@@ -445,21 +446,22 @@ class AccountsDataController extends Controller
                 }
             }
 
-            $accData->login    = $tmp[0];
+            $accData->login = $tmp[0];
             $accData->password = $tmp[1];
-            $accData->type_id  = 3;
-            $accData->user_id  = $user;
+            $accData->type_id = 3;
+            $accData->user_id = $user;
 
             if ($this->testEmail([
-                "login"    => $accData->login,
-                "password" => $accData->password,
-                "smtp"     => $accData->smtp_address,
-                "port"     => $accData->smtp_port
-            ])
+                        "login" => $accData->login,
+                        "password" => $accData->password,
+                        "smtp" => $accData->smtp_address,
+                        "port" => $accData->smtp_port
+                    ])
             ) {
                 $accData->save();
             }
             unset($tmp);
         }
     }
+
 }

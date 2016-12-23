@@ -10,6 +10,7 @@ use App\Models\TemplateDeliverySkypes;
 use App\Models\TemplateDeliveryMailsFiles;
 use App\Models\TemplateDeliveryVK;
 use App\Models\TemplateDeliveryOK;
+use App\Models\TemplateDeliveryFB;
 use App\Models\Parser\SiteLinks;
 use App\Models\SearchQueries;
 use App\Models\TemplateDeliveryTw;
@@ -123,6 +124,7 @@ class ParsingTasksController extends Controller
         $vk = $task->getVK()->first();
         $ok = $task->getOK()->first();
         $tw = $task->getTW()->first();
+        $fb = $task->getFB()->first();
         $search_queries = SearchQueries::where(['task_id' => $id])->orderBy('id', 'desc')->paginate(10);
 
         $active_type = "";
@@ -147,6 +149,7 @@ class ParsingTasksController extends Controller
             'vk'                => $vk,
             'ok'                => $ok,
             'tw'                => $tw,
+            'fb'                => $fb,
             'search_queries'    => $search_queries
         ]);
     }
@@ -203,6 +206,7 @@ class ParsingTasksController extends Controller
         $mail_text = $request->get("mail_text");
         $ok_text = $request->get("ok_text");
         $tw_text = $request->get("tw_text");
+        $fb_text = $request->get("fb_text");
 
 
         if(isset($skype_text)){
@@ -233,6 +237,15 @@ class ParsingTasksController extends Controller
             }
             $tw->text = $tw_text;
             $tw->save();
+        }
+        if(isset($fb_text)){
+            $fb = TemplateDeliveryFB::where("task_id", "=", $request->get("delivery_id"))->first();
+            if(empty($tw)){
+                $fb = new TemplateDeliveryFB();
+                $fb->task_id = $request->get("delivery_id");
+            }
+            $fb->text = $fb_text;
+            $fb->save();
         }
 
         if(isset($mail_subj)){
@@ -609,6 +622,62 @@ class ParsingTasksController extends Controller
             $tw->text = $request->get('tw_text');
             $tw->task_id = $task_id;
             $tw->save();
+        }
+        //Записываем в таблицу шаблонов skypes
+
+        return redirect()->route('parsing_tasks.index');
+
+    }
+    
+     public function testingDeliveryFB()
+    {
+        return view("parsing_tasks.testingDeliveryFB");
+    }
+
+    public function storeTestingDeliveryFB(Request $request)
+    {
+        //Записываем в таблицу тасков
+        $task = new Tasks();
+             
+            $task->task_type_id = 3;
+            $task->task_query = "Тестовая рассылка";
+            $task->active_type = 1;
+            $task->reserved = 0;
+            $task->google_offset = 0;
+            $task->need_send = 1;
+            $task->tw_offset  = "-1";
+            $task->save();
+        $task_id = $task->id;
+        //Записываем в таблицу тасков
+
+        $fbs_list = $request->get('fb_list');
+        if(!empty($fbs_list)) {
+
+            $fbs = explode("\r\n", $fbs_list);
+
+            foreach ($fbs as $item){
+                $search_query = new SearchQueries;
+                    $search_query->link = "Тестовая рассылка";
+                    $search_query->mails = " ";
+                    $search_query->phones = " ";
+                    $search_query->skypes = "";
+                    $search_query->fb_id = $item;
+                    $search_query->task_id = $task_id;
+                    $search_query->email_reserved = 0;
+                    $search_query->email_sended = 0;
+                    $search_query->sk_recevied = 0;
+                    $search_query->sk_sended = 0;
+                $search_query->save();
+            }
+
+        }
+
+        //Записываем в таблицу шаблонов skypes
+        if(!empty($request->get('fb_text'))){
+            $fb = new TemplateDeliveryFB();
+                $fb->text = $request->get('fb_text');
+                $fb->task_id = $task_id;
+            $fb->save();
         }
         //Записываем в таблицу шаблонов skypes
 

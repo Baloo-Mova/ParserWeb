@@ -26,7 +26,11 @@ class SearchQueries extends Model
         'vk_reserved',
         'vk_sended',
         'sk_recevied',
-        'sk_sended'
+        'sk_sended',
+        'fb_sended',
+        'fb_reserved',
+        'fb_name',
+        
         
     ];
 

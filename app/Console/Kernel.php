@@ -14,6 +14,11 @@ use App\Console\Commands\Parsers\ParseTw;
 use App\Console\Commands\Parsers\ParseTwGroups;
 use App\Console\Commands\Senders\VKSender;
 use App\Console\Commands\Senders\TwitterSender;
+use App\Console\Commands\Parsers\ParseFB;
+use App\Console\Commands\Parsers\ParseFBGetUsers;
+use App\Console\Commands\Parsers\ParseFBGetGroups;
+use App\Console\Commands\Parsers\TestFB;
+use App\Console\Commands\Senders\FBSender;
 use App\Console\Commands\Senders\EmailSender;
 use App\Console\Commands\Tester;
 use App\Console\Commands\Senders\SkypeSender;
@@ -37,9 +42,14 @@ class Kernel extends ConsoleKernel
          ParseVKGetGroups::class,
          ParseVKGetUsers::class,
          ParseTwGroups::class,
-         ParseVK::class,
-         ParseTw::class,
+         ParseVK::class, 
          VKSender::class,
+         ParseTw::class,
+         ParseFB::class,
+         ParseFBGetGroups::class,
+         ParseFBGetUsers::class,
+         TestFB::class,
+         FBSender::class,
          TwitterSender::class,
          ParseOk::class,
          ParseOkGroups::class,

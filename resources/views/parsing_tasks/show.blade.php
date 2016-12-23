@@ -163,6 +163,21 @@
                                         <input type="hidden" name="delivery_id" value="{{ $data->id }}">
                                         </tbody>
                                     </table>
+                                    <table class="table table-bordered">
+                                        <thead>
+                                        <tr>
+                                            <th>FB text</th>
+                                            
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {{ csrf_field() }}
+
+                                        <td><textarea name="fb_text" class="form-control" cols="30" rows="3">{{ empty($fb) ? "-" : $fb->text }}</textarea></td>
+                                        
+                                        <input type="hidden" name="delivery_id" value="{{ $data->id }}">
+                                        </tbody>
+                                    </table>
                                     <input type="submit" class="btn btn-primary" value="Изменить">
                                 </form>
                             </div>

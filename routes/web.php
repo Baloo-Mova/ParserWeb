@@ -36,6 +36,7 @@ Route::group(['prefix' => 'accounts-data', 'middleware' => 'auth'], function () 
     Route::get('vk', ['uses' => 'AccountsDataController@vk', 'as' => 'accounts_data.vk']);
     Route::get('ok', ['uses' => 'AccountsDataController@ok', 'as' => 'accounts_data.ok']);
     Route::get('tw', ['uses' => 'AccountsDataController@tw', 'as' => 'accounts_data.tw']);
+    Route::get('fb', ['uses' => 'AccountsDataController@fb', 'as' => 'accounts_data.fb']);
     Route::get('emails', ['uses' => 'AccountsDataController@emails', 'as' => 'accounts_data.emails']);
     Route::get('/create/{type}', ['uses' => 'AccountsDataController@create', 'as' => 'accounts_data.create']);
     Route::post('/create/{type}', ['uses' => 'AccountsDataController@store', 'as' => 'accounts_data.store']);
@@ -46,6 +47,7 @@ Route::group(['prefix' => 'accounts-data', 'middleware' => 'auth'], function () 
     Route::get('/destroy-vk', ['uses'=>'AccountsDataController@destroyVk', 'as'=>'accounts_data.destroy.vk']);
     Route::get('/destroy-ok', ['uses'=>'AccountsDataController@destroyOk', 'as'=>'accounts_data.destroy.ok']);
     Route::get('/destroy-tw', ['uses'=>'AccountsDataController@destroyTw', 'as'=>'accounts_data.destroy.tw']);
+    Route::get('/destroy-tw', ['uses'=>'AccountsDataController@destroyFb', 'as'=>'accounts_data.destroy.fb']);
     Route::get('/destroy-emails', ['uses'=>'AccountsDataController@destroyEmails', 'as'=>'accounts_data.destroy.emails']);
     Route::post('/vk-upload', ['uses'=>'AccountsDataController@vkupload', 'as'=>'accounts_data.vk.upload']);
     Route::post('/ok-upload', ['uses'=>'AccountsDataController@okupload', 'as'=>'accounts_data.ok.upload']);
@@ -102,6 +104,8 @@ Route::group(['prefix' => 'parsing-tasks', 'middleware' => 'auth'], function () 
     Route::post('/testing-delivery-ok', ['uses' => 'ParsingTasksController@storeTestingDeliveryOK', 'as' => 'parsing_tasks.storeTestingDeliveryOK']);
     Route::get('/testing-delivery-tw', ['uses' => 'ParsingTasksController@testingDeliveryTW', 'as' => 'parsing_tasks.testingDeliveryTW']);
     Route::post('/testing-delivery-tw', ['uses' => 'ParsingTasksController@storeTestingDeliveryTW', 'as' => 'parsing_tasks.storeTestingDeliveryTW']);
+    Route::get('/testing-delivery-fb', ['uses' => 'ParsingTasksController@testingDeliveryFB', 'as' => 'parsing_tasks.testingDeliveryFB']);
+    Route::post('/testing-delivery-fb', ['uses' => 'ParsingTasksController@storeTestingDeliveryFB', 'as' => 'parsing_tasks.storeTestingDeliveryFB']);
 });
 
 Route::group(['prefix' => 'skypes-accounts', 'middleware' => 'auth'], function () {

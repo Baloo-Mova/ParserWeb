@@ -14,6 +14,8 @@ class Tasks extends Model
         'task_type_id',
         'task_query',
         'vk_reserved',
+        'fb_reserved',
+        'fb_complete',
     ];
 
     public function tasksType()
@@ -39,5 +41,9 @@ class Tasks extends Model
     public function getTW()
     {
         return $this->belongsTo(TemplateDeliveryTw::class, 'id', 'task_id');
+    }
+     public function getFB()
+    {
+        return $this->belongsTo(TemplateDeliveryFB::class, 'id', 'task_id');
     }
 }

@@ -59,6 +59,10 @@
                             <i class='fa fa-twitter'></i>
                             <span>Twitter</span>
                         </a>
+                        <a href="{{ route('parsing_tasks.testingDeliveryFB') }}" class="{{ Request::path() == 'parsing_tasks/parsing_tasks.testingDeliveryFB' ? 'link_active' : ''}}">
+                            <i class='fa fa-facebook'></i>
+                            <span>Facebook</span>
+                        </a>
                     </li>
                 </ul>
             </li>
@@ -106,6 +110,12 @@
                         <a href="{{ route('accounts_data.tw') }}" class="{{ Request::path() == 'accounts-data/tw' ? 'link_active' : ''}}">
                             <i class='fa fa-twitter'></i>
                             <span>Twitter Аккаунты</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="{{ route('accounts_data.fb') }}" class="{{ Request::path() == 'accounts-data/fb' ? 'link_active' : ''}}">
+                            <i class='fa fa-facebook'></i>
+                            <span>Facebook Аккаунты</span>
                         </a>
                     </li>
                     <li class="">

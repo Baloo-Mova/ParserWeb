@@ -17,6 +17,9 @@ class AccountsData extends Model
         'user_id',
         'count_sended_messages',
         'vk_cookie',
+        'fb_cookie',
+        'fb_user_id',
+        'fb_access_token',
     ];
 
     public function accountType()
@@ -37,6 +40,10 @@ class AccountsData extends Model
     static function scopeTw($query)
     {
         $query->where('type_id', '=', 4)->orderBy('id', 'desc');
+    }
+    static function scopeFb($query)
+    {
+        $query->where('type_id', '=', 5)->orderBy('id', 'desc');
     }
 
     static function scopeEmails($query)
