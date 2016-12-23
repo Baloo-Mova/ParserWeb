@@ -873,7 +873,7 @@ class FB {
         sleep(2);
         $data = $request->getBody()->getContents();
 
-
+echo("pr1\n");
         preg_match_all("/\<span\ dir\=.ltr.\>([0-9 ]*)/s", $data, $phones);
 echo("1\n");
         $phones = $phones[1];
