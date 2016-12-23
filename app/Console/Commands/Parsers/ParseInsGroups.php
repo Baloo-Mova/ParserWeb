@@ -296,6 +296,12 @@ class ParseInsGroups extends Command
 
                     $json_resp = json_decode($people_data->getBody()->getContents());
 
+                    if(!isset($json_resp)){
+                        $query_data->delete();
+                        sleep(rand(2, 4));
+                        continue;
+                    }
+
                     $user_url = $json_resp->user->username;
                     $user_id = $json_resp->user->id;
                     $user_fio = $json_resp->user->full_name;
