@@ -309,6 +309,10 @@ class ParseInsGroups extends Command
                             $mails[] = $m1;
                         }
 
+                    }else{
+
+                        $mails = [];
+
                     }
 
                     $skypes_users = $this->extractSkype($json_resp->user->biography);
@@ -319,9 +323,13 @@ class ParseInsGroups extends Command
                             $skypes[] = $s1;
                         }
 
+                    }else{
+
+                        $skypes = [];
+
                     }
 
-                    $this->saveInfo($user_url, $user_fio, $user_info, $mails, $skypes, $query_data->task_id, $user_id);
+                    $this->saveInfo($user_url, $user_fio, $this->clearstr($user_info), $mails, $skypes, $query_data->task_id, $user_id);
 
                     $query_data->delete();
 
@@ -342,7 +350,6 @@ class ParseInsGroups extends Command
 
     public function saveInfo($gr_url, $fio, $user_info, $mails, $skypes, $task_id, $people_id)
     {
-
         /*
          * Сохраняем мыла и скайпы
          */
