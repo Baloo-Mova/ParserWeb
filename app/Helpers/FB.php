@@ -60,7 +60,7 @@ class FB {
                 'default_persistent' => 1,
                 'timezone' => -120,
             ],
-            'proxy' => '127.0.0.1:8888',
+           // 'proxy' => '127.0.0.1:8888',
                 ]
         );
         sleep(2);
