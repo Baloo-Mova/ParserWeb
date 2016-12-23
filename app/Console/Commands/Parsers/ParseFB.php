@@ -51,8 +51,8 @@ class ParseFB extends Command {
                 continue;
             }
 
-            $fblink->reserved = 1;
-            $fblink->save();
+          //  $fblink->reserved = 1;
+          //  $fblink->save();
             try {
                 $web = new FB();
 
@@ -65,10 +65,10 @@ class ParseFB extends Command {
                     //$fblink->delete();
                     
                 } else if ($fblink->type == 1) {
-                    echo($fblink->name."\n");
+                    echo($fblink->user_id."\n");
                     $web->parseUser($fblink);
                     $fblink->delete();
-                    echo($fblink->name."deleted\n");
+                    echo($fblink->user_id."deleted\n");
                    // $fblink->reserved =0;
            // $fblink->save();
                 }
