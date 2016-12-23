@@ -851,7 +851,7 @@ class FB {
             }
             break;
         }
-echo("1\n");
+
         sleep(1);
         //echo($user->user_id . "\n");
         // echo($sender->fb_user_id . "\n");
@@ -861,7 +861,7 @@ echo("1\n");
         );
         $data = $request->getBody()->getContents();
         preg_match("/href\=.(\S*).\ data-tab-key=.about.\>/s", $data, $req_link);
-echo("2\n");
+
         $req_link = $req_link[1];
         //dd($req_link);
 
@@ -875,7 +875,7 @@ echo("2\n");
 
 
         preg_match_all("/\<span\ dir\=.ltr.\>([0-9 ]*)/s", $data, $phones);
-
+echo("1\n");
         $phones = $phones[1];
         $phones_str = " ";
         if (!empty($phones)) {
@@ -888,19 +888,19 @@ echo("2\n");
 
         preg_match_all("/[\._a-zA-Z0-9-]+\%40[\._a-zA-Z0-9-]+/i", $data, $emails);
         $emails = array_unique($emails[0]);
-        $txt_email = "";
+        $txt_email = " ";
         if (count($emails) != 0) {
             $txt_email = implode($emails, ', ');
             $txt_email = str_replace("%40", "@", $txt_email);
         }
-
+echo("2\n");
         $text = substr($data, strpos($data, "fb-timeline-cover-name"), 100);
         $text = substr($text, strpos($text, ">"), strpos($text, "</span>") - strpos($text, ">"));
         $text = str_replace(">", "", $text);
         //dd($text);
 
 
-
+echo("3\n");
 
 
         $search = SearchQueries::where(['link' => $user->link, 'task_id' => $user->task_id])->first();
@@ -920,6 +920,7 @@ echo("2\n");
 
             try {
                 $search_query->save();
+                echo("4\n");
             } catch (\Exception $e) {
                 echo ($e->getMessage() . "\n");
             }
