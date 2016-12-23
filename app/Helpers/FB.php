@@ -30,6 +30,7 @@ class FB {
             'allow_redirects' => true,
             'timeout' => 10,
         ]);
+       
     }
 
     public function login($fb_login, $pass) {
@@ -53,20 +54,21 @@ class FB {
         //dd(urlencode($login));
         $request = $this->client->request("POST", "https://www.facebook.com/login.php?login_attempt=1&lwv=110", [
             'form_params' => [
-                'lsd' => 'AVrpoKON',
+                //'lsd' => 'AVrpoKON',
                 'email' => $fb_login,
                 'pass' => $pass,
                 'persistent' => '',
                 'default_persistent' => 1,
-                'timezone' => -120,
+               // 'timezone' => -120,
             ],
-           // 'proxy' => '127.0.0.1:8888',
+            'proxy' => '127.0.0.1:8888',
+            
                 ]
         );
         sleep(2);
         $data = $request->getBody()->getContents();
        
-      dd($this->client->getConfig('cookies'));
+      //dd($this->client->getConfig('cookies'));
         \Illuminate\Support\Facades\Storage::put("text.txt",$data);
         //   print_r($request->getStatusCode() . "\n");
         //$cookie = $request->getHeader('set-cookie');
