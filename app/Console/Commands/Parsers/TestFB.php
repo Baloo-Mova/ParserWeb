@@ -45,7 +45,7 @@ class TestFB extends Command {
         
         $web = new FB;
         
-        $web->getAccess();
+        $web->login("volodya.khutin@mail.ru", "Dkflbvbh.Khutin");
             
         
     }
