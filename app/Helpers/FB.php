@@ -870,6 +870,7 @@ class FB {
                 ]
         );
         $data = $request->getBody()->getContents();
+         \Illuminate\Support\Facades\Storage::put("data.html",$data);
 echo("pr1\n");
         sleep(2);
        // $data = $request->getBody()->getContents();
