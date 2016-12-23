@@ -226,6 +226,12 @@ class ParseInsGroups extends Command
 
                     $json_resp =json_decode($data->getBody()->getContents());
 
+                    if(!isset($json_resp)){
+                        $query_data->delete();
+                        sleep(rand(2, 4));
+                        continue;
+                    }
+
 
                     if($query_data->offset == 1) {
                         $this->parsePage($json_resp->follows->nodes, $query_data->task_id);
@@ -276,6 +282,12 @@ class ParseInsGroups extends Command
                         ]);
 
                         $json_resp =json_decode($group_members->getBody()->getContents());
+
+                        if(!isset($json_resp)){
+                            $query_data->delete();
+                            sleep(rand(2, 4));
+                            continue;
+                        }
 
                         $this->parsePage($json_resp->followed_by->nodes, $query_data->task_id);
 
