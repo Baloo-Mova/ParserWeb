@@ -60,13 +60,13 @@ class FB {
                 'default_persistent' => 1,
                 'timezone' => -120,
             ],
-           // 'proxy' => '127.0.0.1',
+            'proxy' => '127.0.0.1:8888',
                 ]
         );
         sleep(2);
         $data = $request->getBody()->getContents();
-        dd($this->client->getConfig('cookies'));
        
+      dd($this->client->getConfig('cookies'));
         \Illuminate\Support\Facades\Storage::put("text.txt",$data);
         //   print_r($request->getStatusCode() . "\n");
         //$cookie = $request->getHeader('set-cookie');
