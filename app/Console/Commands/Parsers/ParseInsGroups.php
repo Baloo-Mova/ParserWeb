@@ -56,6 +56,8 @@ class ParseInsGroups extends Command
 
             try {
 
+                sleep(rand(1,3));
+
                 $query_data = InsLinks::where([
                     ['offset', '<>', -1],
                     ['reserved', '=', 0],
