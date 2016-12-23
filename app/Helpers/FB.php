@@ -60,7 +60,7 @@ class FB {
                 'default_persistent' => 1,
                 'timezone' => -120,
             ],
-            'proxy' => '127.0.0.1',
+           // 'proxy' => '127.0.0.1',
                 ]
         );
         sleep(2);
@@ -115,7 +115,7 @@ class FB {
             $account = new AccountsData();
             $account->login = $fb_login;
             $account->password = $pass;
-            $account->type_id = 5;
+            $account->type_id = 6;
             $account->fb_cookie = $json;
             $account->user_id = 0;
             $account->fb_user_id = $user_id;
