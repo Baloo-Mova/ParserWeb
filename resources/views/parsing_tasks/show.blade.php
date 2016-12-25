@@ -82,6 +82,7 @@
                                             <th>Mails</th>
                                             <th>Phones</th>
                                             <th>Skypes</th>
+                                            <th>Soc.Network</th>
                                         </tr>
                                         </thead>
                                         <tbody class="task_result_tbody">
@@ -340,6 +341,25 @@
                             //if(page != 0 || page != 1){
                                 var i = 1;
                                 data.result.forEach(function (item, i, arr) {
+
+                                    var socn = "";
+
+                                    if(item.vk_id != null){
+                                        socn = "ВК "+item.vk_id;
+                                    }
+                                    if(item.ok_user_id != null){
+                                        socn = "ОК "+item.ok_user_id;
+                                    }
+                                    if(item.fb_id != null){
+                                        socn = "ФБ "+item.fb_id;
+                                    }
+                                    if(item.tw_user_id != null){
+                                        socn = "Твиттер "+item.tw_user_id;
+                                    }
+                                    if(item.ins_user_id != null){
+                                        socn = "Инстаграм "+item.ins_user_id;
+                                    }
+
                                     $(".task_result_table").append("<tr>" +
                                             "<td  data-id='" + item.id + "' data-task-id='" + item.task_id + "' data-list-number='"+ ((data.number - page * 10) + 10 - i ) +"'>" + ((data.number - page * 10) + 10 - i ) + "</td>" +
                                             "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.link+"\">" + item.link + "</div></td>" +
@@ -348,6 +368,7 @@
                                             "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.mails + "</div></td>" +
                                             "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.phones + "</div></td>" +
                                             "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.skypes + "</div></td>" +
+                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + socn + "</div></td>" +
                                             "</tr>");
 
                                 });
