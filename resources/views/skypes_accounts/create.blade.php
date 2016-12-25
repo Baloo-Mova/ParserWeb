@@ -47,26 +47,6 @@
                     </div>
                 </div>
 
-                <div class="box box-primary collapsed-box">
-                    <div class="box-header">
-                        Массовое Добавление Из Файла
-                        <div class="box-tools pull-right">
-                            <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse">
-                                <i class="fa fa-plus"></i></button>
-                        </div>
-                    </div>
-                    <div class="box-body">
-                        <form action="{{ url('/skypes-accounts/mass-upload') }}" enctype="multipart/form-data"  method="post">
-                            {{ csrf_field() }}
-                            <div class="form-group">
-                                <label for="text_file">Загрузить Файл</label>
-                                <input type="file" class="form-controll" id="text_file" name="text_file">
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-flat">Загрузить</button>
-                        </form>
-                    </div>
-                </div>
-
 
             </div>
         </div>

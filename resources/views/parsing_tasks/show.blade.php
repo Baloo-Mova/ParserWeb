@@ -71,39 +71,41 @@
                                     <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}" class="btn btn-primary" >Экспортировать в CSV</a>
                                     <hr>
                                 </div>
-                                <table class="table table-bordered task_result_table">
-                                    <thead>
-                                    <tr>
-                                        <th class="small__th">#</th>
-                                        <th>Link</th>
-                                        <th>Name</th>
-                                        <th>City</th>
-                                        <th>Mails</th>
-                                        <th>Phones</th>
-                                        <th>Skypes</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody class="task_result_tbody">
-                                    {{--@forelse($search_queries as $key => $value )--}}
-                                    {{--<tr>--}}
-                                    {{--<td data-id="{{ $value->id }}" data-text="{{ count($search_queries) - $key }}" data-task-id="{{ $value->task_id }}">{{ count($search_queries) - $key }}</td>--}}
-                                    {{--<td>{{ $value->link }}</td>--}}
-                                    {{--<td>{{ $value->mails }}</td>--}}
-                                    {{--<td>{{ $value->phones }}</td>--}}
-                                    {{--<td>{{ $value->skypes }}</td>--}}
-                                    {{--</tr>--}}
-                                    {{--@empty--}}
-                                    {{--<tr class="no_results_class">--}}
-                                    {{--<td colspan="5" class="text-center">--}}
-                                    {{--Нет результатов!--}}
-                                    {{--</td>--}}
-                                    {{--</tr>--}}
-                                    {{--@endforelse--}}
-                                    <tr class="no_results_class">
-                                        <td colspan="7" class="text-center"> Ожидание результатов ...</td>
-                                    </tr>
-                                    </tbody>
-                                </table>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered task_result_table">
+                                        <thead>
+                                        <tr>
+                                            <th class="small__th">#</th>
+                                            <th>Link</th>
+                                            <th>Name</th>
+                                            <th>City</th>
+                                            <th>Mails</th>
+                                            <th>Phones</th>
+                                            <th>Skypes</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody class="task_result_tbody">
+                                        {{--@forelse($search_queries as $key => $value )--}}
+                                        {{--<tr>--}}
+                                        {{--<td data-id="{{ $value->id }}" data-text="{{ count($search_queries) - $key }}" data-task-id="{{ $value->task_id }}">{{ count($search_queries) - $key }}</td>--}}
+                                        {{--<td>{{ $value->link }}</td>--}}
+                                        {{--<td>{{ $value->mails }}</td>--}}
+                                        {{--<td>{{ $value->phones }}</td>--}}
+                                        {{--<td>{{ $value->skypes }}</td>--}}
+                                        {{--</tr>--}}
+                                        {{--@empty--}}
+                                        {{--<tr class="no_results_class">--}}
+                                        {{--<td colspan="5" class="text-center">--}}
+                                        {{--Нет результатов!--}}
+                                        {{--</td>--}}
+                                        {{--</tr>--}}
+                                        {{--@endforelse--}}
+                                        <tr class="no_results_class">
+                                            <td colspan="7" class="text-center"> Ожидание результатов ...</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                                 {{--{{ $search_queries->links() }}--}}
                                 <nav aria-label="Page navigation">
                                     <ul class="pagination">
@@ -340,12 +342,12 @@
                                 data.result.forEach(function (item, i, arr) {
                                     $(".task_result_table").append("<tr>" +
                                             "<td  data-id='" + item.id + "' data-task-id='" + item.task_id + "' data-list-number='"+ ((data.number - page * 10) + 10 - i ) +"'>" + ((data.number - page * 10) + 10 - i ) + "</td>" +
-                                            "<td width='400px'><div style=\"max-width:400px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.link+"\">" + item.link + "</div></td>" +
-                                            "<td>" + item.vk_name + "</td>" +
-                                            "<td>" + item.vk_city + "</td>" +
-                                            "<td>" + item.mails + "</td>" +
-                                            "<td>" + item.phones + "</td>" +
-                                            "<td>" + item.skypes + "</td>" +
+                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.link+"\">" + item.link + "</div></td>" +
+                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.vk_name + "</div></td>" +
+                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.vk_city+"\">" + item.vk_city + "</div></td>" +
+                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.mails + "</div></td>" +
+                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.phones + "</div></td>" +
+                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.skypes + "</div></td>" +
                                             "</tr>");
 
                                 });

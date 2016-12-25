@@ -10,10 +10,6 @@
             <div class="box box-primary">
                 <div class="box-body">
                     <a href="{!! route("accounts_data.create",["type" => 4]) !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>
-                    <a href="{{ route('accounts_data.destroy') }}"
-                       onclick="return confirm('Вы точно хотите очистить БД? Данное действие удалит записи всех типов (VK, OK, Emails, Tw)')"
-                       class="btn btn-danger btn-flat pull-right add__button"
-                       title="Данное действие удалит записи всех типов (VK, OK, Tw, Emails)">Очистить БД</a>
                     <a href="{{ route('accounts_data.destroy.tw') }}"
                        onclick="return confirm('Вы точно хотите удалить все записи типа Twitter?')"
                        class="btn btn-danger btn-flat pull-right add__button delete__button"

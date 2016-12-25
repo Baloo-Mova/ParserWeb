@@ -10,10 +10,6 @@
             <div class="box box-primary">
                 <div class="box-body">
                     <a href="{!! route("accounts_data.create",["type" => 3]) !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>
-                    <a href="{{ route('accounts_data.destroy') }}"
-                       onclick="return confirm('Вы точно хотите очистить БД? Данное действие удалит записи всех типов (VK, OK, Emails)')"
-                       class="btn btn-danger btn-flat pull-right add__button"
-                       title="Данное действие удалит записи всех типов (VK, OK, Emails)">Очистить БД</a>
                     <a href="{{ route('accounts_data.destroy.emails') }}"
                        onclick="return confirm('Вы точно хотите удалить все записи типа Emails?')"
                        class="btn btn-danger btn-flat pull-right add__button delete__button"
@@ -51,7 +47,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">
+                                    <td colspan="8" class="text-center">
                                         Записи отсутствуют
                                     </td>
                                 </tr>

@@ -10,7 +10,10 @@
             <div class="box box-primary">
                 <div class="box-body">
                     <a href="{!! route("skypes_accounts.create") !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>
-
+                    <a href="{{ route('skypes_accounts.destroy.sk') }}"
+                       onclick="return confirm('Вы точно хотите удалить все записи типа Skype?')"
+                       class="btn btn-danger btn-flat pull-right add__button delete__button"
+                       title="Данное действие удалит записи типа Skype">Удалить все</a>
                     <table class="table table-bordered table-striped">
                         <thead>
                         <tr>
@@ -36,7 +39,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="3" class="text-center">Нет Записей!</td>
+                                    <td colspan="4" class="text-center">Нет Записей!</td>
                                 </tr>
                             @endforelse
                         </tbody>

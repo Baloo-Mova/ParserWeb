@@ -120,4 +120,5 @@ Route::group(['prefix' => 'skypes-accounts', 'middleware' => 'auth'], function (
     Route::get('/edit/{id}', ['uses' => 'SkypesAccountsController@edit', 'as' => 'skypes_accounts.edit']);
     Route::post('/edit/{id}', ['uses'=>'SkypesAccountsController@update', 'as'=>'skypes_accounts.update']);
     Route::get('/delete/{id}', ['uses'=>'SkypesAccountsController@delete', 'as'=>'skypes_accounts.delete']);
+    Route::get('/destroy-sk', ['uses'=>'SkypesAccountsController@destroySk', 'as'=>'skypes_accounts.destroy.sk']);
 });

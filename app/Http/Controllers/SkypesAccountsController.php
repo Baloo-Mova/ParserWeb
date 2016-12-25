@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\SkypeLogins;
 use App\MyFacades\SkypeClassFacade;
+use Illuminate\Support\Facades\DB;
 
 class SkypesAccountsController extends Controller
 {
@@ -97,5 +98,13 @@ class SkypesAccountsController extends Controller
         $data->delete();
 
         return redirect()->back();
+    }
+
+    public function destroySk()
+    {
+
+        DB::table('skype_logins')->delete();
+
+        return redirect()->route('skypes_accounts.index');
     }
 }
