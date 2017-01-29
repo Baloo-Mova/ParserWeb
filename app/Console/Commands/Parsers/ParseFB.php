@@ -51,8 +51,8 @@ class ParseFB extends Command {
                 continue;
             }
 
-          //  $fblink->reserved = 1;
-          //  $fblink->save();
+            $fblink->reserved = 1;
+            $fblink->save();
             try {
                 $web = new FB();
 

@@ -30,7 +30,6 @@ class FB {
             'allow_redirects' => true,
             'timeout' => 10,
         ]);
-       
     }
 
     public function login($fb_login, $pass) {
@@ -39,7 +38,7 @@ class FB {
         $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
 
         $request = $this->client->request("GET", "https://facebook.com", [
-            //'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
         ]);
         $data = $request->getBody()->getContents();
         $crawler->clear();
@@ -59,17 +58,16 @@ class FB {
                 'pass' => $pass,
                 'persistent' => '',
                 'default_persistent' => 1,
-               // 'timezone' => -120,
+            // 'timezone' => -120,
             ],
-           // 'proxy' => '127.0.0.1:8888',
-            
+                // 'proxy' => '127.0.0.1:8888',
                 ]
         );
         sleep(2);
         $data = $request->getBody()->getContents();
-       
-      //dd($this->client->getConfig('cookies'));
-        \Illuminate\Support\Facades\Storage::put("text.txt",$data);
+
+        //dd($this->client->getConfig('cookies'));
+        \Illuminate\Support\Facades\Storage::put("text.txt", $data);
         //   print_r($request->getStatusCode() . "\n");
         //$cookie = $request->getHeader('set-cookie');
         //   print_r($data . "\n");
@@ -84,7 +82,7 @@ class FB {
         //check phone number
 
         $request = $this->client->request("GET", "https://www.facebook.com", [
-            //'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                 //'cookie'=> $cookie
         ]);
         sleep(2);
@@ -193,7 +191,7 @@ class FB {
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://www.facebook.com/" . $to_userId, [
-                //'proxy' => '127.0.0.1:8888',
+                    //'proxy' => '127.0.0.1:8888',
                     ]
             );
             sleep(2);
@@ -245,7 +243,7 @@ class FB {
                 'ttstamp' => "26581696611195691031171055768586581694912010510411375528348",
                 'ui_push_phase' => 'C3',
             ],
-            //'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                 ]
         );
         $data = $request->getBody()->getContents();
@@ -311,7 +309,7 @@ class FB {
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://www.facebook.com/", [
-                //'proxy' => '127.0.0.1:8888',
+                    //'proxy' => '127.0.0.1:8888',
                     ]
             );
             sleep(2);
@@ -327,7 +325,7 @@ class FB {
 
         //$this->login($sender->login, $sender->password);
         $request = $this->client->get("https://www.facebook.com/search/groups/?q=" . urlencode($find), [
-            //'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                 ]
         );
         sleep(2);
@@ -412,7 +410,7 @@ class FB {
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://www.facebook.com/", [
-                //'proxy' => '127.0.0.1:8888',
+                    //'proxy' => '127.0.0.1:8888',
                     ]
             );
             sleep(2);
@@ -432,7 +430,7 @@ class FB {
                         . "access_token=" . $sender->fb_access_token
                         . "&pretty=0&q=" . urlencode($find) . "&type=group&limit=25&after=" . $after, [
                     'form_params' => [],
-                    //'proxy' => '127.0.0.1:8888',
+                        //'proxy' => '127.0.0.1:8888',
                         ]
                 );
                 sleep(2);
@@ -452,7 +450,7 @@ class FB {
                         . "access_token=" . $sender->fb_access_token
                         . "&pretty=0&q=" . urlencode($find) . "&type=group&limit=25&after=" . $after, [
                     'form_params' => [],
-                    //'proxy' => '127.0.0.1:8888',
+                        //'proxy' => '127.0.0.1:8888',
                         ]
                 );
                 sleep(2);
@@ -554,7 +552,7 @@ class FB {
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://www.facebook.com/", [
-                //'proxy' => '127.0.0.1:8888',
+                    //'proxy' => '127.0.0.1:8888',
                     ]
             );
             sleep(2);
@@ -570,7 +568,7 @@ class FB {
 
 
         $request = $this->client->request("GET", $fblink->link, [
-            //'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                 ]
         );
         sleep(2);
@@ -673,7 +671,7 @@ class FB {
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://www.facebook.com/", [
-                //'proxy' => '127.0.0.1:8888',
+                    //'proxy' => '127.0.0.1:8888',
                     ]
             );
             sleep(2);
@@ -690,7 +688,7 @@ class FB {
 
 
         $request = $this->client->get("https://www.facebook.com/groups/" . $group->user_id . "/members/", [
-            //'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                 ]
         );
         sleep(2);
@@ -699,8 +697,8 @@ class FB {
         $data = $request->getBody()->getContents();
 
         if (strpos($data, "uiInterstitial uiInterstitialLarge") == false) {
-           // if (strpos($data, "sp_sxwfege4ycA sx_6596fe") == false) {
-           //     echo "close group\n";
+            // if (strpos($data, "sp_sxwfege4ycA sx_6596fe") == false) {
+            //     echo "close group\n";
             //    return false;
             //}
             preg_match_all("/\/hovercard\/user\.php\?id\=(\w*)/s", $data, $users);
@@ -743,7 +741,7 @@ class FB {
                     "&__pc=" . "PHASED:DEFAULT"
                     //"&__rev=".	"2753320".
                     , [
-                //'proxy' => '127.0.0.1:8888',
+                    //'proxy' => '127.0.0.1:8888',
                     ]
             );
 
@@ -838,7 +836,7 @@ class FB {
 
             // $this->login($sender->login, $sender->password);
             $request = $this->client->request("GET", "https://www.facebook.com/", [
-                //'proxy' => '127.0.0.1:8888',
+                    //'proxy' => '127.0.0.1:8888',
                     ]
             );
             sleep(2);
@@ -856,7 +854,7 @@ class FB {
         //echo($user->user_id . "\n");
         // echo($sender->fb_user_id . "\n");
         $request = $this->client->request("GET", "https://www.facebook.com/profile.php?id=" . $user->user_id, [
-            //'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                 ]
         );
         $data = $request->getBody()->getContents();
@@ -867,15 +865,15 @@ class FB {
         //dd($req_link);
 
         $request = $this->client->request("GET", $req_link . "&section=contact-info&pnref=about", [
-            //'proxy' => '127.0.0.1:8888'
+                //'proxy' => '127.0.0.1:8888'
                 ]
         );
-        
+
         $data = $request->getBody()->getContents();
-         //\Illuminate\Support\Facades\Storage::put("data.html",$data);
+        //\Illuminate\Support\Facades\Storage::put("data.html",$data);
 
         sleep(2);
-       // $data = $request->getBody()->getContents();
+        // $data = $request->getBody()->getContents();
 
 
         preg_match_all("/\<span\ dir\=.ltr.\>([0-9 ]*)/s", $data, $phones);
@@ -887,13 +885,20 @@ class FB {
             $phones_str = str_replace(" ", "", $phones_str);
             $phones_str = str_replace(",", ", ", $phones_str);
         }
-
-
+        preg_match_all("/eid\=(AI\%40[\._a-zA-Z0-9-]*)/i", $data, $fix);
+        $fix = array_unique($fix[1]);
+        //dd($fix);
+        if (count($fix) != 0) {
+            foreach ($fix as $item) {
+                $data = str_replace($item, "", $data);
+            }
+        }
 
         preg_match_all("/[\._a-zA-Z0-9-]+\%40[\._a-zA-Z0-9-]+/i", $data, $emails);
         $emails = array_unique($emails[0]);
         $txt_email = " ";
         if (count($emails) != 0) {
+
             $txt_email = implode($emails, ', ');
             $txt_email = str_replace("%40", "@", $txt_email);
         }
@@ -921,7 +926,6 @@ class FB {
 
             try {
                 $search_query->save();
-                
             } catch (\Exception $e) {
                 echo ($e->getMessage() . "\n");
             }
@@ -983,7 +987,7 @@ class FB {
 
         // $this->login($sender->login, $sender->password);
         $request = $this->client->request("GET", "https://www.facebook.com/", [
-            //'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                 ]
         );
         sleep(2);
@@ -999,7 +1003,7 @@ class FB {
         // }
 
         $request = $this->client->request("GET", "https://developers.facebook.com/tools/explorer", [
-            //'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                 ]
         );
         sleep(2);
@@ -1016,12 +1020,12 @@ class FB {
 
         $request = $this->client->request("GET", "https://www.facebook.com/v2.8/dialog/oauth?response_type=token&display=popup&client_id=" . $app_id . "&redirect_uri=https%3A%2F%2Fdevelopers.facebook.com%2Ftools%2Fexplorer%2Fcallback&scope=", [
 
-            //'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                 ]
         );
         $request = $this->client->request("GET", "https://developers.facebook.com/tools/explorer/" . $app_id . "", [
 
-            //'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                 ]
         );
         $data = $request->getBody()->getContents();
