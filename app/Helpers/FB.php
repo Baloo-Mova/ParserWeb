@@ -699,10 +699,10 @@ class FB {
         $data = $request->getBody()->getContents();
 
         if (strpos($data, "uiInterstitial uiInterstitialLarge") == false) {
-            if (strpos($data, "sp_sxwfege4ycA sx_6596fe") == false) {
-                echo "close group\n";
-                return false;
-            }
+           // if (strpos($data, "sp_sxwfege4ycA sx_6596fe") == false) {
+           //     echo "close group\n";
+            //    return false;
+            //}
             preg_match_all("/\/hovercard\/user\.php\?id\=(\w*)/s", $data, $users);
             $users = array_unique($users[1]);
             foreach ($users as $value) {
