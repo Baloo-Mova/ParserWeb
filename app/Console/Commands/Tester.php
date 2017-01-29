@@ -6,6 +6,7 @@ use PHPMailer;
 use Illuminate\Console\Command;
 use App\MyFacades\SkypeClassFacade;
 use App\Helpers\VK;
+use App\Helpers\FB;
 use App\Models\AccountsData;
 use App\Helpers\SimpleHtmlDom;
 use GuzzleHttp\Client;
@@ -46,9 +47,12 @@ class Tester extends Command
     public function handle()
     {
 
-        $from = AccountsData::where(['type_id' => '2'])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
+        $from = AccountsData::where(['type_id' => '6'])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
 
-        dd(json_decode($from->ok_cookie));
+              $web = new FB;
+        
+        $web->login($from->login, $from->password);
+        dd($web);
 
     }
 
