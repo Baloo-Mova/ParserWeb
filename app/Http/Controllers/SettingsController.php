@@ -155,7 +155,7 @@ class SettingsController extends Controller {
 		 
 		 try {
         $supervisor->restart();
-        $supervisor->startAllProcesses($wait=true);
+        //$supervisor->startAllProcesses($wait=true);
         
         }
        catch (\Supervisor\ApiException $e){
