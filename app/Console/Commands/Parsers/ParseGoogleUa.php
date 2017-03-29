@@ -11,14 +11,14 @@ use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 
-class ParseGoogle extends Command
+class ParseGoogleUa extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'parse:google';
+    protected $signature = 'parse:google:ua';
 
     /**
      * The console command description.
@@ -45,14 +45,14 @@ class ParseGoogle extends Command
     public function handle()
     {
         while (true) {
-            $task = Tasks::where(['task_type_id' => TasksType::WORD, 'reserved' => 0, 'active_type' => 1])->first();
+            $task = Tasks::where(['task_type_id' => TasksType::WORD, 'google_ua_reserved' => 0, 'active_type' => 1])->first();
 
             if ( ! isset($task)) {
                 sleep(10);
                 continue;
             }
 
-            $task->reserved = 1;
+            $task->google_ua_reserved = 1;
             $task->save();
 
             try {
@@ -67,13 +67,10 @@ class ParseGoogle extends Command
                     $data = "";
                     while (strlen($data) < 200) {
 
-                        $data = $web->get("https://www.google.ru/search?q=" . urlencode($task->task_query) . "&start=" . $i * 10,
-                          // $proxy->proxy
-                            '127.0.0.1:8888'    
-                                );
+                        $data = $web->get("https://www.google.com.ua/search?q=" . urlencode($task->task_query) . "&start=" . $i * 10,
+                           $proxy->proxy);
 
                         if ($data == "NEED_NEW_PROXY") {
-                            dd('ff');
                             $proxy->reportBad();
                             while (true) {
                                 $proxy = ProxyItem::orderBy('id', 'desc')->first();
@@ -91,8 +88,8 @@ class ParseGoogle extends Command
                     foreach ($crawler->find('.r') as $item) {
                         $link = $item->find('a', 0);
                         if (isset($link) && ! empty($link->href)) {
-                                                        
-                                 $tmp = SiteLinks::where(['task_id'=>$task->id, 'link'=>$link->href])->first();
+                            
+                               $tmp = SiteLinks::where(['task_id'=>$task->id, 'link'=>$link->href])->first();
                                if(is_null($tmp)){
                                 array_push($listLinks,[
                                     'link'    => $link->href,
@@ -101,13 +98,14 @@ class ParseGoogle extends Command
                                     
                                 ]);
                                }
-                               
                                 $sitesCountNow++;
                             
                         }
                     }
                     try {
-                        SiteLinks::insert($listLinks);
+                       
+                      
+                            SiteLinks::insert($listLinks);
                      } catch (\Exception $ex) {
                                 $log          = new ErrorLog();
                                 $log->message = $ex->getMessage(). " line:".__LINE__ ;

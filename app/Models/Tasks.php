@@ -16,6 +16,9 @@ class Tasks extends Model
         'vk_reserved',
         'fb_reserved',
         'fb_complete',
+        'google_ua_reserved',
+        'yandex_ua_reserved',
+        'yandex_ru_reserved',
     ];
 
     public function tasksType()

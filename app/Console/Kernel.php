@@ -27,6 +27,9 @@ use App\Console\Commands\Senders\SkypeSender;
 use App\Console\Commands\Senders\OkSender;
 use App\Console\Commands\Cleaner\NotValidMailsCleaner;
 
+use App\Console\Commands\Parsers\ParseGoogleUa;
+//use App\Console\Commands\Parsers\ParseYandexUa;
+use App\Console\Commands\Parsers\ParseYandexRu;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -63,6 +66,10 @@ class Kernel extends ConsoleKernel
          SkypeSender::class,
          OkSender::class,
          NotValidMailsCleaner::class,
+        
+        ParseGoogleUa::class,
+        ParseYandexRu::class,
+        //ParseYandexUa::class,
     ];
 
     /**
