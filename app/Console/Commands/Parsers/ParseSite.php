@@ -41,7 +41,9 @@ class ParseSite extends Command {
      * @return mixed
      */
     public function handle() {
-        $this->check = array("javascript:", "mailto:",".tab",".?clear-cache", "#","#orderFlexTab", "tel:", "googtrans(", ".css", ".js", ".ico", ".jpg", ".png", ".jpeg", ".swf", ".gif");
+        $this->check = array("javascript:", "mailto:","/m/","/action_comment/",
+            ".tab",".?clear-cache", "#","#orderFlexTab", "tel:", "googtrans(", ".css", ".js",
+            ".ico", ".jpg", ".png", ".jpeg", ".swf", ".gif");
         while (true) {
             $web = new Web();
             $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' '); //TRANSLIT//IGNORE
@@ -122,13 +124,19 @@ class ParseSite extends Command {
                             if (empty($data)) {
                                 continue;
                             }
+                           
                             $crawler->clear();
                             $crawler->load($data);
                             
                             $data = $crawler->find('body', 0);
+                            
+                            
                             $emails = $this->extractEmails($data, $emails);
+                          //  print_r($emails);
                             $skypes = $this->extractSkype($data, $skypes);
+                            // print_r($skypes);
                             $phones = $this->extractPhones($data);
+                            // print_r($skypes);
                         } catch (\Exception $ex) {
                            // dd($ex->getMessage());
                         }
@@ -290,7 +298,7 @@ class ParseSite extends Command {
                         '<a[^>]*href\s*=\s*"([^"]*)"' . "/is", $html, $M)) {
 
             $M = array_unique($M[2]);
-           // dd($M);
+            //dd($M);
             foreach ($M as $m) {
                  //dd($M);
                 // echo($m."\n");
@@ -315,7 +323,7 @@ class ParseSite extends Command {
                                 $m = substr($m, 1);
                             }
                             $m = substr($m, 1);
-                            echo("\n---".$m."\n");
+                           // echo("\n---".$m."\n");
                           
                         }
                         
