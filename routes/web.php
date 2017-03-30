@@ -122,3 +122,8 @@ Route::group(['prefix' => 'skypes-accounts', 'middleware' => 'auth'], function (
     Route::get('/delete/{id}', ['uses'=>'SkypesAccountsController@delete', 'as'=>'skypes_accounts.delete']);
     Route::get('/destroy-sk', ['uses'=>'SkypesAccountsController@destroySk', 'as'=>'skypes_accounts.destroy.sk']);
 });
+
+Route::group(['prefix' => 'proxy', 'middleware' => 'auth'], function () {
+    Route::get('/get-proxies', ['uses' => 'ProxyController@getProxies', 'as' => 'proxy.getproxies']);
+    Route::post('/get-proxies', ['uses' => 'ProxyController@saveProxies', 'as' => 'proxy.saveproxies']);
+});
