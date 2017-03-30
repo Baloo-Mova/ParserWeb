@@ -12,9 +12,12 @@ use App\Helpers\SimpleHtmlDom;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
+use App\Models\GoodProxies;
+
 
 class Tester extends Command
 {
+    public $client  = null;
     /**
      * The name and signature of the console command.
      *
@@ -46,14 +49,7 @@ class Tester extends Command
      */
     public function handle()
     {
-
-        $from = AccountsData::where(['type_id' => '6'])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
-
-              $web = new FB;
-        
-        $web->login($from->login, $from->password);
-        dd($web);
-
+        dd(GoodProxies::getProxy());
     }
 
 

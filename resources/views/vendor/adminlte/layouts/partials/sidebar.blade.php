@@ -137,6 +137,12 @@
                     <span>Общие Настройки</span>
                 </a>
             </li>
+            <li class="{{ Request::path() == 'proxy' ? 'active' : '' }}">
+                <a href="{{ route('proxy.getproxies') }}">
+                    <i class='fa fa-link'></i>
+                    <span>Proxy</span>
+                </a>
+            </li>
         </ul><!-- /.sidebar-menu -->
     </section>
     <!-- /.sidebar -->
