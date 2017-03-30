@@ -13,6 +13,7 @@ use App\Models\Tasks;
 use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
+use App\Models\IgnoreDomains;
 
 class ParseYandexRu extends Command {
 
@@ -73,6 +74,8 @@ class ParseYandexRu extends Command {
             $task->save();
             //sleep(random_int(5, 10));
             try {
+                $ignore = IgnoreDomains::all();
+                
                 $proxy = ProxyItem::orderBy('id', 'desc')->first();
                 for ($ii = 0; $ii < count($regions); $ii++) {
                     echo($ii);
@@ -155,13 +158,16 @@ class ParseYandexRu extends Command {
                             if (count($links) != 0) {
 
                                 foreach ($links as $link) {
-
+                                    
+                                    if($this->validate($link,$ignore)){
 
                                     array_push($listLinks, [
                                         'link' => $link,
                                         'task_id' => $task->id,
                                         'reserved' => 0
                                     ]);
+                                    
+                                    }
                                 }
                             }
 
@@ -199,5 +205,17 @@ class ParseYandexRu extends Command {
             unset($array[$key]);
         }
     }
+public function validate($url, $check) {
 
+        $valid = true;
+
+        foreach ($check as $val) {
+            
+            if (stripos($url, $val->domain) !== false) {
+                $valid = false;
+                break;
+            }
+        }
+        return $valid;
+    }
 }
