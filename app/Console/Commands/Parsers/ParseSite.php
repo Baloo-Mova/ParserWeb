@@ -118,7 +118,7 @@ class ParseSite extends Command {
 
                     foreach ($additionalLinks as $l) {
 
-                       echo($l . "\n");
+                     ////  echo($l . "\n");
                         try {
                             $data = $web->get($l);
                             if (empty($data)) {
@@ -200,7 +200,7 @@ class ParseSite extends Command {
         $plain = $data->plaintext;
         $plain = str_replace(["&nbsp;", "&larr;", "&rarr;"], [" ", ""], $plain);
         
-        \Illuminate\Support\Facades\Storage::put("plain.txt", $plain);
+        //\Illuminate\Support\Facades\Storage::put("plain.txt", $plain);
 
         $html = $data->innertext;
        // \Illuminate\Support\Facades\Storage::put("html.txt", $html);
@@ -222,7 +222,7 @@ class ParseSite extends Command {
        // if (count($before) == 0) {
           $plain =preg_replace("#(?<=\d)[\s-]+(?=\d)#","",$plain);
             $plain = str_replace(["&#9658;","."], "", $plain);
-            \Illuminate\Support\Facades\Storage::put("plain.txt", $plain);
+           // \Illuminate\Support\Facades\Storage::put("plain.txt", $plain);
             if (preg_match_all('/(?:(\d{1,3})( |  ))?(?:([\(]?\d+[\)]?)[ -])?(\d{1,5}[\- ]?\d{1,5}[\- ]?\d{1,5})/s', $plain, $M)) {
                 $M = array_unique($M[0]);
                 foreach ($M as $m) {
