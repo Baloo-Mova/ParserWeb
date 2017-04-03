@@ -56,7 +56,7 @@ class TestProxies implements ShouldQueue
             foreach ($proxies as $proxy) {
                 try{
                     $test_proxies_query = $this->client->request('GET', 'https://www.google.com', [
-                        'proxy' => $proxy->proxy
+                        'proxy' => 'http://'.$proxy->proxy
                     ]);
                 }catch (\Exception $ex){
                     $delete[] = $proxy->id;
@@ -84,9 +84,7 @@ class TestProxies implements ShouldQueue
 
             }
 
-            if(count($delete) > 0){
-                ProxyTemp::whereIn('id', $delete)->delete();
-            }
+            ProxyTemp::truncate();
 
             if(count($good) > 0){
                 GoodProxies::insert($good);
