@@ -132,16 +132,20 @@ class OkSender extends Command
                     }
                 }
 
-                $data = $this->client->request('POST', 'https://www.ok.ru/dk?cmd=MessagesController&st.convId=PRIVATE_'.$ok_query->ok_user_id.'&st.cmd=userMain&st.openPanel=messages', [
+                $data = $this->client->request('POST', 'https://ok.ru/dk?cmd=MessagesController&st.convId=PRIVATE_'.$ok_query->ok_user_id.'&st.cmd=userMain', [
                     'headers' => [
                         'Referer' => 'https://ok.ru/',
-                        'TKN' => $this->tkn
+                        'TKN' => $this->tkn,
+                       // 'X-Requested-With'=> 'XMLHttpRequest',
+                        //'Accept-Encoding' => 'gzip, deflate'
                     ],
                     'form_params' => [
                         "st.txt" => $message->text,
                         "st.uuid" => time(),
-                        "st.posted" => $this->gwt
-                    ]
+                        "st.ptfu" => "true",
+                        "gwt.requested" => $this->gwt
+                    ],
+                       // 'proxy'=>'127.0.0.1:8888'
                 ]);
 
                 if ( ! empty($data->getHeaderLine('TKN'))) {
