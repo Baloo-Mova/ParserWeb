@@ -34,10 +34,10 @@
                                     
                                     <td>
                                         <a href="{{ route('accounts_data.edit',['id'=>$item['id']]) }}"
-                                           class="btn btn-default" title="Update"><span class="glyphicon glyphicon-pencil"></span></a>
+                                           class="btn btn-default btn-flat" title="Update"><span class="glyphicon glyphicon-pencil"></span></a>
                                         <a href="{{ route('accounts_data.delete',['id'=>$item['id']]) }}"
                                            onclick="return confirm('Удалить выбраную запись?')"
-                                           class="btn btn-danger" title="Delete"><span class="glyphicon glyphicon-trash"></span></a>
+                                           class="btn btn-danger btn-flat" title="Delete"><span class="glyphicon glyphicon-trash"></span></a>
                                     </td>
                                 </tr>
                             @empty
