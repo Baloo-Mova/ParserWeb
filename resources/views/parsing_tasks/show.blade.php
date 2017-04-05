@@ -34,9 +34,9 @@
                         </table>
                     </div>
                     <div class="box-footer">
-                        <a href="{{ route('parsing_tasks.start', ['id' => $data->id]) }}" class="btn btn-success" {{ $data->active_type == 1 || $data->google_offset == -1 ? "disabled" : "" }}>Запустить</a>
-                        <a href="{{ route('parsing_tasks.stop', ['id' => $data->id]) }}" class="btn btn-danger" {{ $data->active_type == 0 || $data->active_type == 2 ? "disabled" : "" }}>Остановить</a>
-                        <a href="{{ route('parsing_tasks.reserved', ['id' => $data->id]) }}" class="btn btn-danger" {{ $data->reserved == 0 ? "disabled" : "" }}>Вернуть задачу</a>
+                        <a href="{{ route('parsing_tasks.start', ['id' => $data->id]) }}" class="btn btn-success btn-flat" {{ $data->active_type == 1 || $data->google_offset == -1 ? "disabled" : "" }}>Запустить</a>
+                        <a href="{{ route('parsing_tasks.stop', ['id' => $data->id]) }}" class="btn btn-danger btn-flat" {{ $data->active_type == 0 || $data->active_type == 2 ? "disabled" : "" }}>Остановить</a>
+                        <a href="{{ route('parsing_tasks.reserved', ['id' => $data->id]) }}" class="btn btn-danger btn-flat" {{ $data->reserved == 0 ? "disabled" : "" }}>Вернуть задачу</a>
 
 
                     </div>
@@ -68,7 +68,7 @@
                                     <span>В очереди: <span class="badge bg-info task_result_span_queue">-</span></span>&nbsp;
                                     <span>Разослано: <span class="badge bg-warning task_result_span_sended">-</span></span>&nbsp;
                                     <hr>
-                                    <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}" class="btn btn-primary" >Экспортировать в CSV</a>
+                                    <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}" class="btn btn-primary btn-flat" >Экспортировать в CSV</a>
                                     <hr>
                                 </div>
                                 <div class="table-responsive">
@@ -102,7 +102,7 @@
                                         {{--</tr>--}}
                                         {{--@endforelse--}}
                                         <tr class="no_results_class">
-                                            <td colspan="7" class="text-center"> Ожидание результатов ...</td>
+                                            <td colspan="8" class="text-center"> Ожидание результатов ...</td>
                                         </tr>
                                         </tbody>
                                     </table>
@@ -116,8 +116,8 @@
                             </div>
 
                             <div id="data" class="tab-pane well fade">
-                                <a href="{{ route('parsing_tasks.startDelivery', ['id' => $data->id]) }}" class="btn btn-success" {{empty($mails->subject) || empty($skype->text) || $data->need_send == 1 ? "disabled" : "" }}>Запустить рассылку</a>
-                                <a href="{{ route('parsing_tasks.stopDelivery', ['id' => $data->id]) }}" class="btn btn-danger" {{$data->need_send == 0 ? "disabled" : "" }}>Остановить рассылку</a>
+                                <a href="{{ route('parsing_tasks.startDelivery', ['id' => $data->id]) }}" class="btn btn-success btn-flat" {{empty($mails->subject) || empty($skype->text) || $data->need_send == 1 ? "disabled" : "" }}>Запустить рассылку</a>
+                                <a href="{{ route('parsing_tasks.stopDelivery', ['id' => $data->id]) }}" class="btn btn-danger btn-flat" {{$data->need_send == 0 ? "disabled" : "" }}>Остановить рассылку</a>
                                 <hr>
                                 <form action="{{ route('parsing_tasks.changeDeliveryInfo') }}" method="post">
                                     <table class="table table-bordered">
@@ -181,7 +181,7 @@
                                         <input type="hidden" name="delivery_id" value="{{ $data->id }}">
                                         </tbody>
                                     </table>
-                                    <input type="submit" class="btn btn-primary" value="Изменить">
+                                    <input type="submit" class="btn btn-primary btn-flat" value="Изменить">
                                 </form>
                             </div>
                         </div>
