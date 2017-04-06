@@ -207,7 +207,7 @@ class EmailSender extends Command {
             }
 
             $request = $this->client->request("POST", "http://localhost:25555/sendmail", [
-                'proxy' => '127.0.0.1:8888',
+               // 'proxy' => '127.0.0.1:8888',
                 'json' => [
                     'hostname' => $arguments['from']->smtp_address,
                     'port' => $arguments['from']->smtp_port,
