@@ -51,6 +51,10 @@ label {
     max-width: 60px;
     width: 60px !important;
 }
+.parsing-tasks_action-th{
+    max-width: 130px;
+    width: 130px !important;
+}
 .skypes_action_td{
     max-width: 120px;
     width: 105px !important;
@@ -66,4 +70,7 @@ label {
 }
 .bg-danger{
     background-color: orangered !important;
+}
+.well {
+    border-radius: 0px !important;
 }

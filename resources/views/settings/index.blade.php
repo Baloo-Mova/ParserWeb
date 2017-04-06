@@ -51,10 +51,10 @@
                     </form>--}}
                     
                     <div>
-                        <a href="{{route('settings.process.start.all')}}" class="btn btn-success" title="Startall" aria-label="View" data-pjax="0">
+                        <a href="{{route('settings.process.start.all')}}" class="btn btn-success btn-flat" title="Startall" aria-label="View" data-pjax="0">
                             Запустить все потоки
                         </a>
-                        <a href="{{route('settings.process.stop.all')}}" class="btn btn-danger" title="Stopall" aria-label="View" data-pjax="0">
+                        <a href="{{route('settings.process.stop.all')}}" class="btn btn-danger btn-flat" title="Stopall" aria-label="View" data-pjax="0">
                             Отсановить все потоки
                         </a>
                     </div>
@@ -90,7 +90,7 @@
                                                <input type="number" class="form-control" placeholder="" name="numprocs" id="numprocs" value="{{$conf->numprocs}}"/>
                                             </div>
                                        
-                                                <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-floppy-disk"></span></button>
+                                                <button type="submit" class="btn btn-primary btn-flat"><span class="glyphicon glyphicon-floppy-disk"></span></button>
                                             
                                         </form></td>
                                     <td>{{$counters[$conf->name]}}</td>

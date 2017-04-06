@@ -55,7 +55,7 @@
                             </div>
                     </div>
                     <div class="box-footer">
-                        <button type="submit" class="btn btn-primary">Выбрать</button>
+                        <button type="submit" class="btn btn-primary btn-flat">Выбрать</button>
                     </div>
                 </form>
             </div>
