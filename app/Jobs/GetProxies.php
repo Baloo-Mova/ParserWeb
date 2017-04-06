@@ -64,6 +64,7 @@ class GetProxies implements ShouldQueue
                     '&ports=' . str_replace(" ", "", $this->data['port']) .
                     '&type=' . str_replace(" ", "", $this->data['type']) .
                     $mode
+                    .'&includeType'
                     ); // if need http://ip format '&includeType='
 
                 if ($get_proxies_query->getStatusCode() == 200) {

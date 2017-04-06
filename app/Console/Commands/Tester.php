@@ -61,7 +61,7 @@ class Tester extends Command
         curl_exec($ch);
         echo curl_error($ch);
 
-
+        
         /*$mail = new PHPMailer;
         //$mail->SMTPDebug = 3;
         $mail->isSMTP();
