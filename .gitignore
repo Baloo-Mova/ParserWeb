@@ -8,3 +8,4 @@ Homestead.yaml
 .env
 /composer.lock
 /nbproject
+/node/nodemailer/node_modules
