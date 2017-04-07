@@ -193,7 +193,7 @@ class SkypeClass {
         }
         curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36");
+        curl_setopt($curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36");
         curl_setopt($curl, CURLOPT_HEADER, $showHeaders);
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, $follow);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -305,11 +305,12 @@ class SkypeClass {
             "content" => $message,
             "messagetype" => "RichText",
             "contenttype" => "text",
-            "clientmessageid" => $messageID
+            "clientmessageid" => $messageID,
+            "Has-Mentions"=>false
         ];
 
         $req = json_decode($this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/conversations/$mode:$to/messages", "POST", json_encode($post)), true);
-
+//dd($req);
         return isset($req["OriginalArrivalTime"]) ? $messageID : 0;
     }
 
