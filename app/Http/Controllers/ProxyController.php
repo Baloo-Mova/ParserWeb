@@ -20,7 +20,8 @@ class ProxyController extends Controller
             'limit'     => $request->get('limit'),
             'type'      => $request->get('type'),
             'port'      => $request->get('port'),
-            'mode'      => $request->get('mode')
+            'mode'      => $request->get('mode'),
+            'country'      => $request->get('country')
         ];
 
         $job = dispatch(new GetProxies($data));

@@ -16,5 +16,6 @@ class ProxyTemp extends Model
         'google',
         'mailru',
         'twitter',
+        'country',
     ];
 }

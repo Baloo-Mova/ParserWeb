@@ -22,6 +22,7 @@ class GoodProxies extends Model
         'google',
         'mailru',
         'twitter',
+        'country',
     ];
 
     public static function getProxy($mode = null)

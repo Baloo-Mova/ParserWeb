@@ -56,7 +56,7 @@ class TestProxies implements ShouldQueue
             foreach ($proxies as $proxy) {
                 try{
                     $test_proxies_query = $this->client->request('GET', 'https://www.google.com', [
-                        'proxy' => 'http://'.$proxy->proxy
+                        'proxy' => $proxy->proxy
                     ]);
                 }catch (\Exception $ex){
                     $delete[] = $proxy->id;
@@ -68,7 +68,8 @@ class TestProxies implements ShouldQueue
                     "yandex"  => $proxy->yandex == 1,
                     "google"  => $proxy->google == 1,
                     "mailru"  => $proxy->mailru == 1,
-                    "twitter"  => $proxy->twitter == 1
+                    "twitter"  => $proxy->twitter == 1,
+                    "country"  => $proxy->country
                 ];
                 $delete[] = $proxy->id;
 

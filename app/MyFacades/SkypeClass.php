@@ -4,16 +4,37 @@ namespace App\MyFacades;
 
 use App\Models\SkypeLogins;
 use App\Models\Parser\ErrorLog;
+use App\Models\ProxyTemp;
+use App\Models\GoodProxies;
 
 class SkypeClass {
 
     public $username, $valid = true;
     private $password, $registrationToken, $skypeToken, $expiry = 0, $logged = false, $hashedUsername;
+    public $cur_proxy = null;
 
     public function addSender($username, $password) {
         $this->username = $username;
         $this->password = $password;
         $this->valid = $this->login();
+    }
+
+    public function setCurrentProxy() {
+        while (true) {
+            if (!isset($this->cur_proxy)) {
+                $this->cur_proxy = GoodProxies::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->first();
+                if (isset($this->cur_proxy)) return true;
+            } else {
+                try {
+                    $this->cur_proxy->delete();
+                } catch (\Exception $ex) {
+                    // dd('gopa');
+                }
+                $this->cur_proxy = GoodProxies::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->first();
+                if (isset($this->cur_proxy)) return true;
+            }
+            sleep(random_int(1, 3));
+        }
     }
 
     private function login() {
@@ -22,8 +43,16 @@ class SkypeClass {
             $this->registrationToken = null;
             $this->expiry = 0;
             $this->skypeToken = null;
+            while (true) {
+                $loginForm = $this->web("https://login.skype.com/login/oauth/microsoft?client_id=578134&redirect_uri=https%3A%2F%2Fweb.skype.com%2F&username={$this->username}", "GET", [], true, true);
+                if ($loginForm == false) {
 
-            $loginForm = $this->web("https://login.skype.com/login/oauth/microsoft?client_id=578134&redirect_uri=https%3A%2F%2Fweb.skype.com%2F&username={$this->username}", "GET", [], true, true);
+                    $this->setCurrentProxy();
+                    continue;
+                }
+              
+                break;
+            }
 
             preg_match("`urlPost:'(.+)',`isU", $loginForm, $loginURL);
             $loginURL = $loginURL[1];
@@ -196,6 +225,9 @@ class SkypeClass {
         curl_setopt($curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36");
         curl_setopt($curl, CURLOPT_HEADER, $showHeaders);
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, $follow);
+        curl_setopt($curl, CURLOPT_PROXY, (isset($this->cur_proxy) ? $this->cur_proxy->proxy : ''));  //http://79.133.105.71:8080  - this proxy not work
+        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 20); //timeout in seconds
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec($curl);
 
@@ -245,16 +277,19 @@ class SkypeClass {
             $auth['registrationToken'] = $skype_logins->registrationToken;
             $auth['expiry'] = $skype_logins->expiry;
             if (time() >= $auth["expiry"]) {
+
                 $needRelogin = true;
             }
         }
 
         if (!$needRelogin) {
+
             $this->skypeToken = $auth["skypeToken"];
             $this->registrationToken = $auth["registrationToken"];
             $this->expiry = $auth["expiry"];
             $this->valid = true;
         } else {
+
             $this->valid = $this->login();
         }
     }
@@ -306,12 +341,12 @@ class SkypeClass {
             "messagetype" => "RichText",
             "contenttype" => "text",
             "clientmessageid" => $messageID,
-            "Has-Mentions"=>false
+            "Has-Mentions" => false
         ];
 
         $req = json_decode($this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/conversations/$mode:$to/messages", "POST", json_encode($post)), true);
-//dd($req);
-        return isset($req["OriginalArrivalTime"]) ? $messageID : 0;
+//dd($messageID);
+        return isset($req["OriginalArrivalTime"]) ? $messageID : false;
     }
 
     private function timestamp() {
@@ -333,14 +368,26 @@ class SkypeClass {
                 $is_friend = $this->isMyFriend($to);                     //$this->isFriend($to, $message);
 
                 if ($is_friend) {
-                    $this->sendMessage(["login" => $from->login, "password" => $from->password], $to, $message);
-                    //dd("friend");
+
+                    if (!$this->sendMessage(["login" => $from->login, "password" => $from->password], $to, $message)) {
+                        sleep(2);
+                        $this->setCurrentProxy();
+                        // echo("\nnot sended");
+                        continue;
+                    }
+                   return true;
                 } else {
-                    $this->addContact($to, $message);
-                    
+
+                    if (!$this->addContact($to, $message)) {
+                        sleep(2);
+                        $this->setCurrentProxy();
+                        // echo("\nnot sended");
+                        continue;
+                    }
+                    return true;
                 }
             }
-            break;
+            
         }
     }
 
@@ -352,24 +399,37 @@ class SkypeClass {
 
     public function getContactsList() {
         $req = json_decode($this->web("https://contacts.skype.com/contacts/v1/users/{$this->username}/contacts?\$filter=type%20eq%20%27skype%27%20or%20type%20eq%20%27msn%27%20or%20type%20eq%20%27pstn%27%20or%20type%20eq%20%27agent%27&reason=default"), true);
+        //$req = $this->web("https://contacts.skype.com/contacts/v1/users/{$this->username}/contacts?\$filter=type%20eq%20%27skype%27%20or%20type%20eq%20%27msn%27%20or%20type%20eq%20%27pstn%27%20or%20type%20eq%20%27agent%27&reason=default");
 
         return isset($req["contacts"]) ? $req["contacts"] : [];
     }
 
     public function isMyFriend($skype_id) {
-        $friends = $this->getContactsList();
-        //dd($friends);
-        if (count($friends) != 0) {
-            foreach ($friends as $friend) {
+        $friends = [];
+        
+        while (true) {
 
-                if ($friend["id"] == $skype_id && $friend["authorized"] == "1") {
+            $friends = $this->getContactsList();
+            
+           // echo("\nproxy:".$this->cur_proxy->proxy);
+           //   print_r($friends);
+            if (count($friends) == 0) {
+                sleep(2);
+                $this->setCurrentProxy();
+                 
+                
+                continue;
+            }
+            break;
+        }
+        foreach ($friends as $friend) {
+
+            if ($friend["id"] == $skype_id && $friend["authorized"] == "1") {
 
 
-                    return true;
-                }
+                return true;
             }
         }
-
         return false;
     }
 
@@ -382,13 +442,13 @@ class SkypeClass {
             "mri" => "8:" . $to_username,
             "greeting" => $greeting
         ];
-         
+
         $req = json_decode($this->web("https://contacts.skype.com/contacts/v2/users/" . $this->username . "/contacts", "POST", json_encode($post)), true);
         //dd($req["Message"]);
-        
 
 
-        return strlen($req["Message"])==0 ? true : false;
+
+        return strlen($req["Message"]) == 0 ? true : false;
     }
 
 }

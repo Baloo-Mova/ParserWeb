@@ -63,15 +63,15 @@ class GetProxies implements ShouldQueue
                     '&limit=' . str_replace(" ", "", $this->data['limit']) .
                     '&ports=' . str_replace(" ", "", $this->data['port']) .
                     '&type=' . str_replace(" ", "", $this->data['type']) .
+                    (strlen($this->data['country'])>1 ?  '&country='.str_replace(" ","", $this->data['country']) : "") .    
                     $mode
-                    .'&includeType'
+                    .'&includeType',['proxy'=>'127.0.0.1:8888']
                     ); // if need http://ip format '&includeType='
 
                 if ($get_proxies_query->getStatusCode() == 200) {
                     $proxies_list = $get_proxies_query->getBody()->getContents();
 
-                    $proxies = explode("\n", $proxies_list);
-
+                    $proxies = explode("\r\n", $proxies_list);
                     foreach ($proxies as $item){
                         $arr[] = [
                             "proxy" => $item,
@@ -79,7 +79,9 @@ class GetProxies implements ShouldQueue
                             "yandex"  => ($this->data['mode'] == "yandex"),
                             "google"  => ($this->data['mode'] == "google"),
                             "mailru"  => ($this->data['mode'] == "mailru"),
-                            "twitter"  => ($this->data['mode'] == "twitter")
+                            "twitter"  => ($this->data['mode'] == "twitter"),
+                            "country" => ($this->data['country'])
+                            
                         ];
                     }
 
