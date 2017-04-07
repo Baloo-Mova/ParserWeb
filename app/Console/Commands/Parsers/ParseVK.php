@@ -45,7 +45,7 @@ class ParseVK extends Command {
     public function handle() {
         
         while (true) {
-        $vklink = VKLinks::where(['parsed' => 0])->first();
+        $vklink = VKLinks::where(['parsed' => 0,'reserved'=> 0])->first();
 
         if (!isset($vklink)) {
             sleep(10);
@@ -53,7 +53,7 @@ class ParseVK extends Command {
             continue;
         }
 
-        $vklink->parsed = 1;
+        $vklink->reserved= 1;
         $vklink->save();
         try {
             $web = new VK();
@@ -63,14 +63,20 @@ class ParseVK extends Command {
 
             if ($vklink->type == 0) {
                $web->parseGroup($vklink);
-                   $vklink->delete();
-                
+                    $vklink->reserved= 0;
+                    $vklink->parsed= 1;
+                    $vklink->save();
+                    if ($vklink->getusers_status== 1){
+                        $vklink->delete();
+                    }
+                   
+               
             } 
             else if ($vklink->type == 1) {
                 $web->parseUser($vklink) ;
                 $vklink->delete();
             }
-
+           sleep(random_int(1, 3));
 
            
         } catch (\Exception $ex) {

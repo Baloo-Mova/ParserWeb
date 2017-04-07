@@ -63,7 +63,7 @@ class ParseFBGetUsers extends Command
                 if($web->getUsersOfGroup($group)){
                 $group->getusers_reserved = 0;
                 $group->getusers_status = 1;
-                $group->delete();
+               // $group->delete();
                  
                     
                 }

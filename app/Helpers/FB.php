@@ -248,6 +248,8 @@ class FB {
         );
         $data = $request->getBody()->getContents();
         //dd($data);
+        $sender->count_sended_messages+=1;
+        $sender->save();
         return true;
     }
 

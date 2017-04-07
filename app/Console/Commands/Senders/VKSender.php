@@ -62,7 +62,7 @@ class VKSender extends Command
                 }
 
                 //$sk_query->vk_reserved = 1;
-                //$sk_query->save();
+                $sk_query->save();
 
                 
                 $message = TemplateDeliveryVK::where('task_id', '=', $sk_query->task_id)->first();
@@ -76,12 +76,21 @@ class VKSender extends Command
                 }
 
                  $web = new VK();
-                $web->sendRandomMessage($sk_query->vk_id, $message->text);
-                    sleep(random_int(1, 5));
+                if($web->sendRandomMessage($sk_query->vk_id, $message->text)==true){
+                $sk_query->vk_sended = 1;
+                $sk_query->vk_reserved = 0;
+                
+                $sk_query->save();
+                }
+                else{
+                $sk_query->vk_reserved = 2;
+                $sk_query->save();
+                    
+                }
+                sleep(random_int(1, 5));
                 
 
-                $sk_query->vk_sended = 1;
-                $sk_query->save();
+               
 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
