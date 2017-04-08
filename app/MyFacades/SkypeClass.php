@@ -225,13 +225,15 @@ class SkypeClass {
         curl_setopt($curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36");
         curl_setopt($curl, CURLOPT_HEADER, $showHeaders);
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, $follow);
-        curl_setopt($curl, CURLOPT_PROXY, (isset($this->cur_proxy) ? $this->cur_proxy->proxy : ''));  //http://79.133.105.71:8080  - this proxy not work
+        curl_setopt($curl, CURLOPT_PROXY, (isset($this->cur_proxy) ? $this->cur_proxy->proxy : '127.0.0.1:8888'));  //http://79.133.105.71:8080  - this proxy not work
         curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
         curl_setopt($curl, CURLOPT_TIMEOUT, 20); //timeout in seconds
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec($curl);
 
+        //if(strpos($result,"Operation failed")>0) echo $result;
         curl_close($curl);
+
 
         return $result;
     }
@@ -334,6 +336,7 @@ class SkypeClass {
         $this->index($from["login"], $from["password"]);
 
         $user = $this->URLtoUser($to);
+        //dd($user);
         $mode = strstr($user, "thread.skype") ? 19 : 8;
         $messageID = $this->timestamp();
         $post = [
@@ -344,8 +347,8 @@ class SkypeClass {
             "Has-Mentions" => false
         ];
 
-        $req = json_decode($this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/conversations/$mode:$to/messages", "POST", json_encode($post)), true);
-//dd($messageID);
+        $req = json_decode($this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/conversations/".$mode.":".$to."/messages", "POST", json_encode($post)), true);
+
         return isset($req["OriginalArrivalTime"]) ? $messageID : false;
     }
 
@@ -384,6 +387,7 @@ class SkypeClass {
                         // echo("\nnot sended");
                         continue;
                     }
+                    
                     return true;
                 }
             }
@@ -436,7 +440,7 @@ class SkypeClass {
     public function addContact($to_username, $greeting = "Hello, I would like to add you to my contacts.") {
 
 
-        $to_username = $this->URLtoUser($to_username);
+        //$to_username = $this->URLtoUser($to_username);
 
         $post = [
             "mri" => "8:" . $to_username,
@@ -444,7 +448,7 @@ class SkypeClass {
         ];
 
         $req = json_decode($this->web("https://contacts.skype.com/contacts/v2/users/" . $this->username . "/contacts", "POST", json_encode($post)), true);
-        //dd($req["Message"]);
+        if($req["Message"]=="Operation failed.") return("Operation failed");
 
 
 
