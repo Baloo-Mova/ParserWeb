@@ -14,7 +14,7 @@ class DelPropertiesUniqeProxyProxytempGoodproxies extends Migration
     public function up()
     {
         Schema::table('proxy_temp', function ($table) {
-            $table->dropUnique('good_proxies_proxy_unique');
+            $table->dropUnique('proxy_temp_proxy_unique');
     
         });
         Schema::table('good_proxies', function ($table) {
