@@ -11,6 +11,7 @@ use App\Models\IgnoreDomains;
 use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
+use App\Models\ProxyTemp;
 
 class ParseGoogle extends Command {
 
@@ -60,7 +61,7 @@ class ParseGoogle extends Command {
                 $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
                 $sitesCountNow = 0;
                 $sitesCountWas = 0;
-                $proxy = ProxyItem::orderBy('id', 'desc')->first();
+                $proxy = ProxyTemp::where(['google'=>1])->first();//ProxyItem::orderBy('id', 'desc')->first();
                 $i = 0;
                 do {
 
@@ -76,7 +77,7 @@ class ParseGoogle extends Command {
                             // dd('ff');
                             $proxy->reportBad();
                             while (true) {
-                                $proxy = ProxyItem::orderBy('id', 'desc')->first();
+                                $proxy = ProxyTemp::where(['google'=>1])->first();//ProxyItem::orderBy('id', 'desc')->first();
                                 if (isset($proxy)) {
                                     break;
                                 }

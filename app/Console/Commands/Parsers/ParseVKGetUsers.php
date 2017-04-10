@@ -65,7 +65,7 @@ class ParseVKGetUsers extends Command
                 $group->getusers_reserved = 0;
                 $group->getusers_status = 1;
                 $group->save();
-                 
+                 sleep(random_int(1,5));
                     
                 }
                 

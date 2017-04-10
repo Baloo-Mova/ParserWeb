@@ -13,6 +13,9 @@ use GuzzleHttp;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
+use App\Models\GoodProxies;
+use App\Models\ProxyTemp;
+
 
 class ParseOkGroups extends Command
 {
@@ -20,6 +23,7 @@ class ParseOkGroups extends Command
     public $crawler = null;
     public $gwt     = "";
     public $tkn     = "";
+    public $cur_proxy;
     /**
      * The name and signature of the console command.
      *
@@ -78,6 +82,11 @@ class ParseOkGroups extends Command
                 $skypes = [];
 
                 while (true) {
+                    $this->cur_proxy = ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
+                    if (!isset($this->cur_proxy)) {
+                        sleep(10);
+                        continue;
+                    }
                     $from = AccountsData::where(['type_id' => '2'])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
 
                     if ( ! isset($from)) {
@@ -111,6 +120,7 @@ class ParseOkGroups extends Command
                         'cookies'         => $array->count() > 0 ? $array : true,
                         'allow_redirects' => true,
                         'timeout'         => 20,
+                        'proxy'           =>$this->cur_proxy->proxy,
                     ]);
 
                     if ($array->count() < 1) {
@@ -296,6 +306,8 @@ class ParseOkGroups extends Command
                 $log->task_id = 0;
                 $log->message = $ex->getTraceAsString();
                 $log->save();
+                $this->cur_proxy->reportBad();
+                sleep(random_int(1, 5));
             }
 
         }

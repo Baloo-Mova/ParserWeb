@@ -65,7 +65,7 @@ class GetProxies implements ShouldQueue
                     '&type=' . str_replace(" ", "", $this->data['type']) .
                     (strlen($this->data['country'])>1 ?  '&country='.str_replace(" ","", $this->data['country']) : "") .    
                     $mode
-                    .'&includeType',['proxy'=>'127.0.0.1:8888']
+                    .'&includeType'//,['proxy'=>'127.0.0.1:8888']
                     ); // if need http://ip format '&includeType='
 
                 if ($get_proxies_query->getStatusCode() == 200) {

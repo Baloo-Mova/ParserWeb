@@ -68,7 +68,7 @@ class ParseVKGetGroups extends Command
                     
                     
                 }
-                
+                sleep(random_int(1, 3));
                 
                 
                 

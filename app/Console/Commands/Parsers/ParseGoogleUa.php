@@ -11,6 +11,7 @@ use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\IgnoreDomains;
+use App\Models\ProxyTemp;
 
 class ParseGoogleUa extends Command {
 
@@ -59,7 +60,7 @@ class ParseGoogleUa extends Command {
                 $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
                 $sitesCountNow = 0;
                 $sitesCountWas = 0;
-                $proxy = ProxyItem::orderBy('id', 'desc')->first();
+                ProxyTemp::where(['google'=>1])->first();//ProxyItem::orderBy('id', 'desc')->first();
                 $i = 0;
                 do {
 
@@ -74,7 +75,7 @@ class ParseGoogleUa extends Command {
                         if ($data == "NEED_NEW_PROXY") {
                             $proxy->reportBad();
                             while (true) {
-                                $proxy = ProxyItem::orderBy('id', 'desc')->first();
+                                  $proxy = ProxyTemp::where(['google'=>1])->first();//ProxyItem::orderBy('id', 'desc')->first();
                                 if (isset($proxy)) {
                                     break;
                                 }

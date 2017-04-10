@@ -76,7 +76,7 @@ class ParseVK extends Command {
                 $web->parseUser($vklink) ;
                 $vklink->delete();
             }
-           sleep(random_int(1, 3));
+           sleep(random_int(1, 5));
 
            
         } catch (\Exception $ex) {

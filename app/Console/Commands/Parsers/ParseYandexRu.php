@@ -14,6 +14,7 @@ use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\IgnoreDomains;
+use App\Models\ProxyTemp;
 
 class ParseYandexRu extends Command {
 
@@ -76,7 +77,7 @@ class ParseYandexRu extends Command {
             try {
                 $ignore = IgnoreDomains::all();
                 
-                $proxy = ProxyItem::orderBy('id', 'desc')->first();
+                $proxy =  ProxyTemp::where(['yandex'=>1])->first();//ProxyItem::orderBy('id', 'desc')->first();
                 for ($ii = 0; $ii < count($regions); $ii++) {
                     echo($ii);
                     while (true) {
@@ -127,7 +128,7 @@ class ParseYandexRu extends Command {
                            // dd("gg");
                             $proxy->reportBad();
                             while (true) {
-                                $proxy = ProxyItem::orderBy('id', 'desc')->first();
+                                $proxy =  ProxyTemp::where(['yandex'=>1])->first();//ProxyItem::orderBy('id', 'desc')->first();
                                 if (isset($proxy)) {
                                    
                                     break;

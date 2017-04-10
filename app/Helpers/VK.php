@@ -379,7 +379,7 @@ class VK {
                 sleep(1);
                 continue;
             }
-            sleep(1);
+            sleep(random_int(1,3));
             break;
         }
 
@@ -399,7 +399,7 @@ class VK {
         );
         // $data = $request->getBody()->getContents();
 
-        sleep(2);
+        sleep(random_int(1,3));
         $counter = 0;
         while (true) {
             // if($counter>=$summary) break;
@@ -452,7 +452,7 @@ class VK {
 
                 // echo $vklink->vkiser_id."\n";
             }
-            sleep(1);
+           sleep(random_int(1,5));
             $counter+=20;
         }
         return true;
@@ -514,10 +514,10 @@ class VK {
             $data = $request->getBody()->getContents();
 
             if (strpos($data, "login_button")) {
-                sleep(1);
+                sleep(random_int(1,5));
                 continue;
             }
-            sleep(1);
+            sleep(random_int(1,5));
             break;
         }
 
@@ -526,7 +526,7 @@ class VK {
                 // 'proxy' => '127.0.0.1:8888',
                 ]
         );
-        sleep(2);
+        sleep(random_int(1,5));
         $data = $request->getBody()->getContents();
         $title = substr($data, strpos($data, "<title>"), (strpos($data, "</title>") - strpos($data, "<title>")));
         $title = str_replace("<title>", "", $title);
@@ -658,7 +658,7 @@ class VK {
             }
 
 
-            sleep(1);
+            sleep(random_int(1,5));
             $search = $search = SearchQueries::where(['link' => $user->link, 'task_id' => $user->task_id])->first();
 //dd($user->link);
 
