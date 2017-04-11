@@ -61,11 +61,13 @@ class ParseOkGroups extends Command
 
 
             try {
-
-                $query_data = OkGroups::where([
-                    ['offset', '<>', -1],
-                    ['reserved', '=', 0]
-                ])->first(); // Забираем 1 групп для этого таска
+ 
+           
+                $query_data = OkGroups::join('tasks', 'tasks.id', '=', 'ok_groups.task_id')->where([
+                    ['ok_groups.offset', '<>', -1],
+                    ['ok_groups.reserved', '=', 0],
+                    ['tasks.active_type',  '=', 1]
+                    ])->select('ok_groups.*')->first(); // Забираем 1 групп для этого таска
 
 
                 if (!isset($query_data)) {

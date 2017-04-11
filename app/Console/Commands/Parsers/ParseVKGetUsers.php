@@ -46,7 +46,11 @@ class ParseVKGetUsers extends Command
     public function handle()
     {
         while (true) {
-            $group = VKLinks::where(['type' => 0, 'getusers_reserved' => 0, 'getusers_status' => 0])->first();
+            
+            $group = VKLinks::join('tasks', 'tasks.id', '=', 'vk_links.task_id')->
+                    where(['vk_links.type' => 0, 'vk_links.getusers_reserved' => 0, 'vk_links.getusers_status' => 0,'tasks.active_type' => 1,])
+                    ->select('vk_links.*')->first();
+                   
 
             if ( !isset($group)) {
             sleep(10);

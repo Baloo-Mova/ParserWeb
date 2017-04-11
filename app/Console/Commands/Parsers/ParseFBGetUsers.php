@@ -46,13 +46,15 @@ class ParseFBGetUsers extends Command
     public function handle()
     {
         while (true) {
-            $group = FBLinks::where(['type' => 0, 'getusers_reserved' => 0, 'getusers_status' => 0])->first();
+            
+           
+            $group = FBLinks::join('tasks', 'tasks.id', '=', 'fb_links.task_id')->where(['fb_links.type' => 0, 'fb_links.getusers_reserved' => 0, 'fb_links.getusers_status' => 0,'tasks.active_type' => 1,])->select('fb_links.*')->first();
 
             if ( !isset($group)) {
             sleep(10);
                 continue;
             }
-
+//echo("\n".$group->link);
             $group->getusers_reserved = 1;
             $group->save();
             try {

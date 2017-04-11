@@ -43,14 +43,15 @@ class ParseFB extends Command {
      */
     public function handle() {
         while (true) {
-            $fblink = FBLinks::where(['parsed' => 0, 'reserved'=>0])->first();
-           
+            
+            $fblink = FBLinks::join('tasks', 'tasks.id', '=', 'fb_links.task_id')->where(['fb_links.parsed' => 0, 'fb_links.reserved'=>0,'tasks.active_type' => 1,])->select('fb_links.*')->first();
+          
             if (!isset($fblink)) {
                 sleep(10);
 
                 continue;
             }
-
+//echo("\n".$fblink->link);
             $fblink->reserved = 1;
             $fblink->save();
             try {

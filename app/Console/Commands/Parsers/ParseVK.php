@@ -45,7 +45,10 @@ class ParseVK extends Command {
     public function handle() {
         
         while (true) {
-        $vklink = VKLinks::where(['parsed' => 0,'reserved'=> 0])->first();
+        $vklink = VKLinks::
+                join('tasks', 'tasks.id', '=', 'vk_links.task_id')->
+                    where(['vk_links.parsed' => 0,'vk_links.reserved'=> 0,'tasks.active_type' => 1,])
+                   ->select('vk_links.*')->first();
 
         if (!isset($vklink)) {
             sleep(10);

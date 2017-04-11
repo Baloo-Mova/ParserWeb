@@ -46,13 +46,13 @@ class ParseFBGetGroups extends Command
     public function handle()
     {
         while (true) {
-            $task = Tasks::where(['task_type_id' => 1, 'fb_reserved' => 0, 'fb_complete' => 0])->first();
+            $task = Tasks::where(['task_type_id' => 1, 'fb_reserved' => 0, 'fb_complete' => 0,'active_type'=>1])->first();
 
             if ( !isset($task)) {
             sleep(10);
                 continue;
             }
-
+//dd($task);
             $task->fb_reserved = 1;
             $task->save();
             try {

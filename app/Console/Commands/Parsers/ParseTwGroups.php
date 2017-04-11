@@ -55,18 +55,22 @@ class ParseTwGroups extends Command
 
             try {
 
-                $query_data = TwLinks::where([
-                    ['offset', '<>', -1],
-                    ['reserved', '=', 0],
-                    ['type', '=', 2]
-                ])->first(); // Забираем людей для этого таска
+                $query_data = TwLinks::join('tasks', 'tasks.id', '=', 'tw_links.task_id')
+                                ->where([
+                                    ['tw_links.offset', '<>', -1],
+                                    ['tw_links.reserved', '=', 0],
+                                    ['tw_links.type', '=', 2],
+                                    ['tasks.active_type', '=', 1],
+                                ])->select('tw_links.*')->first(); // Забираем людей для этого таска
 
                 if (!isset($query_data)) {
-                    $query_data = TwLinks::where([
-                        ['offset', '<>', -1],
-                        ['reserved', '=', 0],
-                        ['type', '=', 1]
-                    ])->first(); // Если нет людей, берем группу
+                    $query_data = TwLinks::join('tasks', 'tasks.id', '=', 'tw_links.task_id')
+                                ->where([
+                                    ['tw_links.offset', '<>', -1],
+                                    ['tw_links.reserved', '=', 0],
+                                    ['tw_links.type', '=', 1],
+                                    ['tasks.active_type', '=', 1],
+                                ])->select('tw_links.*')->first(); // Если нет людей, берем группу
                 }
 
                 if (!isset($query_data)) { // Если нет и групп, ждем, когда появятся

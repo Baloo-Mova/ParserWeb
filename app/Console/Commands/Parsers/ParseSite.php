@@ -49,7 +49,9 @@ class ParseSite extends Command {
             $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' '); //TRANSLIT//IGNORE
 
             try {
-                $link = SiteLinks::where('reserved', '=', 0)->first();
+                $link = SiteLinks::join('tasks', 'tasks.id', '=', 'site_links.task_id')
+                        ->where(['site_links.reserved' => 0,'tasks.active_type' => 1])
+                        ->select('site_links.*')->first();
                 if (!isset($link)) {
                     sleep(10);
                     continue;

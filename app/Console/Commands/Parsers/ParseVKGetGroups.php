@@ -62,8 +62,8 @@ class ParseVKGetGroups extends Command
                 $i             = 0;
                 
                 if($web->getGroups($task->task_query,$task->id)){
-                $task->vk_reserved = 0;
-                $task->active_type = 0;
+                $task->vk_reserved = 2;
+                //$task->active_type = 0;
                 $task->save();
                     
                     
