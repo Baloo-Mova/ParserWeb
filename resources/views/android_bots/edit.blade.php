@@ -20,6 +20,10 @@
                                 <label for="phone" class="control-label">Моб. номер телефона (который был использован для входа в Viber и Whatsapp на устройстве)</label>
                                 <input type="phone" class="form-control" placeholder="Телефон" name="phone" value="{{ $data->phone }}" id="phone"/>
                             </div>
+                            <div class="form-group has-feedback">
+                                <label for="status" class="control-label">Статус(0-1 = Не работает, 2 - Работает)</label>
+                                <input type="status" class="form-control" placeholder="" name="status" value="{{ $data->status }}" id="status"/>
+                            </div>
                             <button type="submit" class="btn btn-primary btn-flat">Сохранить</button>
                         </form>
                     </div>
