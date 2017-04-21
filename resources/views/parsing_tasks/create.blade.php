@@ -65,13 +65,17 @@
                                     </div>
                                     <hr>
                                     <div class="form-group has-feedback">
-                                        <label for="ok_text" class="control-label">Текст Сообщения OK</label>
-                                        <textarea class="form-control" rows="5" name="ok_text" id="ok_text"></textarea>
+                                        <label for="fb_text" class="control-label">Текст Сообщения FB</label>
+                                        <textarea class="form-control" rows="5" name="fb_text" id="fb_text"></textarea>
                                     </div>
                                     <hr>
                                     <div class="form-group has-feedback">
-                                        <label for="tw_text" class="control-label">Текст Сообщения Twitter</label>
-                                        <textarea class="form-control" rows="5" name="tw_text" id="tw_text" maxlength="100"></textarea>
+                                        <label for="viber_text" class="control-label">Текст Сообщения Viber</label>
+                                        <textarea class="form-control" rows="5" name="viber_text" id="viber_text" maxlength="100"></textarea>
+                                    </div>
+                                    <div class="form-group has-feedback">
+                                        <label for="whats_text" class="control-label">Текст Сообщения Whatapp</label>
+                                        <textarea class="form-control" rows="5" name="whats_text" id="whats_text" maxlength="100"></textarea>
                                     </div>
                                 </div>
                         </div>

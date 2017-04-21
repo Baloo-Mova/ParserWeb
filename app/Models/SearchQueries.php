@@ -17,6 +17,8 @@ class SearchQueries extends Model
         'country',
         'city',
         'phones',
+        'phones_reserved_viber',
+        'phones_reserved_wh',
         'skypes',
         'query',
         'task_id',

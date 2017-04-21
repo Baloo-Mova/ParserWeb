@@ -49,4 +49,12 @@ class Tasks extends Model
     {
         return $this->belongsTo(TemplateDeliveryFB::class, 'id', 'task_id');
     }
+     public function getViber()
+    {
+        return $this->belongsTo(TemplateDeliveryViber::class, 'id', 'task_id');
+    }
+     public function getWhatsapp()
+    {
+        return $this->belongsTo(TemplateDeliveryWhatsapp::class, 'id', 'task_id');
+    }
 }

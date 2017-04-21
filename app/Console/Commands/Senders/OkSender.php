@@ -62,6 +62,7 @@ class OkSender extends Command {
                             'search_queries.ok_sended' => 0,
                             'search_queries.ok_reserved' => 0,
                             'tasks.need_send' => 1,
+                            'tasks.active_type' =>1,
                         ])->select('search_queries.*')->first();
 
                 if (!isset($ok_query)) {

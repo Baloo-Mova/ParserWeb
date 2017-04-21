@@ -34,7 +34,7 @@ class AddCollsTempgoodproxy extends Migration
     
         });
         Schema::table('good_proxies', function ($table) {
-            $table->dropColumn('country',300)->nullable();
+            $table->dropColumn('country');
     
         });
     }

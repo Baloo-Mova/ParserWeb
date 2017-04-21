@@ -56,7 +56,7 @@ Route::group(['prefix' => 'accounts-data', 'middleware' => 'auth'], function () 
     Route::post('/tw-upload', ['uses'=>'AccountsDataController@twupload', 'as'=>'accounts_data.tw.upload']);
     Route::post('/ins-upload', ['uses'=>'AccountsDataController@insupload', 'as'=>'accounts_data.ins.upload']);
     Route::post('/mails-upload', ['uses'=>'AccountsDataController@mailsupload', 'as'=>'accounts_data.mails.upload']);
-});
+    });
 
 Route::group(['prefix' => 'smtp-base', 'middleware' => 'auth'], function () {
     Route::get('/', ['uses' => 'SmtpBaseController@index', 'as' => 'smtpbase.index']);
@@ -110,6 +110,8 @@ Route::group(['prefix' => 'parsing-tasks', 'middleware' => 'auth'], function () 
     Route::post('/testing-delivery-tw', ['uses' => 'ParsingTasksController@storeTestingDeliveryTW', 'as' => 'parsing_tasks.storeTestingDeliveryTW']);
     Route::get('/testing-delivery-fb', ['uses' => 'ParsingTasksController@testingDeliveryFB', 'as' => 'parsing_tasks.testingDeliveryFB']);
     Route::post('/testing-delivery-fb', ['uses' => 'ParsingTasksController@storeTestingDeliveryFB', 'as' => 'parsing_tasks.storeTestingDeliveryFB']);
+    Route::get('/testing-delivery-android-bots', ['uses' => 'ParsingTasksController@testingDeliveryAndroidBots', 'as' => 'parsing_tasks.testingDeliveryAndroidBots']);
+    Route::post('/testing-delivery-android-bots', ['uses' => 'ParsingTasksController@storeTestingDeliveryAndroidBots', 'as' => 'parsing_tasks.storeTestingDeliveryAndroidBots']);
 });
 
 Route::group(['prefix' => 'skypes-accounts', 'middleware' => 'auth'], function () {
@@ -122,8 +124,24 @@ Route::group(['prefix' => 'skypes-accounts', 'middleware' => 'auth'], function (
     Route::get('/delete/{id}', ['uses'=>'SkypesAccountsController@delete', 'as'=>'skypes_accounts.delete']);
     Route::get('/destroy-sk', ['uses'=>'SkypesAccountsController@destroySk', 'as'=>'skypes_accounts.destroy.sk']);
 });
+Route::group(['prefix' => 'android-bots', 'middleware' => 'auth'], function () {
+    Route::get('/', ['uses' => 'AndroidBotsController@index', 'as' => 'android_bots.index']);
+    Route::get('/create', ['uses' => 'AndroidBotsController@create', 'as' => 'android_bots.create']);
+    Route::post('/create', ['uses' => 'AndroidBotsController@store', 'as' => 'android_bots.store']);
+    Route::post('/mass-upload', ['uses'=>'AndroidBotsController@massupload', 'as'=>'android_bots.mass.upload']);
+    Route::get('/edit/{id}', ['uses' => 'AndroidBotsController@edit', 'as' => 'android_bots.edit']);
+    Route::post('/edit/{id}', ['uses'=>'AndroidBotsController@update', 'as'=>'android_bots.update']);
+    Route::get('/delete/{id}', ['uses'=>'AndroidBotsController@delete', 'as'=>'android_bots.delete']);
+    Route::get('/destroy-androids', ['uses'=>'AndroidBotsController@destroyAndroidBots', 'as'=>'android_bots.destroy']);
+});
 
 Route::group(['prefix' => 'proxy', 'middleware' => 'auth'], function () {
     Route::get('/get-proxies', ['uses' => 'ProxyController@getProxies', 'as' => 'proxy.getproxies']);
     Route::post('/get-proxies', ['uses' => 'ProxyController@saveProxies', 'as' => 'proxy.saveproxies']);
+});
+Route::group(['prefix' => 'get-numbers'/*, 'middleware' => 'auth'*/], function () {
+    Route::get('/get-whatsapp/{name}', ['uses' => 'GetNumbersController@getWhatsappTask', 'as' => 'getnumbers.getwhatsapptask']);
+    Route::get('/get-viber/{name}', ['uses' => 'GetNumbersController@getViberTask', 'as' => 'getnumbers.getvibertask']);
+    Route::put('/set-bot', ['uses' => 'GetNumbersController@setBotAndroid', 'as' => 'getnumbers.setbotandroid']);
+    
 });

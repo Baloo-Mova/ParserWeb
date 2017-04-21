@@ -63,6 +63,11 @@
                             <i class='fa fa-facebook'></i>
                             <span>Facebook</span>
                         </a>
+                        <a href="{{ route('parsing_tasks.testingDeliveryAndroidBots') }}" class="{{ Request::path() == 'parsing_tasks/parsing_tasks.testingDeliveryAndroidBots' ? 'link_active' : ''}}">
+                            <i class='fa fa-whatsapp'></i>
+                            <span>Viber, Whatsapp</span>
+                        </a>
+                       
                     </li>
                 </ul>
             </li>
@@ -122,7 +127,13 @@
                         <a href="{{ route('accounts_data.fb') }}" class="{{ Request::path() == 'accounts-data/fb' ? 'link_active' : ''}}">
                             <i class='fa fa-facebook'></i>
                             <span>Facebook Аккаунты</span>
-                    </li>        
+                    </li>  
+                    <li class="">
+                        <a href="{{ route('android_bots.index') }}" class="{{ Request::path() == 'accounts-data/fb' ? 'link_active' : ''}}">
+                            <i class='fa fa-android'></i>
+                            <span>Android Боты</span>
+                    </li>  
+                    
                     <li class="">
                         <a href="{{ route('smtpbase.index') }}" class="{{ Request::path() == 'smtp-base' ? 'link_active' : ''}}">
                             <i class='fa fa-envelope'></i>

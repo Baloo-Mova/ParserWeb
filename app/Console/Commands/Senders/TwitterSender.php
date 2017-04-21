@@ -62,6 +62,7 @@ class TwitterSender extends Command
                     'search_queries.tw_sended'   => 0,
                     'search_queries.tw_reserved' => 0,
                     'tasks.need_send'            => 1,
+                    'tasks.active_type'          => 1,
 
                 ])->select('search_queries.*')->first();
 

@@ -7,6 +7,7 @@
 @section('main-content')
 <div class="container-fluid spark-screen">
     <div class="row">
+        <a href="{{route('getnumbers.setbotandroid')}}" class="btn btn-success btn-flat" title="Startall" aria-label="View" data-pjax="0">ddddd</a>
         <div class="box box-primary">
             <form action="" method="post">
                 {{ csrf_field() }}

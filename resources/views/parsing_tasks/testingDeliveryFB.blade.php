@@ -15,12 +15,12 @@
 
                             <div class="form-group has-feedback">
                                 <label for="fb_list" class="control-label">Список FB (каждый с новой строки)</label>
-                                <textarea class="form-control" rows="6" name="fb_list" id="skypes_list"></textarea>
+                                <textarea class="form-control" rows="6" name="fb_list" id="fb_list"></textarea>
                             </div>
 
                             <div class="form-group has-feedback">
                                 <label for="fb_text" class="control-label">Текст Сообщения FB</label>
-                                <textarea class="form-control" rows="6" name="fb_text" id="skypes_text"></textarea>
+                                <textarea class="form-control" rows="6" name="fb_text" id="fb_text"></textarea>
                             </div>
 
                         </div>

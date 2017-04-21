@@ -52,6 +52,7 @@ class FBSender extends Command
                      'search_queries.fb_sended'   => 0,
                     'search_queries.fb_reserved' => 0,
                     'tasks.need_send'            => 1,
+                    'tasks.active_type'          => 1, 
                     
                 ])->select('search_queries.*')->first();
                

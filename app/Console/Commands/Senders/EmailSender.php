@@ -67,6 +67,7 @@ class EmailSender extends Command {
                             'search_queries.email_reserved' => 0,
                             'search_queries.email_sended' => 0,
                             'tasks.need_send' => 1,
+                            'tasks.active_type' => 1,
                         ])->select('search_queries.*')->first();
 
                 if (!isset($emails)) {

@@ -181,6 +181,21 @@
                                         <input type="hidden" name="delivery_id" value="{{ $data->id }}">
                                         </tbody>
                                     </table>
+                                    <table class="table table-bordered">
+                                        <thead>
+                                        <tr>
+                                            <th>Viber text</th>
+                                            <th>Whatapp text</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {{ csrf_field() }}
+
+                                        <td><textarea name="viber_text" class="form-control" cols="30" rows="3">{{ empty($viber) ? "-" : $viber->text }}</textarea></td>
+                                        <td><textarea name="whats_text" class="form-control" cols="30" rows="3" maxlength="100">{{ empty($whats) ? "-" : $whats->text }}</textarea></td>
+                                        <input type="hidden" name="delivery_id" value="{{ $data->id }}">
+                                        </tbody>
+                                    </table>
                                     <input type="submit" class="btn btn-primary btn-flat" value="Изменить">
                                 </form>
                             </div>
