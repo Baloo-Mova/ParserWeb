@@ -279,13 +279,9 @@ class ParsingTasksController extends Controller {
 
         if (isset($viber_text)) {
             $count_lines = substr_count($viber_text, "\r\n");
-            if($count_lines<=5){
-                if((strlen($viber_text)/42)<6){
-                    
-                $viber_text = str_pad($viber_text,strlen($viber_text)+($count_lines+(int)(strlen($viber_text)/42))*2,"\r\n", STR_PAD_RIGHT);
-                
-                }
-            }
+           
+                $viber_text = str_pad($viber_text,strlen($viber_text)+5*2,"\r\n", STR_PAD_RIGHT);
+            
             //dd((strlen($viber_text)/42).$viber_text);
             $viber = TemplateDeliveryViber::where("task_id", "=", $request->get("delivery_id"))->first();
             if (empty($viber)) {
@@ -747,15 +743,10 @@ class ParsingTasksController extends Controller {
         //Записываем в таблицу шаблонов skypes
         $viber_text=$request->get('viber_text');
         if (!empty($viber_text)) {
-             $count_lines = substr_count($viber_text, "\r\n");
-            if($count_lines<=5){
-                if((strlen($viber_text)/42)<6){
-                    
-                $viber_text = str_pad($viber_text,strlen($viber_text)+($count_lines+(int)(strlen($viber_text)/42))*2,"\r\n", STR_PAD_RIGHT);
-                
-                }
-            }
             
+                $viber_text = str_pad($viber_text,strlen($viber_text)+5*2,"\r\n", STR_PAD_RIGHT);
+           
+            //dd($viber_text);
             $viber = new TemplateDeliveryViber();
             $viber->text = $viber_text;
             $viber->task_id = $task_id;
