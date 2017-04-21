@@ -104,8 +104,22 @@ class GetNumbersController extends Controller {
         return $json;
     }
     public function setBotAndroid(Request $request){
+        if(isset($request['name']) && isset($request['phone'])) {
+            $name = str_replace("\n", "", $request['name']);
+            $phone = str_replace("\n", "", $request['phone']);
+            $androidBot = AndroidBots::where(['name'=>$name])->orWhere(['phone'=>$phone])->first();
+            if(isset($androidBot)){return 0;}
+            $android_bot = new AndroidBots;
+            $android_bot->name    = $name;
+            $android_bot->phone = $phone;
+            //$android_bot->valid    = 1;
+            $android_bot->save();
+            
+           return "OK"; 
         
-        dd($request["name"]);
+           
+        }
+        
         return 0;
     }
 

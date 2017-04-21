@@ -23,6 +23,7 @@ use App\Console\Commands\Parsers\TestFB;
 use App\Console\Commands\Senders\FBSender;
 use App\Console\Commands\Senders\EmailSender;
 use App\Console\Commands\Tester;
+use App\Console\Commands\AndroidBotManager;
 use App\Console\Commands\Senders\SkypeSender;
 use App\Console\Commands\Senders\OkSender;
 use App\Console\Commands\Cleaner\NotValidMailsCleaner;
@@ -70,6 +71,7 @@ class Kernel extends ConsoleKernel
         ParseGoogleUa::class,
         ParseYandexRu::class,
         //ParseYandexUa::class,
+        AndroidBotManager::class,
     ];
 
     /**

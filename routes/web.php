@@ -142,6 +142,6 @@ Route::group(['prefix' => 'proxy', 'middleware' => 'auth'], function () {
 Route::group(['prefix' => 'get-numbers'/*, 'middleware' => 'auth'*/], function () {
     Route::get('/get-whatsapp/{name}', ['uses' => 'GetNumbersController@getWhatsappTask', 'as' => 'getnumbers.getwhatsapptask']);
     Route::get('/get-viber/{name}', ['uses' => 'GetNumbersController@getViberTask', 'as' => 'getnumbers.getvibertask']);
-    Route::put('/set-bot', ['uses' => 'GetNumbersController@setBotAndroid', 'as' => 'getnumbers.setbotandroid']);
+    Route::post('/set-bot', ['uses' => 'GetNumbersController@setBotAndroid', 'as' => 'getnumbers.setbotandroid']);
     
 });
