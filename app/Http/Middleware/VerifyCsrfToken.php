@@ -13,5 +13,6 @@ class VerifyCsrfToken extends BaseVerifier
      */
     protected $except = [
         "/get-numbers/set-bot",
+        "/get-numbers/replace-bot"
     ];
 }

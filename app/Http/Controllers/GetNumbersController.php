@@ -45,6 +45,10 @@ class GetNumbersController extends Controller {
         $wh_query->phones = str_replace("+", "", $wh_query->phones);
         $wh_query->phones_reserved_wh=1;
         $wh_query->save();
+        if($wh_query->phones_reserved_viber==1){
+         $device->status=1;
+         $device->save();
+        }
         $phone_numbers = explode(",", $wh_query->phones);
 //dd($phone_numbers);  
         $json = [];
@@ -53,7 +57,7 @@ class GetNumbersController extends Controller {
         }
         $json = json_encode($json);
 
-
+        
         //return view("proxy.//dd($wh_query); getproxies");     
 
         return $json;
@@ -65,8 +69,10 @@ class GetNumbersController extends Controller {
         if(!isset($device)){
             return null;
         }
+      //  $device->status=1;
         $device->updated_at= date("Y-m-d H:i:s");
         $device->save();
+       
         $vb_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
                     ['search_queries.phones', '<>', ''],
                      'search_queries.phones_reserved_viber'   => 0,
@@ -90,6 +96,11 @@ class GetNumbersController extends Controller {
         $vb_query->phones = str_replace("+", "", $vb_query->phones);
         $vb_query->phones_reserved_viber=1;
         $vb_query->save();
+        if($vb_query->phones_reserved_wh==1){
+         $device->status=1;
+        $device->save();
+        
+        }
         $phone_numbers = explode(",", $vb_query->phones);
 //dd($phone_numbers);  
         $json = [];
@@ -99,8 +110,9 @@ class GetNumbersController extends Controller {
         $json = json_encode($json);
 
 
-        //return view("proxy.//dd($wh_query); getproxies");     
-
+        //return view("proxy.//dd($wh_query); getproxies"); 
+        
+        
         return $json;
     }
     public function setBotAndroid(Request $request){
@@ -122,5 +134,30 @@ class GetNumbersController extends Controller {
         
         return 0;
     }
+   public function replaceBotAndroid(Request $request){
+       if(isset($request['name'])){
+          
+           $name = str_replace("\n", "", $request['name']);
+           $androidBot = AndroidBots::where(['name'=>$name])->first();
+            if(!isset($androidBot)){return 0;}
+            if($androidBot->status==1){
+                 $curAndroidBot = AndroidBots::where(['status' => 2])->first();
+             
+            if (!isset($curAndroidBot)) {
+                $androidBot = AndroidBots::where(['status'=>0])->first();
+               if (isset($androidBot)){
+                   
+                   $androidBot->status = 2;
+                   $androidBot->save();
+                   return "replaced";
+               }
+            }
+                
+            }
+       }
+       
+       
+       return 0;
+   }
 
 }

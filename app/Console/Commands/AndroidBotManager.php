@@ -41,41 +41,27 @@ class AndroidBotManager extends Command {
      */
     public function handle() {
         while (true) {
-            $curAndroidBot = AndroidBots::where(['status' => 2])->first();
-             
-            if (isset($curAndroidBot)) {
-                $now =strtotime((date("Y-m-d H:i:s")));
-                $update = strtotime($curAndroidBot->updated_at);
-                $create = strtotime($curAndroidBot->created_at);
-                $diff = intval(($now - $update) / 60);
-               // echo "\n".$diff;
-                if ($diff > 1) {
+            $curAndroidBot = AndroidBots::where(['status' => 0])->first();
 
-                    $curAndroidBot->status = 1;
-                    $curAndroidBot->save();
-                    //dd(($curAndroidBot));
-                    echo "\n Bot stoped id: $curAndroidBot->id";
+            if (!isset($curAndroidBot)) {
+                $curAndroidBot = AndroidBots::where(['status' => 2])->first();
+                if (!isset($curAndroidBot)) {
+                   // dd("dd");
+                    sleep(10);
+                    AndroidBots::where(['status' => 1])->update(['status' => 0]);
                 }
-
-                
-               // dd($update . "  " . $create . " " . $diff);
-               // dd(strtotime($curAndroidBot->updated_at));
-               // dd(gettype($curAndroidBot->updated_at));
             } else {
-                $curAndroidBot = AndroidBots::where(['status' => 0])->first();
-                if(isset($curAndroidBot)){
+                $curAndroidBot = AndroidBots::whereIn('status', [1, 2])->first();
+                
+                if (!isset($curAndroidBot)) {
+                    sleep(15);
+                    $curAndroidBot = AndroidBots::where(['status'=>0])->first();
                     $curAndroidBot->status = 2;
                     $curAndroidBot->save();
-                    
-                }
-                else{
-                    $curAndroidBot = AndroidBots::where(['status' => 1])->update(['status'=>0]);
-                    //dd('stop');
-                   // DB::table('countries')->whereIn('id', [1, 2])->update(['code' => 'AD']);
                 }
             }
-            
-            sleep(10);
+
+            sleep(5);
         }
         return 0;
     }

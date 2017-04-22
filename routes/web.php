@@ -143,5 +143,6 @@ Route::group(['prefix' => 'get-numbers'/*, 'middleware' => 'auth'*/], function (
     Route::get('/get-whatsapp/{name}', ['uses' => 'GetNumbersController@getWhatsappTask', 'as' => 'getnumbers.getwhatsapptask']);
     Route::get('/get-viber/{name}', ['uses' => 'GetNumbersController@getViberTask', 'as' => 'getnumbers.getvibertask']);
     Route::post('/set-bot', ['uses' => 'GetNumbersController@setBotAndroid', 'as' => 'getnumbers.setbotandroid']);
+    Route::post('/replace-bot', ['uses' => 'GetNumbersController@replaceBotAndroid', 'as' => 'getnumbers.replacebotandroid']);
     
 });
