@@ -59,6 +59,7 @@ class EmailSender extends Command {
      * @return mixed
      */
     public function handle() {
+       sleep(random_int(1,2));
         while (true) {
             sleep(1);
             try {

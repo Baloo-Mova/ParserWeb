@@ -41,7 +41,7 @@ class ParseSite extends Command {
      * @return mixed
      */
     public function handle() {
-
+        sleep(random_int(1, 3));
         $this->check = array("javascript:", "mailto:", "/m/", "/action_comment/",
             ".tab", ".?clear-cache", "#", "#orderFlexTab", "tel:", "googtrans(", ".css", ".js",
             ".ico", ".jpg", ".png", ".jpeg", ".swf", ".gif");
@@ -227,7 +227,7 @@ class ParseSite extends Command {
 
                 if (!in_array(trim($m), $before) && !$this->endsWith(trim($m), "png") && strlen($m) >= 9 && strlen($m) <= 12
                 ) {
-                  
+
                     if (strlen($m) > 9 && ($m[0] != '2' || $m[0] != '1')) {
                         if ($m[0] == '0') {
                             foreach ($this->ua_operators_code as $i) {
@@ -239,7 +239,6 @@ class ParseSite extends Command {
                         }
 
                         $before[] = trim($m);
-                       
                     }
                 }
             }
@@ -256,10 +255,10 @@ class ParseSite extends Command {
 
                 if (!in_array(trim($m), $before) && !$this->endsWith(trim($m), "png") && strlen($m) >= 9 && strlen($m) <= 12
                 ) {
-                 //   echo$m . "\n";
+                    //   echo$m . "\n";
                     if ($m[0] == '7' || $m[0] == '8' || (strpos($m, "380") !== false && strpos($m, "380") == 0)) {
                         $before[] = trim($m);
-                     //   echo"true11\n";
+                        //   echo"true11\n";
                     }
                 }
             }

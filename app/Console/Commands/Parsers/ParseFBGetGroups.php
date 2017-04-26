@@ -45,6 +45,7 @@ class ParseFBGetGroups extends Command
      */
     public function handle()
     {
+        sleep(random_int(1,3));
         while (true) {
             $task = Tasks::where(['task_type_id' => 1, 'fb_reserved' => 0, 'fb_complete' => 0,'active_type'=>1])->first();
 

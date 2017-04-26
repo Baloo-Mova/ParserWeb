@@ -43,7 +43,7 @@ class ParseFB extends Command {
      */
     public function handle() {
         while (true) {
-            
+            sleep(random_int(1,3));
             $fblink = FBLinks::join('tasks', 'tasks.id', '=', 'fb_links.task_id')->where(['fb_links.parsed' => 0, 'fb_links.reserved'=>0,'tasks.active_type' => 1,])->select('fb_links.*')->first();
           
             if (!isset($fblink)) {
@@ -78,6 +78,7 @@ class ParseFB extends Command {
                 $log->task_id = $fblink->task_id;
                 $log->message = $ex->getMessage() . " line:" . __LINE__;
                 $log->save();
+                
             }
         }
     }

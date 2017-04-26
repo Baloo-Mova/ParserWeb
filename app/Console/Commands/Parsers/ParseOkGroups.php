@@ -15,6 +15,7 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use App\Models\GoodProxies;
 use App\Models\ProxyTemp;
+use App\Models\Parser\Proxy as ProxyItem;
 
 
 class ParseOkGroups extends Command
@@ -24,6 +25,7 @@ class ParseOkGroups extends Command
     public $gwt     = "";
     public $tkn     = "";
     public $cur_proxy;
+    public $proxy_arr;
     /**
      * The name and signature of the console command.
      *
@@ -55,8 +57,9 @@ class ParseOkGroups extends Command
      */
     public function handle()
     {
+        sleep(random_int(1,3));
         $this->crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
-
+$from;
         while (true) {
 
 
@@ -71,7 +74,7 @@ class ParseOkGroups extends Command
 
 
                 if (!isset($query_data)) {
-                    sleep(10);
+                    sleep(random_int(5,10));
                     continue;
                 }
 
@@ -84,16 +87,39 @@ class ParseOkGroups extends Command
                 $skypes = [];
 
                 while (true) {
-                    $this->cur_proxy = ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
-                    if (!isset($this->cur_proxy)) {
-                        sleep(10);
-                        continue;
-                    }
-                    $from = AccountsData::where(['type_id' => '2'])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
+                    
+                    $from = AccountsData::where(['type_id' => '2','is_sender'=>0])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
 
                     if ( ! isset($from)) {
-                        sleep(10);
+                        sleep(random_int(5,10));
                         continue;
+                    }
+                    if ($from->proxy_id == "") {
+
+                        $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
+                                        where(['proxy.valid' => 1, 'accounts_data.type_id' => $from->type_id, 'accounts_data.is_sender'=>0])->where('proxy.ok', '<>', '0')
+                                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
+
+                        if (!isset($this->cur_proxy)) {
+                            sleep(random_int(5,10));
+                            continue;
+                        }
+                        $from->proxy_id = $this->cur_proxy->id;
+                        $from->ok_user_gwt = null;
+                        $from->ok_user_tkn = null;
+                        $from->ok_cookie = null;
+                        $from->save();
+                    } else {
+                        $this->cur_proxy = ProxyItem::where(['id' => $from->proxy_id, 'valid' => 1])->where('ok', '<>', '0')->first();
+                        if (!isset($this->cur_proxy)) {
+                            sleep(random_int(5,10));
+                            $from->proxy_id = 0;
+                            $from->ok_user_gwt = null;
+                            $from->ok_user_tkn = null;
+                            $from->ok_cookie = null;
+                            $from->save();
+                            continue;
+                        }
                     }
 
                     $cookies = json_decode($from->ok_cookie);
@@ -110,7 +136,7 @@ class ParseOkGroups extends Command
                             $array->setCookie($set);
                         }
                     }
-
+                    $this->proxy_arr = parse_url($this->cur_proxy->proxy);
                     $this->client = new Client([
                         'headers'         => [
                             'User-Agent'      => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
@@ -122,9 +148,9 @@ class ParseOkGroups extends Command
                         'cookies'         => $array->count() > 0 ? $array : true,
                         'allow_redirects' => true,
                         'timeout'         => 20,
-                        'proxy'           =>$this->cur_proxy->proxy,
+                        'proxy' => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
                     ]);
-
+                   
                     if ($array->count() < 1) {
                         if ($this->login($from->login, $from->password)) {
                             $from->ok_user_gwt = $this->gwt;
@@ -239,7 +265,7 @@ class ParseOkGroups extends Command
 
                         $query_data->offset = $page_numb;
                         $query_data->save();
-                        sleep(rand(10,15));
+                        sleep(random_int(5,10));
 
                     } while (strlen($gr_doc) > 200);
 
@@ -304,11 +330,21 @@ class ParseOkGroups extends Command
 
 
             } catch (\Exception $ex) {
+                //dd($ex->getMessage());
                 $log = new ErrorLog();
                 $log->task_id = 0;
                 $log->message = $ex->getTraceAsString();
                 $log->save();
-                $this->cur_proxy->reportBad();
+                if (strpos($ex->getMessage(), 'cURL') !== false) {
+                    $from->proxy_id = 0;
+                    $from->ok_user_gwt = null;
+                    $from->ok_user_tkn = null;
+                    $from->ok_cookie = null;
+                    $from->save();
+                    $this->cur_proxy->ok = 0;
+                    $this->cur_proxy->save();
+                }
+                //$this->cur_proxy->reportBad();
                 sleep(random_int(1, 5));
             }
 

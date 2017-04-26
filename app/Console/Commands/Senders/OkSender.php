@@ -52,6 +52,8 @@ class OkSender extends Command {
      * @return mixed
      */
     public function handle() {
+        sleep(random_int(1, 3));
+        $from;
         $this->crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
 
         while (true) {
@@ -62,7 +64,7 @@ class OkSender extends Command {
                             'search_queries.ok_sended' => 0,
                             'search_queries.ok_reserved' => 0,
                             'tasks.need_send' => 1,
-                            'tasks.active_type' =>1,
+                            'tasks.active_type' => 1,
                         ])->select('search_queries.*')->first();
 
                 if (!isset($ok_query)) {
@@ -73,7 +75,7 @@ class OkSender extends Command {
 
                 $task_id = $ok_query->task_id;
 
-                // $ok_query->ok_reserved = 1;
+                $ok_query->ok_reserved = 1;
                 $ok_query->save();
 
                 $message = TemplateDeliveryOK::where('task_id', '=', $ok_query->task_id)->first();
@@ -83,11 +85,7 @@ class OkSender extends Command {
                     continue;
                 }
 
-                $this->cur_proxy = ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
-                if (!isset($this->cur_proxy)) {
-                    sleep(10);
-                    continue;
-                }
+
 
                 while (true) {
                     $from = AccountsData::where(['type_id' => '2'])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
@@ -96,6 +94,33 @@ class OkSender extends Command {
                         sleep(10);
                         continue;
                     }
+                    if ($from->proxy_id == "") {
+
+                        $this->cur_proxy = ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
+                        if (!isset($this->cur_proxy)) {
+                           sleep(random_int(5, 10));
+                            continue;
+                        }
+                       
+                        $from->proxy_id = $this->cur_proxy->id;
+                        $from->ok_user_gwt = null;
+                        $from->ok_user_tkn = null;
+                        $from->ok_cookie = null;
+                        $from->save();
+                    } else {
+                        $this->cur_proxy = ProxyItem::where(['id' => $from->proxy_id, 'valid' => 1])->where('ok', '<>', '0')->first();
+                        if (!isset($this->cur_proxy)) {
+                            sleep(random_int(5, 10));
+                            $from->proxy_id = 0;
+                            $from->ok_user_gwt = null;
+                            $from->ok_user_tkn = null;
+                            $from->ok_cookie = null;
+                            $from->save();
+                            continue;
+                        }
+                    }
+
+
 
                     $cookies = json_decode($from->ok_cookie);
                     $array = new CookieJar();
@@ -159,13 +184,13 @@ class OkSender extends Command {
                     ],
                     'proxy' => $this->cur_proxy->proxy,
                 ]);
-echo("\ntrySend".$this->cur_proxy);
+                echo("\ntrySend" . $this->cur_proxy);
                 if (!empty($data->getHeaderLine('TKN'))) {
                     $this->tkn = $data->getHeaderLine('TKN');
                 }
                 $contents = $data->getBody()->getContents();
                 if (empty($contents)) {
-                   
+
                     if ($this->login($from->login, $from->password)) {
                         $from->ok_user_gwt = $this->gwt;
                         $from->ok_user_tkn = $this->tkn;
@@ -192,6 +217,11 @@ echo("\ntrySend".$this->cur_proxy);
                 $log->task_id = $task_id;
                 $log->save();
                 $this->cur_proxy->reportBad();
+                 $from->proxy_id = 0;
+                            $from->ok_user_gwt = null;
+                            $from->ok_user_tkn = null;
+                            $from->ok_cookie = null;
+                            $from->save();
                 sleep(random_int(1, 5));
             }
         }
@@ -213,12 +243,13 @@ echo("\ntrySend".$this->cur_proxy);
                 "st.password" => $password,
                 "st.iscode" => "false"
             ],
-            'proxy' => '127.0.0.1:8888'//$this->cur_proxy->proxy
+            // 'proxy' => '127.0.0.1:8888'
+            'proxy' => $this->cur_proxy->proxy,
         ]);
 
-       // echo ("\n".$this->cur_proxy->proxy);
+        // echo ("\n".$this->cur_proxy->proxy);
         $html_doc = $data->getBody()->getContents();
-       // dd($html_doc);
+        // dd($html_doc);
         if (strpos($html_doc, 'Профиль заблокирован') > 0 || strpos($html_doc, 'восстановления доступа')) { // Вывелось сообщение безопасности, значит не залогинились
             return false;
         }

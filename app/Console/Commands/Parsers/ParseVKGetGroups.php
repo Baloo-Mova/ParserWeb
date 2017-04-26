@@ -45,6 +45,7 @@ class ParseVKGetGroups extends Command
      */
     public function handle()
     {
+        sleep(random_int(1,3));
         while (true) {
             $task = Tasks::where(['task_type_id' => 1, 'vk_reserved' => 0, 'active_type' => 1])->first();
 

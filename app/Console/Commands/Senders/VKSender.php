@@ -45,6 +45,7 @@ class VKSender extends Command
      */
     public function handle()
     {
+        sleep(random_int(1,3));
         while (true) {
             try {
                  $sk_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([

@@ -16,5 +16,7 @@ class SkypeLogins extends Model
         'registrationToken',
         'expiry',
         'valid',
+        'process_id',
+        'proxy_id',
     ];
 }

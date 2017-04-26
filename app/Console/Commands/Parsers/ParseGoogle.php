@@ -13,6 +13,7 @@ use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\ProxyTemp;
 
+
 class ParseGoogle extends Command {
 
     /**
@@ -44,6 +45,7 @@ class ParseGoogle extends Command {
      * @return mixed
      */
     public function handle() {
+        sleep(random_int(1, 3));
         while (true) {
             $task = Tasks::where(['task_type_id' => TasksType::WORD, 'reserved' => 0, 'active_type' => 1])->first();
 
@@ -61,7 +63,11 @@ class ParseGoogle extends Command {
                 $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
                 $sitesCountNow = 0;
                 $sitesCountWas = 0;
-                $proxy = ProxyTemp::where(['google'=>1])->first();//ProxyItem::orderBy('id', 'desc')->first();
+                $proxy = ProxyItem::where(['google'=>1,'valid'=>1])->first();//ProxyTemp::where(['google'=>1])->first();
+                if(!isset($proxy)){
+                    sleep(random_int(5, 10));
+                continue;
+                }
                 $i = 0;
                 do {
 
@@ -69,15 +75,17 @@ class ParseGoogle extends Command {
                     while (strlen($data) < 200) {
 
                         $data = $web->get("https://www.google.ru/search?q=" . urlencode($task->task_query) . "&start=" . $i * 10,
-                                 $proxy->proxy
+                                $proxy
                                 //'127.0.0.1:8888'
                         );
 
                         if ($data == "NEED_NEW_PROXY") {
                             // dd('ff');
-                            $proxy->reportBad();
+                           // $proxy->reportBad();
+                            $proxy->google=0;
+                            $proxy->save();
                             while (true) {
-                                $proxy = ProxyTemp::where(['google'=>1])->first();//ProxyItem::orderBy('id', 'desc')->first();
+                                $proxy = ProxyItem::where(['google'=>1,'valid'=>1])->first();//ProxyItem::orderBy('id', 'desc')->first();
                                 if (isset($proxy)) {
                                     break;
                                 }

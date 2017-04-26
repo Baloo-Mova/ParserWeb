@@ -45,6 +45,7 @@ class ParseVKGetUsers extends Command
      */
     public function handle()
     {
+        sleep(random_int(1, 3));
         while (true) {
             
             $group = VKLinks::join('tasks', 'tasks.id', '=', 'vk_links.task_id')->

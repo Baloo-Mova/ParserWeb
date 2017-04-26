@@ -45,6 +45,7 @@ class FBSender extends Command
      */
     public function handle()
     {
+        sleep(random_int(1,3));
         while (true) {
             try {
                  $sk_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
@@ -62,8 +63,8 @@ class FBSender extends Command
                     continue;
                 }
 
-                //$sk_query->vk_reserved = 1;
-                //$sk_query->save();
+                $sk_query->fb_reserved = 1;
+                $sk_query->save();
 
                 
                 $message = TemplateDeliveryFB::where('task_id', '=', $sk_query->task_id)->first();

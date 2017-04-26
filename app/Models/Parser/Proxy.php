@@ -9,7 +9,18 @@ class Proxy extends Model
     public $timestamps = true;
     public $table = 'proxy';
     public $fillable = [
-        'proxy'
+        'proxy',
+        'valid',
+        'google',
+        'yandex_ru',
+        'fb',
+        'vk',
+        'ok',
+        'viber',
+        'wh',
+        'ins',
+        'twitter',
+        'country'
     ];
 
     public static function isInBase($string)

@@ -43,7 +43,7 @@ class ParseVK extends Command {
      * @return mixed
      */
     public function handle() {
-        
+        sleep(random_int(1,3));
         while (true) {
         $vklink = VKLinks::
                 join('tasks', 'tasks.id', '=', 'vk_links.task_id')->
@@ -51,7 +51,7 @@ class ParseVK extends Command {
                    ->select('vk_links.*')->first();
 
         if (!isset($vklink)) {
-            sleep(10);
+            sleep(random_int(5,10));
             
             continue;
         }

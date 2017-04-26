@@ -17,6 +17,7 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use App\Models\GoodProxies;
 use App\Models\ProxyTemp;
+use App\Models\Parser\Proxy as ProxyItem;
 
 class ParseOk extends Command {
 
@@ -25,6 +26,7 @@ class ParseOk extends Command {
     public $gwt = "";
     public $tkn = "";
     public $cur_proxy;
+    public $proxy_arr;
 
     /**
      * The name and signature of the console command.
@@ -55,8 +57,10 @@ class ParseOk extends Command {
      * @return mixed
      */
     public function handle() {
+        sleep(random_int(1, 3));
         $this->crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
 
+        $from = null;
         while (true) {
 
             try {
@@ -67,24 +71,53 @@ class ParseOk extends Command {
                         ])->first();
 
                 if (!isset($task)) {
-                    sleep(10);
+                    sleep(random_int(5,10));
                     continue;
                 }
                 $page_numb = $task->ok_offset;
                 $from = null;
 
                 while (true) {
-                    $from = AccountsData::where(['type_id' => '2'])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
+                    $from = AccountsData::where(['type_id' => '2','is_sender'=>0])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
 
                     if (!isset($from)) {
-                        sleep(10);
+                        sleep(random_int(5,10));
                         continue;
                     }
-                    $this->cur_proxy = ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
-                    if (!isset($this->cur_proxy)) {
-                        sleep(10);
-                        continue;
+                    //$this->cur_proxy = ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
+                    //  if (!isset($this->cur_proxy)) {
+                    //     sleep(random_int(5,10));
+                    //      continue;
+                    // }
+
+                    if ($from->proxy_id == "") {
+
+                        $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
+                                        where(['proxy.valid' => 1, 'accounts_data.type_id' => $from->type_id, 'accounts_data.is_sender'=>0])->where('proxy.ok', '<>', '0')
+                                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
+
+                        if (!isset($this->cur_proxy)) {
+                            sleep(random_int(5,10));
+                            continue;
+                        }
+                        $from->proxy_id = $this->cur_proxy->id;
+                        $from->ok_user_gwt = null;
+                        $from->ok_user_tkn = null;
+                        $from->ok_cookie = null;
+                        $from->save();
+                    } else {
+                        $this->cur_proxy = ProxyItem::where(['id' => $from->proxy_id, 'valid' => 1])->where('ok', '<>', '0')->first();
+                        if (!isset($this->cur_proxy)) {
+                            sleep(random_int(5,10));
+                            $from->proxy_id = 0;
+                            $from->ok_user_gwt = null;
+                            $from->ok_user_tkn = null;
+                            $from->ok_cookie = null;
+                            $from->save();
+                            continue;
+                        }
                     }
+
                     $cookies = json_decode($from->ok_cookie);
                     $array = new CookieJar();
 
@@ -100,6 +133,8 @@ class ParseOk extends Command {
                         }
                     }
 
+                    $this->proxy_arr = parse_url($this->cur_proxy->proxy);
+                  // dd( $this->proxy_arr);
                     $this->client = new Client([
                         'headers' => [
                             'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
@@ -111,10 +146,13 @@ class ParseOk extends Command {
                         'cookies' => $array->count() > 0 ? $array : true,
                         'allow_redirects' => true,
                         'timeout' => 20,
+                        'proxy' => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
                     ]);
-
+                    //dd("kk");
                     if ($array->count() < 1) {
+                        
                         if ($this->login($from->login, $from->password)) {
+
                             $from->ok_user_gwt = $this->gwt;
                             $from->ok_user_tkn = $this->tkn;
                             $from->ok_cookie = json_encode($this->client->getConfig('cookies')->toArray());
@@ -186,7 +224,16 @@ class ParseOk extends Command {
                 $err->message = $ex->getTraceAsString();
                 $err->task_id = 0;
                 $err->save();
-                $this->cur_proxy->reportBad();
+                //$this->cur_proxy->reportBad();
+                if (strpos($ex->getMessage(), 'cURL') !== false) {
+                    $from->proxy_id = null;
+                    $from->ok_user_gwt = null;
+                    $from->ok_user_tkn = null;
+                    $from->ok_cookie = null;
+                    $from->save();
+                    $this->cur_proxy->ok = 0;
+                    $this->cur_proxy->save();
+                }
                 sleep(random_int(1, 5));
             }
         }
@@ -208,12 +255,13 @@ class ParseOk extends Command {
                 "st.password" => $password,
                 "st.iscode" => "false"
             ],
-            'proxy' => $this->cur_proxy->proxy,
+            //'proxy' => $this->cur_proxy->proxy,
+            'proxy' => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
         ]);
 
         $html_doc = $data->getBody()->getContents();
         if (strpos($html_doc, 'Профиль заблокирован') > 0 || strpos($html_doc, 'восстановления доступа')) { // Вывелось сообщение безопасности, значит не залогинились
-              return false;
+            return false;
         }
         if ($this->client->getConfig("cookies")->count() > 2) { // Куков больше 2, возможно залогинились
             $this->crawler->clear();

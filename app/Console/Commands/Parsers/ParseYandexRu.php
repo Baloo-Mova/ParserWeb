@@ -61,6 +61,7 @@ class ParseYandexRu extends Command {
      * @return mixed
      */
     public function handle() {
+        sleep(random_int(1, 3));
         $page_number = -1;
         $regions = [225, 187]; //russia 225 ukraine 187
         while (true) {
@@ -76,26 +77,32 @@ class ParseYandexRu extends Command {
             //sleep(random_int(5, 10));
             try {
                 $ignore = IgnoreDomains::all();
-                
-                $proxy =  ProxyTemp::where(['yandex'=>1])->first();//ProxyItem::orderBy('id', 'desc')->first();
+
+                $proxy = ProxyItem::where(['yandex_ru' => 1, 'valid' => 1])->first(); //ProxyTemp::where(['yandex'=>1])->first();
+                if(!isset($proxy)){
+                    sleep(random_int(5, 10));
+                continue;
+                }
                 for ($ii = 0; $ii < count($regions); $ii++) {
                     echo($ii);
                     while (true) {
                         $page_number++;
                         $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
-                        
+
                         $data = "";
 
                         try {
+                             $proxy_arr = parse_url($proxy->proxy);
                             $request = $this->client->request("GET", 'https://yandex.ru/search/?text=' .
                                     urlencode($task->task_query) . '&lr=' . $regions[$ii] .
                                     ($page_number > 1 ? '&p=' . $page_number : ''), [
-                                
-                                'proxy' => $proxy->proxy, //'127.0.0.1:8888',//"",
+
+                                // 'proxy' => $proxy->proxy, //'127.0.0.1:8888',//"",
+                                'proxy' =>$proxy_arr['scheme']."://". $proxy->login . ':' . $proxy->password.'@'.$proxy_arr['host'].':'.$proxy_arr['port'],
                             ]);
                         } catch (\Exception $ex) {
-                           
-                            
+
+
                             if (preg_match("/404 Not Found/s", $ex->getMessage())) {
                                 //$log = new ErrorLog();
                                 //  $log->task_id = $task->id;
@@ -104,14 +111,15 @@ class ParseYandexRu extends Command {
                                 $page_number = 0;
                                 break;
                             }
-                            echo("\n".$ex->getMessage());
-                            $proxy->reportBad();
+                            echo("\n" . $ex->getMessage());
+                            //$proxy->reportBad();
+                             $proxy->yandex_ru=0;
+                            $proxy->save();
                             while (true) {
-                                $proxy = ProxyItem::orderBy('id', 'desc')->first();
+                                $proxy = ProxyItem::where(['yandex_ru'=>1,'valid'=>1])->first();
                                 if (isset($proxy)) {
-                                   
+
                                     break;
-                                    
                                 }
                                 sleep(random_int(4, 10));
                             }
@@ -124,15 +132,16 @@ class ParseYandexRu extends Command {
                         $crawler->clear();
                         $crawler->load($data);
                         if (preg_match("/captcha/s", $data)) {
-                           
-                           // dd("gg");
-                            $proxy->reportBad();
+
+                            // dd("gg");
+                            //$proxy->reportBad();
+                            $proxy->yandex_ru=0;
+                            $proxy->save();
                             while (true) {
-                                $proxy =  ProxyTemp::where(['yandex'=>1])->first();//ProxyItem::orderBy('id', 'desc')->first();
+                               $proxy = ProxyItem::where(['yandex_ru'=>1,'valid'=>1])->first();// $proxy = ProxyTemp::where(['yandex' => 1])->first(); 
                                 if (isset($proxy)) {
-                                   
+
                                     break;
-                                    
                                 }
                                 sleep(10);
                             }
@@ -159,15 +168,14 @@ class ParseYandexRu extends Command {
                             if (count($links) != 0) {
 
                                 foreach ($links as $link) {
-                                    
-                                    if($this->validate($link,$ignore)){
 
-                                    array_push($listLinks, [
-                                        'link' => $link,
-                                        'task_id' => $task->id,
-                                        'reserved' => 0
-                                    ]);
-                                    
+                                    if ($this->validate($link, $ignore)) {
+
+                                        array_push($listLinks, [
+                                            'link' => $link,
+                                            'task_id' => $task->id,
+                                            'reserved' => 0
+                                        ]);
                                     }
                                 }
                             }
@@ -206,12 +214,13 @@ class ParseYandexRu extends Command {
             unset($array[$key]);
         }
     }
-public function validate($url, $check) {
+
+    public function validate($url, $check) {
 
         $valid = true;
 
         foreach ($check as $val) {
-            
+
             if (stripos($url, $val->domain) !== false) {
                 $valid = false;
                 break;
@@ -219,4 +228,5 @@ public function validate($url, $check) {
         }
         return $valid;
     }
+
 }

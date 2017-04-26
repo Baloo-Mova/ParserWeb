@@ -20,6 +20,9 @@ class AccountsData extends Model
         'fb_cookie',
         'fb_user_id',
         'fb_access_token',
+        'process_id',
+        'proxy_id',
+        'is_sender',
     ];
 
     public function accountType()
