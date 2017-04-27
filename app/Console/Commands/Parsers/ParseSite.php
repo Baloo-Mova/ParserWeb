@@ -77,13 +77,20 @@ class ParseSite extends Command {
                 $data = $web->get($link->link);
                 //$link->delete();
                 //dd($data);
+               
                 $crawler->clear();
                 $crawler->load($data);
+                //\Illuminate\Support\Facades\Storage::put("data.html", $data);
 
                 $data = $crawler->find('body', 0);
+                if(!isset($data)) {
+                    $link->delete();
+                    continue;
+                };
                 try {
                     $ff = $data->innertext;
                 } catch (\Exception $ex) {
+                    //dd($ex->getMessage());
                     if (strpos($ex->getMessage(), "conv():")) {
                         $crawler = new SimpleHtmlDom(null, true, true, 'windows-1251', true, '\r\n', ' ');
                         $data = $web->get($link->link);
@@ -105,7 +112,7 @@ class ParseSite extends Command {
                     $phones = $this->extractPhones($data);
                     // dd($phones);
                     $skypes = $this->extractSkype($data);
-                    // dd($baseData);
+                    // dd($phones);
 
                     if (count($emails) > 0 || count($phones) > 0 || count($skypes) > 0) {
                         $res = new SearchQueries();
@@ -131,7 +138,7 @@ class ParseSite extends Command {
 
                     foreach ($additionalLinks as $l) {
 
-                        ////  echo($l . "\n");
+                        echo($l . "\n");
                         try {
                             $data = $web->get($l);
                             if (empty($data)) {
@@ -172,6 +179,7 @@ class ParseSite extends Command {
                 $log->task_id = 0;
                 $log->save();
             }
+            
         }
     }
 
@@ -213,10 +221,6 @@ class ParseSite extends Command {
         $plain = $data->plaintext;
         $plain = str_replace(["&nbsp;", "&larr;", "&rarr;"], [" ", ""], $plain);
 
-        //\Illuminate\Support\Facades\Storage::put("plain.txt", $plain);
-
-        $html = $data->innertext;
-        // \Illuminate\Support\Facades\Storage::put("html.txt", $html);
         $plain = str_replace([" - ",], "-", $plain);
 
         if (preg_match_all('/(\d{0,4})(?:\s?)\((\d{0,6})\)(?:\s?)([ |\-\d]{1,15})(?:\s?)(?:\-?)(?:\s?)([ \-\d]{1,11})?(?:\s?)/s', $plain, $M)) {
@@ -231,13 +235,14 @@ class ParseSite extends Command {
                     if (strlen($m) > 9 && ($m[0] != '2' || $m[0] != '1')) {
                         if ($m[0] == '0') {
                             foreach ($this->ua_operators_code as $i) {
-                                echo $i . "\n";
-                                if (strpos($m, $i) !== false) {
+                                // echo $i . "\n";
+                                if (strpos($m, $i) !== false&& strpos($m, $i)==0) {
                                     $m = "38" . $m;
                                 }
+                                
                             }
                         }
-
+                        if($m[0] == '0' || strlen($m) > 12) continue;
                         $before[] = trim($m);
                     }
                 }
@@ -255,7 +260,7 @@ class ParseSite extends Command {
 
                 if (!in_array(trim($m), $before) && !$this->endsWith(trim($m), "png") && strlen($m) >= 9 && strlen($m) <= 12
                 ) {
-                    //   echo$m . "\n";
+                      // echo$m . "\n";
                     if ($m[0] == '7' || $m[0] == '8' || (strpos($m, "380") !== false && strpos($m, "380") == 0)) {
                         $before[] = trim($m);
                         //   echo"true11\n";
@@ -264,8 +269,33 @@ class ParseSite extends Command {
             }
         }
         // }
+        $html = $data->innertext;
+        // \Illuminate\Support\Facades\Storage::put("html.txt", $html);
+
+        //\Illuminate\Support\Facades\Storage::put("html.html", $html);
+        if (preg_match_all('/href\=\"tel\:((.*?)(?:"|$)|([^"]+))/s', $html, $tel)) {
+            $tel = array_unique($tel[2]);
+            foreach ($tel as $t) {
+                
+                $t = str_replace($del, "", $t);
+                $t = str_replace(["+"], "", $t);
+                if (!in_array(trim($t), $before) && !$this->endsWith(trim($t), "png") && strlen($t) >= 9 && strlen($t) <= 12){
+                   // echo$t . "\n";
+                    if ($t[0] == '0') {
+                            foreach ($this->ua_operators_code as $i) {
+                                // echo $i . "\n";
+                                if (strpos($t, $i) !== false&& strpos($t, $i)==0) {
+                                    $t = "38" . $t;
+                                }
+                            }
+                        }
+                        if($t[0] == '0'|| strlen($t) > 12) continue;
+                    $before[] = trim($t); 
+                }
+            }
+        }
         //dd($before);
-        return $before;
+        return array_unique($before);
     }
 
     function endsWith($haystack, $needle) {
