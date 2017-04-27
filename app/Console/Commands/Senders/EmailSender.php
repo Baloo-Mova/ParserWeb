@@ -146,8 +146,10 @@ class EmailSender extends Command {
                 $log->task_id = 1;
 
                 $log->save();
-                if (strpos($ex->getMessage(), "Operation timed out") > 0) {
+                dd($ex->getMessage());
+                if (strpos($ex->getMessage(), "Operation timed out") !==false ) {
                     $proxy = ProxyTemp::where(['mail' => 1])->orWhere(['mail' => 2])->first();
+                    dd($ex->getMessage());
                     try {
 
                         $proxy->delete();
@@ -244,7 +246,7 @@ class EmailSender extends Command {
                     //echo "SEND SPAM";
                 }
                 //dd($response);
-                if (strlen(stristr($response, "connection")) > 0) {
+                if (strlen(stristr($response, "connection")) > 0 || strpos($response, 'connect etimedout')!==false) {
                     $number_con_time_out++;
                     echo "\n" . $number_con_time_out . ":" . $response . $proxy->proxy;
                     if ($number_con_time_out >= 2) {
@@ -259,12 +261,13 @@ class EmailSender extends Command {
                     //echo "SEND SPAM";
                 }
 
-                if (strlen(stristr($response, "socket closed")) > 0 || strlen(stristr($response, 'rejected (')) > 0 || strlen(stristr($response, 'negotiation error')) > 0) {
+                if (strlen(stristr($response, "socket closed")) > 0 || strlen(stristr($response, 'rejected (')) > 0 || strlen(stristr($response, 'negotiation error')) > 0 
+                        || strpos($response, 'mailer error: connect etimedout')!==false) {
                     echo "\nSEND bad socket" . $proxy->proxy;
                     try {
                         $proxy->delete();
                     } catch (\Exception $ex) {
-                        
+                      //  dd($ex->getMessage());
                     }
 
                     continue;
