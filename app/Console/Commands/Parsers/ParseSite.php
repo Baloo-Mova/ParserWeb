@@ -195,6 +195,7 @@ class ParseSite extends Command {
         if (preg_match_all('/[\._a-zA-Z0-9-]+@[\._a-zA-Z0-9-]+/i', $plain, $M)) {
             $M = array_unique($M[0]);
             foreach ($M as $m) {
+                if($m[strlen($m)-1]=='.') {$m = substr($m, 0, -1);}
                 if (!in_array(trim($m), $before) && !strpos($m, "Rating@Mail.ru") && !$this->endsWith(trim($m), "png")
                 ) {
                     array_push($before, trim($m));
@@ -205,13 +206,23 @@ class ParseSite extends Command {
         if (preg_match_all('/[\._a-zA-Z0-9-]+@[\._a-zA-Z0-9-]+/i', $html, $M)) {
             $M = array_unique($M[0]);
             foreach ($M as $m) {
+                
+                $m=trim($m);
+                
+               
                 if (!in_array(trim($m), $before) && strpos(strtolower($m), strtolower("Rating@Mail.ru")) === false && !$this->endsWith(trim($m), "png")
                 ) {
+                 //   echo"\nmust:".$m."\n";
+                    if($m[strlen($m)-1]=='.') {$m = substr($m, 0, -1);}
+                    
                     array_push($before, trim($m));
+                    
                 }
+                //echo "\nrr:".$m."\n";
             }
         }
-        return $before;
+        
+        return array_unique($before);
     }
 
     private $ua_operators_code = array("039", "050", "066", "095", "099", "039", "067", "068", "096", "097", "098", "093", "091", "092", "094", "044");
