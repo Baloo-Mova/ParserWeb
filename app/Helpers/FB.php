@@ -156,12 +156,12 @@ class FB {
                 try {
                     $account->save();
                 } catch (\Exception $e) {
-                    dd($e->getMessage());
+                   // dd($e->getMessage());
                 }
                 //("save");
             }
             //dd($json);
-            //dd($account);
+           // dd($account);
             echo "login()-succes\n\n";
             return true;
         } catch (\Exception $e) {
@@ -189,10 +189,13 @@ class FB {
                 if (empty($sender->fb_cookie)) {
                     //echo "no coikie logining\n";
                     $response = $this->login($sender->login, $sender->password, $proxy->proxy);
-                    if ($response) {
+                   // dd(gettype($response));
+                    if (gettype($response)=="boolean" && $response==true) {
                         $sender = AccountsData::where(['id' => $sender->id])->first();
                         // dd($sender->fb_cookie);
+                        echo("\nGood");
                     } else {
+                        //dd($response."gg");
                         if ($response == "bad proxy") {
                             $proxy->delete();
                             // $proxy->save();
@@ -201,6 +204,7 @@ class FB {
                             $sender->fb_user_id = null;
                             $sender->fb_access_token = null;
                             $sender->save();
+                           // dd($response);
                             continue;
                         } else {
                             $sender->delete();
@@ -322,7 +326,7 @@ class FB {
         try {
             while (true) {
 
-                $sender = AccountsData::where(['type_id' => 6, 'valid' => 1])->orderByRaw('RAND()')->first();
+                $sender = AccountsData::where(['type_id' => 6, 'valid' => 1,'is_sender'=>0])->orderByRaw('RAND()')->first();
 
                 if (!isset($sender)) {
                     sleep(10);
@@ -358,7 +362,7 @@ class FB {
                 if (empty($sender->fb_cookie)) {
                     //echo "no coikie logining\n";
                     $response = $this->login($sender->login, $sender->password, $this->proxy);
-                    if ($response) {
+                    if (gettype($response)=="boolean" && $response==true) {
                         $sender = AccountsData::where(['id' => $sender->id])->first();
                         // dd($sender->fb_cookie);
                     } else {
@@ -367,7 +371,7 @@ class FB {
                             $this->proxy->save();
                             $sender->proxy_id = 0;
                             $sender->fb_cookie = null;
-                            $sender->fb_user_id = null;
+                            //$sender->fb_user_id = null;
                             $sender->fb_access_token = null;
                             $sender->save();
                             continue;
@@ -434,7 +438,7 @@ class FB {
                     //dd("adadada");
                     $after = "";
                     try {
-                        $request = $this->client->request("GET", "https://graph.facebook.com/v2.8/search?"
+                        $request = $this->client->request("GET", "https://graph.facebook.com/v2.9/search?"
                                 . "access_token=" . $sender->fb_access_token
                                 . "&pretty=0&q=" . urlencode($find) . "&type=group&limit=25&after=" . $after, [
                             'form_params' => [],
@@ -456,16 +460,16 @@ class FB {
                 } catch (\Exception $exd) {
                     echo("\n" . $exd->getMessage());
 
-                    if (strpos($exd->getMessage(), "cURL")) {
+                    if (strpos($exd->getMessage(), "cURL")!==false) {
 
                         $sender->proxy_id = 0;
                         $sender->fb_cookie = null;
-                        $sender->fb_user_id = null;
+                        //$sender->fb_user_id = null;
                         $sender->fb_access_token = null;
                         $sender->save();
 
-                        $proxy->fb = 0;
-                        $proxy->save();
+                        $this->proxy->fb = 0;
+                        $this->proxy->save();
                         continue;
                     }
                 }
@@ -473,7 +477,7 @@ class FB {
 
             while (true) {
                 try {
-                    $request = $this->client->request("GET", "https://graph.facebook.com/v2.8/search?"
+                    $request = $this->client->request("GET", "https://graph.facebook.com/v2.9/search?"
                             . "access_token=" . $sender->fb_access_token
                             . "&pretty=0&q=" . urlencode($find) . "&type=group&limit=25&after=" . $after, [
                         'form_params' => [],
@@ -492,7 +496,7 @@ class FB {
 
                         $sender->proxy_id = 0;
                         $sender->fb_cookie = null;
-                        $sender->fb_user_id = null;
+                        //$sender->fb_user_id = null;
                         $sender->fb_access_token = null;
                         $sender->save();
                         $this->proxy->fb = 0;
@@ -568,7 +572,7 @@ class FB {
                 sleep(random_int(5, 10));
                 $sender->proxy_id = 0;
                 $sender->fb_cookie = null;
-                $sender->fb_user_id = null;
+                //$sender->fb_user_id = null;
                 $sender->fb_access_token = null;
                 $sender->save();
                 continue;
@@ -578,7 +582,7 @@ class FB {
             if (empty($sender->fb_cookie)) {
                 //echo "no coikie logining\n";
                 $response = $this->login($sender->login, $sender->password, $proxy);
-                if ($response) {
+                if (gettype($response)=="boolean" && $response==true) {
                     $sender = AccountsData::where(['id' => $sender->id])->first();
                     // dd($sender->fb_cookie);
                 } else {
@@ -587,7 +591,7 @@ class FB {
                         $proxy->save();
                         $sender->proxy_id = 0;
                         $sender->fb_cookie = null;
-                        $sender->fb_user_id = null;
+                       // $sender->fb_user_id = null;
                         $sender->fb_access_token = null;
                         $sender->save();
                         continue;
@@ -652,7 +656,7 @@ class FB {
 
                     $sender->proxy_id = 0;
                     $sender->fb_cookie = null;
-                    $sender->fb_user_id = null;
+                    //$sender->fb_user_id = null;
                     $sender->fb_access_token = null;
                     $sender->save();
                     $proxy->fb = 0;
@@ -674,7 +678,7 @@ class FB {
 
                 $sender->proxy_id = 0;
                 $sender->fb_cookie = null;
-                $sender->fb_user_id = null;
+                //$sender->fb_user_id = null;
                 $sender->fb_access_token = null;
                 $sender->save();
                 $proxy->fb = 0;
@@ -764,7 +768,7 @@ class FB {
                 //echo "no coikie logining\n";
                 $response = $this->login($sender->login, $sender->password, $proxy);
                 //dd($response);
-                if ($response) {
+                if (gettype($response)=="boolean" && $response==true) {
                     $sender = AccountsData::where(['id' => $sender->id])->first();
                     // dd($sender->fb_cookie);
                 } else {
@@ -995,7 +999,7 @@ class FB {
             if (empty($sender->fb_cookie)) {
                 //echo "no coikie logining\n";
                 $response = $this->login($sender->login, $sender->password, $proxy);
-                if ($response) {
+                if (gettype($response)=="boolean" && $response==true) {
                     $sender = AccountsData::where(['id' => $sender->id])->first();
                     // dd($sender->fb_cookie);
                 } else {
@@ -1342,7 +1346,7 @@ class FB {
            // file_put_contents("test2.html", $data);
 
             preg_match('/\{.accessToken.\:\"(\w*)/s', $data, $acc_token);
-            file_put_contents("test.html", $data);
+            //file_put_contents("test.html", $data);
             $acc_token = $acc_token[1];
            // return $acc_token;
             //echo("\n".$acc_token);
