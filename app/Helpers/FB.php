@@ -14,6 +14,7 @@ use App\Helpers\SimpleHtmlDom;
 use App\Models\SearchQueries;
 use App\Models\Parser\Proxy as ProxyItem;
 use App\Models\ProxyTemp;
+use App\Models\UserNames;
 
 class FB {
 
@@ -59,8 +60,8 @@ class FB {
 
 
             $data = $request->getBody()->getContents();
-            preg_match('/name\=\"lsd\" value\="(\w*)/i', $data, $lsd);
-            $lsd = $lsd[1];
+            preg_match('/name\=\"lsd\" value\=("(.*?)(?:"|$)|([^"]+))/i', $data, $lsd);
+            $lsd = $lsd[2];
             preg_match('/name\=\"trynum\" value\="(\w*)/i', $data, $trynum);
             $trynum = $trynum[1];
             preg_match('/name\=\"legacy_return\" value\="(\w*)/i', $data, $legacy_return);
@@ -96,7 +97,7 @@ class FB {
             $data = $request->getBody()->getContents();
 
             //dd($this->client->getConfig('cookies'));
-            \Illuminate\Support\Facades\Storage::put("text.html", $data);
+            //\Illuminate\Support\Facades\Storage::put("text.html", $data);
             //   print_r($request->getStatusCode() . "\n");
             //$cookie = $request->getHeader('set-cookie');
             //   print_r($data . "\n");
@@ -156,12 +157,12 @@ class FB {
                 try {
                     $account->save();
                 } catch (\Exception $e) {
-                   // dd($e->getMessage());
+                    // dd($e->getMessage());
                 }
                 //("save");
             }
             //dd($json);
-           // dd($account);
+            // dd($account);
             echo "login()-succes\n\n";
             return true;
         } catch (\Exception $e) {
@@ -189,8 +190,8 @@ class FB {
                 if (empty($sender->fb_cookie)) {
                     //echo "no coikie logining\n";
                     $response = $this->login($sender->login, $sender->password, $proxy->proxy);
-                   // dd(gettype($response));
-                    if (gettype($response)=="boolean" && $response==true) {
+                    // dd(gettype($response));
+                    if (gettype($response) == "boolean" && $response == true) {
                         $sender = AccountsData::where(['id' => $sender->id])->first();
                         // dd($sender->fb_cookie);
                         echo("\nGood");
@@ -204,7 +205,7 @@ class FB {
                             $sender->fb_user_id = null;
                             $sender->fb_access_token = null;
                             $sender->save();
-                           // dd($response);
+                            // dd($response);
                             continue;
                         } else {
                             $sender->delete();
@@ -326,7 +327,7 @@ class FB {
         try {
             while (true) {
 
-                $sender = AccountsData::where(['type_id' => 6, 'valid' => 1,'is_sender'=>0])->orderByRaw('RAND()')->first();
+                $sender = AccountsData::where(['type_id' => 6, 'valid' => 1, 'is_sender' => 0])->orderByRaw('RAND()')->first();
 
                 if (!isset($sender)) {
                     sleep(10);
@@ -362,7 +363,7 @@ class FB {
                 if (empty($sender->fb_cookie)) {
                     //echo "no coikie logining\n";
                     $response = $this->login($sender->login, $sender->password, $this->proxy);
-                    if (gettype($response)=="boolean" && $response==true) {
+                    if (gettype($response) == "boolean" && $response == true) {
                         $sender = AccountsData::where(['id' => $sender->id])->first();
                         // dd($sender->fb_cookie);
                     } else {
@@ -460,7 +461,7 @@ class FB {
                 } catch (\Exception $exd) {
                     echo("\n" . $exd->getMessage());
 
-                    if (strpos($exd->getMessage(), "cURL")!==false) {
+                    if (strpos($exd->getMessage(), "cURL") !== false) {
 
                         $sender->proxy_id = 0;
                         $sender->fb_cookie = null;
@@ -582,7 +583,7 @@ class FB {
             if (empty($sender->fb_cookie)) {
                 //echo "no coikie logining\n";
                 $response = $this->login($sender->login, $sender->password, $proxy);
-                if (gettype($response)=="boolean" && $response==true) {
+                if (gettype($response) == "boolean" && $response == true) {
                     $sender = AccountsData::where(['id' => $sender->id])->first();
                     // dd($sender->fb_cookie);
                 } else {
@@ -591,7 +592,7 @@ class FB {
                         $proxy->save();
                         $sender->proxy_id = 0;
                         $sender->fb_cookie = null;
-                       // $sender->fb_user_id = null;
+                        // $sender->fb_user_id = null;
                         $sender->fb_access_token = null;
                         $sender->save();
                         continue;
@@ -768,7 +769,7 @@ class FB {
                 //echo "no coikie logining\n";
                 $response = $this->login($sender->login, $sender->password, $proxy);
                 //dd($response);
-                if (gettype($response)=="boolean" && $response==true) {
+                if (gettype($response) == "boolean" && $response == true) {
                     $sender = AccountsData::where(['id' => $sender->id])->first();
                     // dd($sender->fb_cookie);
                 } else {
@@ -999,7 +1000,7 @@ class FB {
             if (empty($sender->fb_cookie)) {
                 //echo "no coikie logining\n";
                 $response = $this->login($sender->login, $sender->password, $proxy);
-                if (gettype($response)=="boolean" && $response==true) {
+                if (gettype($response) == "boolean" && $response == true) {
                     $sender = AccountsData::where(['id' => $sender->id])->first();
                     // dd($sender->fb_cookie);
                 } else {
@@ -1272,21 +1273,21 @@ class FB {
                     ]
             );
             $data = $request->getBody()->getContents();
-           // file_put_contents("test0.html", $data);
+            // file_put_contents("test0.html", $data);
             preg_match('/\[\"DTSGInitialData\"\,\[\]\,\{\"token\"\:("(.*?)(?:"|$)|([^"]+))/i', $data, $fb_dtsg);
             $fb_dtsg = $fb_dtsg[2];
 //echo("\n".$fb_dtsg);
 
             preg_match('/name\=\"logger\_id\"\ value\=\"(\S*)\"/i', $data, $logger_id);
             $logger_id = $logger_id[1];
-           // echo "\n".$logger_id;
+            // echo "\n".$logger_id;
             preg_match('/name\=\"seen_scopes\"\ value\=\"(\S*)\"/i', $data, $seen_scopes);
             $seen_scopes = $seen_scopes[1];
 //echo "\n".$seen_scopes;
             preg_match('/\,\"ACCOUNT\_ID\"\:\"(\w*)\"/i', $data, $user);
             $user = $user[1];
-           // echo "\n".$user;
-            $read=$seen_scopes;
+            // echo "\n".$user;
+            $read = $seen_scopes;
             $req_str = 'https://www.facebook.com/v2.9/dialog/oauth/read?dpr=1';
 //            preg_match('/name\=\"extended\"\ value\=\"(\S*)\"/i', $data, $extended);
 //            if(isset($extended)){
@@ -1299,7 +1300,6 @@ class FB {
 //            echo "\n".$req_str;
 //            }
             //preg_match('/name\=\"read\"\ value\=\"(\S*)\"/i', $data, $read);
-            
             //file_put_contents("test.html", $data);
             // return $user;
 
@@ -1311,7 +1311,7 @@ class FB {
                     'display' => 'popup',
                     'from_post' => 1,
                     'public_info_nux' => 'true',
-                    'read' =>$read,
+                    'read' => $read,
                     //'extended' => '',
                     'seen_scopes' => $seen_scopes,
                     'ref' => 'Default',
@@ -1329,7 +1329,7 @@ class FB {
                     '__be' => -1,
                     '__pc' => 'EXP4:DEFAULT'
                 ],
-                   //'proxy' => '127.0.0.1:8888',
+                    //'proxy' => '127.0.0.1:8888',
                     ]
             );
 
@@ -1343,12 +1343,12 @@ class FB {
                     ]
             );
             $data = $request->getBody()->getContents();
-           // file_put_contents("test2.html", $data);
+            // file_put_contents("test2.html", $data);
 
             preg_match('/\{.accessToken.\:\"(\w*)/s', $data, $acc_token);
             //file_put_contents("test.html", $data);
             $acc_token = $acc_token[1];
-           // return $acc_token;
+            // return $acc_token;
             //echo("\n".$acc_token);
             if (empty($acc_token)) {
                 return false;
@@ -1356,6 +1356,306 @@ class FB {
             $sender->fb_access_token = $acc_token;
             $sender->save();
 
+            return true;
+        } catch (\Exception $ex) {
+
+            dd($ex->getMessage());
+        }
+    }
+
+    public function registrateUser() {
+        $min = strtotime("47 years ago");
+        $max = strtotime("18 years ago");
+        $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
+        try {
+
+
+            while (true) {
+                $proxy = ProxyItem::where('fb', '<>', 0)->first();
+                //echo($sender->login . "\n");
+                if (!isset($proxy)) {
+                    sleep(10);
+                    continue;
+                }
+                break;
+            }
+            $proxy_arr = parse_url($proxy->proxy);
+            //dd($proxy_arr);
+            $proxy_string = $proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port'];
+            //dd($proxy);
+
+            $this->client = new Client([
+                 'headers' => [
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Encoding' => 'gzip, deflate,sdch',
+                'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+            ],
+            'verify' => false,
+            'cookies' => true,
+            'allow_redirects' => true,
+            'timeout' => 10,
+                //'proxy' => $proxy_string,
+            ]);
+
+            $str_s_name;
+            $f_name;
+
+            $rand_time = mt_rand($min, $max);
+
+            $birth_date = date('m-d-Y', $rand_time);
+            $birth_date = explode('-', $birth_date);
+            //dd($birth_date);
+            $login = '+16149082036';
+            $pass = str_random(random_int(8, 12));
+            echo("\n" . $pass);
+            while (true) {
+                $f_name = UserNames::where(['type_name' => 0])->orderByRaw('RAND()')->first();
+                if (!isset($f_name)) {
+                    sleep(random_int(5, 10));
+                    continue;
+                }
+                break;
+            }
+
+            while (true) {
+                $s_name = UserNames::where(['type_name' => 1])->orderByRaw('RAND()')->first();
+                if (!isset($s_name)) {
+                    sleep(random_int(5, 10));
+                    continue;
+                }
+                break;
+            }
+            if ($f_name->gender == 1) {
+
+                $str_s_name = $s_name->name .= 'а';
+            } else {
+                $str_s_name = $s_name->name;
+            }
+
+            \Illuminate\Support\Facades\Storage::put("pass.txt", json_encode($login . " " . $pass, JSON_UNESCAPED_UNICODE));
+            // $this->login($sender->login, $sender->password);
+            
+            $request = $this->client->request("GET", "https://www.facebook.com/reg/", [
+                'proxy' => '127.0.0.1:8888',
+                //'cookies' => true,
+                    ]
+            );
+            sleep(2);
+            $data = $request->getBody()->getContents();
+            \Illuminate\Support\Facades\Storage::put("fb.html", $data);
+            // $crawler->clear();
+            // $crawler->load($data);
+            //$gg = $crawler->find('body', 0);
+            // $gg = $crawler->find('div[class=nameslist]');
+$newCookies = $request->getHeader('Set-Cookie');
+ \Illuminate\Support\Facades\Storage::put("fbcookie.txt", $data);
+ 
+ 
+
+  preg_match('/_js_datr\"\,("(.*?)(?:"|$)|([^"]+))\,/i', $data, $datr);
+            $datr = $datr[2];
+            $array = new CookieJar();
+  $set = new SetCookie();
+                $set->setDomain('.facebook.com');
+                //$set->setExpires($cookie->Expires);
+                $set->setName('datr');
+                $set->setValue($datr);
+                $set->setPath('/');
+                $array->setCookie($set);
+                $this->login("ggg", "ffff");
+             $request = $this->client->request("GET", "https://www.facebook.com/", [
+                'proxy' => '127.0.0.1:8888',
+               // 'cookies'=>$array   
+                 ]
+            );
+            
+            preg_match('/name\=\"lsd\" value\=("(.*?)(?:"|$)|([^"]+))/i', $data, $lsd);
+            $lsd = $lsd[2];
+            preg_match('/name\=\"reg_instance\" value\=("(.*?)(?:"|$)|([^"]+))/i', $data, $reg_instance);
+            $reg_instance = $reg_instance[2];
+
+            preg_match('/name\=\"captcha_persist_data\" id\=\"captcha_persist_data\" value\=("(.*?)(?:"|$)|([^"]+))/i', $data, $captcha_persist_data);
+            $captcha_persist_data = $captcha_persist_data[2];
+            preg_match('/name\=\"captcha_session\" value\=("(.*?)(?:"|$)|([^"]+))/i', $data, $captcha_session);
+            $captcha_session = $captcha_session[2];
+            preg_match('/name\=\"extra_challenge_params\" value\=("(.*?)(?:"|$)|([^"]+))/i', $data, $extra_challenge_params);
+            $extra_challenge_params = $extra_challenge_params[2];
+            preg_match('/\[\"SiteData\"\,\[\]\,\{\"revision\"\:(\w*)\,/i', $data, $rev);
+            $rev = $rev[1];
+
+
+            // dd($rev);
+
+
+            $req = 6; //random_int(2, 9);
+            $request = $this->client->post("https://www.facebook.com/cookie/consent/?pv=1&dpr=1", [
+                'form_params' => [
+
+                    '__user' => '0',
+                    '__a' => '1',
+                    // '__dyn' => '7AzHK4GgN2Hy49UrJxm2q3miWGey8jrWo466EeVE98nwgUb8aUgxebmbwPG2iuUG4XzEa8uwh9Vobo88lwIxWcwJwnoCiu2K4o6m5FFovgeFUuwxxW1hwam6pHxii6ElzECfwnUKU',
+                    '__af' => 'iw',
+                    //'__req' => $req,
+                    '__be' => '-1',
+                    '__pc' => 'PHASED:DEFAULT',
+                    '__rev' => $rev,
+                    'lsd' => $lsd,
+                ],
+                'proxy' => '127.0.0.1:8888',
+                    ]
+            );
+            $data = $request->getBody()->getContents();
+
+            //$cookieJar = CookieJar::fromArray([
+               //         'datr' => $reg_instance,
+                  //          ], 'https://www.facebook.com');
+
+            $request = $this->client->post("https://www.facebook.com/ajax/register.php?dpr=1", [
+                'form_params' => [
+                    'lsd' => $lsd,
+                    'firstname' => $f_name->name,
+                    'lastname' => $str_s_name,
+                    'reg_email__' => $login,
+                    'reg_email_confirmation__' => '',
+                    'reg_second_contactpoint__' => '',
+                    'reg_passwd__' => $pass,
+                    'birthday_day' => $birth_date[1],
+                    'birthday_month' => $birth_date[0],
+                    'birthday_year' => $birth_date[2],
+                    'sex' => '2',
+                    'referrer' => '',
+                    'asked_to_login' => '0',
+                    'terms' => 'on',
+                    'locale' => 'ru_RU',
+                    'reg_instance' => $reg_instance,
+                    'contactpoint_label' => 'email_or_phone',
+                    'ignore' => 'reg_second_contactpoint__|captcha|reg_email_confirmation__',
+                    'captcha_persist_data' => $captcha_persist_data,
+                    'captcha_session' => $captcha_session,
+                    'extra_challenge_params' => $extra_challenge_params,
+                    'recaptcha_type' => 'password',
+                    '__user' => '0',
+                    '__a' => '1',
+                    // '__dyn' => '7AzHK4GgN2Hy49UrJxm2q3miWGey8jrWo466EeVE98nwgUb8aUgxebmbwPG2iuUG4XzEa8uwh9Vobo88lwIxWcwJwnoCiu2K4o6m5FFovgeFUuwxxW1hwam6pHxii6ElzECfwnUKU',
+                    '__af' => 'iw',
+                    '__req' => $req,
+                    '__be' => '-1',
+                    '__pc' => 'PHASED:DEFAULT',
+                    '__rev' => $rev
+                ],
+                'proxy' => '127.0.0.1:8888',
+               // 'cookies' => $cookieJar,
+                    ]
+            );
+           // dd( $cookieJar);
+            $data = $request->getBody()->getContents();
+            //dd($data);
+            dd($rev);
+            $request = $this->client->request("GET", "https://www.facebook.com/?__req=" . $req, [
+                'proxy' => '127.0.0.1:8888',
+                    ]
+            );
+            $request = $this->client->request("GET", "https://www.facebook.com/confirmemail.php?next=https%3A%2F%2Fwww.facebook.com%2F&rd&__req=" . $req, [
+                'proxy' => '127.0.0.1:8888',
+                    ]
+            );
+            // sleep(2);
+            $data = $request->getBody()->getContents();
+            \Illuminate\Support\Facades\Storage::put("fb1.html", $data);
+            preg_match('/\[\"DTSGInitialData\"\,\[\]\,\{\"token\"\:("(.*?)(?:"|$)|([^"]+))/i', $data, $fb_dtsg);
+            $fb_dtsg = $fb_dtsg[2];
+
+            preg_match('/\{\"USER\_ID\"\:\"(\w*)\"\,"ACC/i', $data, $id);
+            $id = $id[1];
+            echo "\n" . $id;
+            preg_match('/\"\_\_spin\_t\"\:(\w*)\,/i', $data, $spin_t);
+            $spin_t = $spin_t[1];
+
+            $code;
+            while (true) {
+                echo "\nwait code";
+                $code = UserNames::where([type => 77])->first();
+                if (!isset($code)) {
+                    sleep(3);
+                    continue;
+                }
+            }
+
+            $request = $this->client->post("https://www.facebook.com/confirm_code/dialog/submit/?next=%2F&cp=" . urlencode($login) . "&from_cliff=1&conf_surface=hard_cliff&event_location=cliff&dpr=1", [
+                'form_params' => [
+                    'fb_dtsg' => $fb_dtsg,
+                    'code' => $code->name,
+                    'confirm' => '1',
+                    '__user' => $id,
+                    '__a' => '1',
+//'__dyn'=>'7AzHK4GmagngDxKS5o9EdpbGEW8xdLFwxx-bzEeAq2i5U4e2O2K48jyRyUrxuE99XyEjKewExmt0gKum4Upww-9DwIxWcwJwkEG9J7BwBx62q3W5FFovgeFUoh8CrzEly856q2ui2eq3O9xCWK598qxmeyqz85-bK
+                    '__af' => 'iw',
+                    '__req' => '5',
+                    '__be' => '-1',
+                    '__pc' => 'PHASED:DEFAULT',
+                    '__rev' => $rev,
+//'logging'=>'265817010211010210469106701211165865817210276711041026969103122',
+                    '__spin_r' => $rev,
+                    '__spin_b' => 'trunk',
+                    '__spin_t' => $spin_t,
+                ],
+                'proxy' => '127.0.0.1:8888',
+                    ]
+            );
+            $data = $request->getBody()->getContents();
+            //dd($data);
+            \Illuminate\Support\Facades\Storage::put("fb2.html", $data);
+            // $request = $this->client->request("GET", "https://www.facebook.com/confirmemail.php?next=https%3A%2F%2Fwww.facebook.com%2F&rd&__req=".$req, [
+            //   'proxy' => '127.0.0.1:8888',
+            //       ]
+            // );
+            // sleep(2);
+            // $data = $request->getBody()->getContents();
+            $request = $this->client->request("GET", "https://www.facebook.com", [
+                'proxy' => '127.0.0.1:8888',
+                    //'proxy' => $proxy_string,
+                    //'cookie'=> $cookie
+            ]);
+            sleep(2);
+            $data = $request->getBody()->getContents();
+            $cookie = $this->client->getConfig('cookies');
+
+
+            $gg = $cookie->toArray();
+            $user_id = "";
+            foreach ($gg as $value) {
+                if ($value["Name"] == "c_user") {
+                    $user_id = $value["Value"];
+                    break;
+                }
+            }
+
+            if (empty($user_id) == true) {
+                // dd($cookie);
+                echo "\nddd";
+                return false;
+            }
+
+
+            $json = json_encode($cookie->toArray());
+
+            // $account = AccountsData::where(['login' => $fb_login, 'type_id' => 6])->first();
+
+
+            $account = new AccountsData();
+            $account->login = $login;
+            $account->password = $pass;
+            $account->type_id = 6;
+            $account->fb_cookie = $json;
+            $account->user_id = 0;
+            $account->fb_user_id = $id;
+            try {
+                $account->save();
+            } catch (\Exception $e) {
+                // dd($e->getMessage());
+            }
+            dd("stop");
             return true;
         } catch (\Exception $ex) {
 

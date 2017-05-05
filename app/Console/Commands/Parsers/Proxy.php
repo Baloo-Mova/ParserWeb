@@ -58,13 +58,13 @@ class Proxy extends Command {
 //
 //                }
 //            }
-            $data = [
-                'limit' => 100,
-                'type' => 'http,https,socks4,socks5',
-                'port' => '',
-                'mode' => 'google',
-                'country' => ''
-            ];
+          //  $data = [
+            //    'limit' => 100,
+            //    'type' => 'http,https,socks4,socks5',
+             //   'port' => '',
+           //     'mode' => 'google',
+           //     'country' => ''
+           // ];
 
             $job = dispatch(new GetProxies($data));
             sleep(30);
@@ -85,7 +85,7 @@ class Proxy extends Command {
                 'type' => 'http,https,socks4,socks5',
                 'port' => '',
                 'mode' => '',
-                'country' => 'ua,ru'
+                'country' => 'ru'
             ];
 
             $job = dispatch(new GetProxies($data));
