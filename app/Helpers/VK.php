@@ -14,6 +14,8 @@ use App\Helpers\SimpleHtmlDom;
 use App\Models\SearchQueries;
 use App\Models\Parser\Proxy as ProxyItem;
 use App\Models\ProxyTemp;
+use App\Models\UserNames;
+use App\Helpers\PhoneNumber;
 
 class VK {
 
@@ -196,15 +198,15 @@ class VK {
 
     public function sendRandomMessage($to_userId, $messages) {
         while (true) {
-            try{
-            $sender = AccountsData::where(['type_id' => 1, 'valid' => 1, 'is_sender' => 1])->orderByRaw('RAND()')->first();
-            if (!isset($sender)) {
-                sleep(10);
-                continue;
-            }
-           
+            try {
+                $sender = AccountsData::where(['type_id' => 1, 'valid' => 1, 'is_sender' => 1])->orderByRaw('RAND()')->first();
+                if (!isset($sender)) {
+                    sleep(10);
+                    continue;
+                }
 
-           if ($sender->proxy_id == 0) {
+
+                if ($sender->proxy_id == 0) {
 
                     $this->cur_proxy = ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
 
@@ -215,7 +217,6 @@ class VK {
                     $sender->proxy_id = $this->cur_proxy->id;
                     $sender->vk_cookie = null;
                     $sender->save();
-                   
                 } else {
                     $this->cur_proxy = ProxyTemp::where(['id' => $sender->proxy_id])->first();
                     if (!isset($this->cur_proxy)) {
@@ -242,12 +243,9 @@ class VK {
                     }
                 }
 
-               // $this->proxy_arr = parse_url($this->cur_proxy->proxy);
-
-                
+                // $this->proxy_arr = parse_url($this->cur_proxy->proxy);
 //        
                 //$cookiejar = new CookieJar($cookie);
-
 //$this->cur_proxy->proxy='127.0.0.1:8888';
                 $this->client = new Client([
                     'headers' => [
@@ -265,7 +263,7 @@ class VK {
 
                 if ($array->count() < 1) {
                     // echo "no coikie logining\n";
-                    
+
                     if ($this->login($sender->login, $sender->password)) {
                         $sender = AccountsData::where(['id' => $sender->id])->first();
                         //dd($sender->vk_cookie);
@@ -276,70 +274,68 @@ class VK {
                         continue;
                     }
                 }
-                
-            $request = $this->client->request("GET", "https://vk.com/id" . $to_userId, [
-                    // 'proxy' => '127.0.0.1:8888',
-                    ]
-            );
-            sleep(2);
-            $data = $request->getBody()->getContents();
 
-            if (strpos($data, "quick_login_button")) {
-                continue;
-            };
-            
-        
-        if (strpos($data, "flat_button profile_btn_cut_left") == false) {
-            echo "\nprivate profile or page isn't define";
-            return false;
-        }
-        // $chas = substr($data, strpos($data, "toData: "), 400);
-        //echo "\n---".($chas);
-        preg_match_all("/   hash\: '(\w*)'/s", $data, $chas);
+                $request = $this->client->request("GET", "https://vk.com/id" . $to_userId, [
+                        // 'proxy' => '127.0.0.1:8888',
+                        ]
+                );
+                sleep(2);
+                $data = $request->getBody()->getContents();
 
-        //  preg_match("/hash\:  /sg", $data, $hash);
-        //dd($hash);
-        //sleep(10);
-        //dd($this->client->getConfig('cookies'));
-        //dd($chas);
-        $chas = $chas[1];
-        //dd($chas);
-        $request = $this->client->post("https://vk.com/al_mail.php", [
-            'form_params' => [
-                'act' => 'a_send',
-                'al' => 1,
-                'chas' => $chas[0],
-                'from' => 'box',
-                'media' => '',
-                'message' => $messages,
-                'title' => '',
-                'to_ids' => $to_userId,
-            ],
-                // 'proxy' => '127.0.0.1:8888',
-                ]
-                //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
-        );
-        $data = $request->getBody()->getContents();
-        //dd($data);
-        if (strpos($data, 'error') > 0) {
-            echo("\nsecurity error");
-            return false;
-        }
+                if (strpos($data, "quick_login_button")) {
+                    continue;
+                };
+
+
+                if (strpos($data, "flat_button profile_btn_cut_left") == false) {
+                    echo "\nprivate profile or page isn't define";
+                    return false;
+                }
+                // $chas = substr($data, strpos($data, "toData: "), 400);
+                //echo "\n---".($chas);
+                preg_match_all("/   hash\: '(\w*)'/s", $data, $chas);
+
+                //  preg_match("/hash\:  /sg", $data, $hash);
+                //dd($hash);
+                //sleep(10);
+                //dd($this->client->getConfig('cookies'));
+                //dd($chas);
+                $chas = $chas[1];
+                //dd($chas);
+                $request = $this->client->post("https://vk.com/al_mail.php", [
+                    'form_params' => [
+                        'act' => 'a_send',
+                        'al' => 1,
+                        'chas' => $chas[0],
+                        'from' => 'box',
+                        'media' => '',
+                        'message' => $messages,
+                        'title' => '',
+                        'to_ids' => $to_userId,
+                    ],
+                        // 'proxy' => '127.0.0.1:8888',
+                        ]
+                        //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
+                );
+                $data = $request->getBody()->getContents();
+                //dd($data);
+                if (strpos($data, 'error') > 0) {
+                    echo("\nsecurity error");
+                    return false;
+                }
 
 
 //print_r($data);
-        $sender->count_sended_messages += 1;
-        $sender->save();
-        return true;
-        }catch(\Exception $ex){
-            echo "\n".$ex->getMessage();
-            if(strpos($ex->getMessage(),"cURL")!==false){
-                $this->cur_proxy->delete();
-                continue;
+                $sender->count_sended_messages += 1;
+                $sender->save();
+                return true;
+            } catch (\Exception $ex) {
+                echo "\n" . $ex->getMessage();
+                if (strpos($ex->getMessage(), "cURL") !== false) {
+                    $this->cur_proxy->delete();
+                    continue;
+                }
             }
-        }
-        
-        
         }
     }
 
@@ -397,7 +393,7 @@ class VK {
                 if ($sender->proxy_id == 0) {
 
                     $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
-                                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id,'accounts_data.is_sender'=>0])->where('proxy.vk', '<>', '0')
+                                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where('proxy.vk', '<>', '0')
                                     ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
 
                     if (!isset($this->cur_proxy)) {
@@ -587,7 +583,7 @@ class VK {
                 if ($sender->proxy_id == 0) {
 
                     $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
-                                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id,'accounts_data.is_sender'=>0])->where('proxy.vk', '<>', '0')
+                                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where('proxy.vk', '<>', '0')
                                     ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
 
                     if (!isset($this->cur_proxy)) {
@@ -713,7 +709,7 @@ class VK {
 
                 return true;
             } catch (\Exception $ex) {
-                 if (strpos($ex->getMessage(), 'cURL') !== false) {
+                if (strpos($ex->getMessage(), 'cURL') !== false) {
 
                     $this->cur_proxy->vk = 0;
                     $this->cur_proxy->save();
@@ -887,5 +883,263 @@ class VK {
         }
     }
 
+    public function registrateUser() {
+        $min = strtotime("47 years ago");
+        $max = strtotime("18 years ago");
+        $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
+        try {
+
+
+            while (true) {
+                $proxy = ProxyItem::where('fb', '<>', 0)->first();
+                //echo($sender->login . "\n");
+                if (!isset($proxy)) {
+                    sleep(10);
+                    continue;
+                }
+                break;
+            }
+            $proxy_arr = parse_url($proxy->proxy);
+            //dd($proxy_arr);
+            $proxy_string = $proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port'];
+            //dd($proxy);
+
+            $cookies = new CookieJar();
+
+
+            $this->client = new Client([
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Encoding' => 'gzip, deflate, sdch,',
+                    'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+                    'X-Requested-With'=> 'XMLHttpRequest',
+                    //'Content-Type'=> 'application/x-www-form-urlencoded',
+                ],
+                'verify' => false,
+                'cookies' => true,
+                'allow_redirects' => true,
+                'timeout' => 20,
+                    // 'proxy'=> $proxy_string,
+            ]);
+            $str_s_name;
+            $f_name;
+
+            $rand_time = mt_rand($min, $max);
+
+            $birth_date = date('m-d-Y', $rand_time);
+            $birth_date = explode('-', $birth_date);
+            $Phone = new PhoneNumber();
+            print_r($Phone->getBalance());
+            //$phone = $Phone->getNumber(PhoneNumber::FaceBook);
+            $login = '+380685578956';//$phone['number']; //'+16143479906';
+           // print_r($login);
+
+            //dd($birth_date);
+            //$login = "12"; //$Phone->getNumber($Phone::FaceBook); //'+16143479906';
+            // dd($login);
+            $pass = str_random(random_int(8, 12));
+            echo("\n" . $pass);
+            while (true) {
+                $f_name = UserNames::where(['type_name' => 0])->orderByRaw('RAND()')->first();
+                if (!isset($f_name)) {
+                    sleep(random_int(5, 10));
+                    continue;
+                }
+                break;
+            }
+
+            while (true) {
+                $s_name = UserNames::where(['type_name' => 1])->orderByRaw('RAND()')->first();
+                if (!isset($s_name)) {
+                    sleep(random_int(5, 10));
+                    continue;
+                }
+                break;
+            }
+            $gender = 2;
+            if ($f_name->gender == 1) {
+
+                $str_s_name = $s_name->name .= 'а';
+                $gender = 1;
+            } else {
+                $str_s_name = $s_name->name;
+            }
+
+            \Illuminate\Support\Facades\Storage::put("pass.txt", "vk:" . json_encode($login . ":" . $pass, JSON_UNESCAPED_UNICODE));
+            // $this->login($sender->login, $sender->password);
+
+            $request = $this->client->request("GET", "https://vk.com/", [
+                'proxy' => '127.0.0.1:8888',
+                    //'cookies' => true,
+                    ]
+            );
+            sleep(2);
+ $data = $request->getBody()->getContents();
+       preg_match("/ip_h: ('(.*?)(?:'|$)|([^']+))\,/i", $data, $ip_h);
+            $ip_h = $ip_h[2];
+           
+
+            // $crawler->clear();
+            // $crawler->load($data);
+            //$gg = $crawler->find('body', 0);
+            // $gg = $crawler->find('div[class=nameslist]');
+//$newCookies = $request->getHeader('Set-Cookie');
+            //\Illuminate\Support\Facades\Storage::put("fbcookie.txt", $data);
+            //preg_match('/_js_datr\"\,("(.*?)(?:"|$)|([^"]+))\,/i', $data, $datr);
+            //dd($datr);          
+            // $datr = $datr[2];
+            // preg_match('/_js_dats\"\,("(.*?)(?:"|$)|([^"]+))\,/i', $data, $dats);
+            //dd($datr);          
+            //$dats = $dats[2];
+
+            $request = $this->client->post("https://vk.com/join.php?act=start", [
+                'form_params' => [
+
+                    'al' => '1',
+                    'bday' => $birth_date[1],
+                    'bmonth' => $birth_date[0],
+                    'byear' => $birth_date[2],
+                    'fname' => $f_name->name,
+                    'frm' => '1',
+                    'lname' => $str_s_name,
+                    //'sex' => $gender,
+                ],
+                'proxy' => '127.0.0.1:8888',
+                    ]
+            );
+            $data = $request->getBody()->getContents();
+
+$request = $this->client->get("https://vk.com/js/al/join.js", [
+               
+                'proxy' => '127.0.0.1:8888',
+                    ]
+            );
+            //$cookieJar = CookieJar::fromArray([
+            //         'datr' => $reg_instance,
+            //          ], 'https://www.facebook.com');
+            $request = $this->client->get("https://vk.com/join.php?__query=join&_ref=&act=finish&al=-1&al_id=0&_rndVer=".random_int(3000,9999), [
+               
+                'proxy' => '127.0.0.1:8888',
+                    ]
+            );
+            $data = $request->getBody()->getContents();
+            $data =  str_replace('\\','', $data);
+\Illuminate\Support\Facades\Storage::put("vk00.html", $data);
+//dd(strpos($data,"hash"));
+            preg_match('/nextend\(cur\, \{\"hash\"\:("(.*?)(?:"|$)|([^"]+))/i', $data, $hash);
+           // dd($hash);
+            $hash =$hash[2]; //substr($hash[2], 0, -1);
+    // $hash= hash('ripemd160', RAND());
+           // dd($hash);
+            $request = $this->client->post("https://vk.com/join.php", [
+            'form_params' => [
+            'act' => 'phone',
+            'al' => '1',
+            'hash' => $hash,
+            'phone' => $login,
+            ],
+            'proxy' => '127.0.0.1:8888',
+            // 'cookies' => $cookieJar,
+            ]
+            );
+            // dd( $cookieJar);
+            $data = $request->getBody()->getContents();
+            
+
+           
+              $request = $this->client->post("https://vk.com/join.php", [
+            'form_params' => [
+            'act' => 'resend',
+            'al' => '1',
+            'hash' => $hash,
+            //'phone' => $login,
+            ],
+            'proxy' => '127.0.0.1:8888',
+            // 'cookies' => $cookieJar,
+            ]
+            );
+            // dd( $cookieJar);
+            $data = $request->getBody()->getContents();
+            $code;
+
+            while (true) {
+                echo "\nwait code";
+                $code = UserNames::where(['type_name' => 77])->first();
+                if (!isset($code)) {
+                    sleep(3);
+                    continue;
+                }
+            }
+$code=$code->name;
+            $request = $this->client->post("https://login.vk.com/?act=check_code&_origin=https://vk.com", [
+                'form_params' => [
+                  'email'=>$login,
+                  'code'=>$code,
+                  'recaptcha'=>''
+                ],
+                'proxy' => '127.0.0.1:8888',
+                    ]
+            );
+            $data = $request->getBody()->getContents();
+            //dd($data);
+            \Illuminate\Support\Facades\Storage::put("vk2.html", $data);
+            // $request = $this->client->request("GET", "https://www.facebook.com/confirmemail.php?next=https%3A%2F%2Fwww.facebook.com%2F&rd&__req=".$req, [
+            //   'proxy' => '127.0.0.1:8888',
+            //       ]
+            // );
+            // sleep(2);
+            // $data = $request->getBody()->getContents();
+            dd($rev);
+            $request = $this->client->request("GET", "https://www.facebook.com", [
+                'proxy' => '127.0.0.1:8888',
+                    //'proxy' => $proxy_string,
+                    //'cookie'=> $cookie
+            ]);
+            sleep(2);
+            $data = $request->getBody()->getContents();
+            $cookie = $this->client->getConfig('cookies');
+
+
+            $gg = $cookie->toArray();
+            $user_id = "";
+            foreach ($gg as $value) {
+                if ($value["Name"] == "c_user") {
+                    $user_id = $value["Value"];
+                    break;
+                }
+            }
+
+            if (empty($user_id) == true) {
+                // dd($cookie);
+                echo "\nddd";
+                return false;
+            }
+
+
+            $json = json_encode($cookie->toArray());
+
+            // $account = AccountsData::where(['login' => $fb_login, 'type_id' => 6])->first();
+
+
+            $account = new AccountsData();
+            $account->login = $login;
+            $account->password = $pass;
+            $account->type_id = 6;
+            $account->fb_cookie = $json;
+            $account->user_id = 0;
+            $account->fb_user_id = $id;
+            try {
+                $account->save();
+            } catch (\Exception $e) {
+                // dd($e->getMessage());
+            }
+            dd("stop");
+            return true;
+        } catch (\Exception $ex) {
+
+            dd($ex->getMessage());
+        }
+    }
 
 }

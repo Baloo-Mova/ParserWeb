@@ -15,6 +15,7 @@ use App\Models\SearchQueries;
 use App\Models\Parser\Proxy as ProxyItem;
 use App\Models\ProxyTemp;
 use App\Models\UserNames;
+use App\Helpers\PhoneNumber;
 
 class FB {
 
@@ -1384,20 +1385,22 @@ class FB {
             $proxy_string = $proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port'];
             //dd($proxy);
 
-            $this->client = new Client([
-                 'headers' => [
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
-                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Encoding' => 'gzip, deflate,sdch',
-                'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
-            ],
-            'verify' => false,
-            'cookies' => true,
-            'allow_redirects' => true,
-            'timeout' => 10,
-                //'proxy' => $proxy_string,
-            ]);
+            $cookies = new CookieJar();
 
+
+            $this->client = new Client([
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Encoding' => 'gzip, deflate, sdch,',
+                    'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+                ],
+                'verify' => false,
+                'cookies' => $cookies,
+                'allow_redirects' => true,
+                'timeout' => 20,
+                     'proxy'=> $proxy_string,
+            ]);
             $str_s_name;
             $f_name;
 
@@ -1405,8 +1408,14 @@ class FB {
 
             $birth_date = date('m-d-Y', $rand_time);
             $birth_date = explode('-', $birth_date);
+            $Phone = new PhoneNumber();
+            print_r($Phone->getBalance());
+
             //dd($birth_date);
-            $login = '+16149082036';
+            $phone = $Phone->getNumber(PhoneNumber::FaceBook);
+            $login = $phone['number']; //'+16143479906';
+            print_r($login);
+
             $pass = str_random(random_int(8, 12));
             echo("\n" . $pass);
             while (true) {
@@ -1435,10 +1444,10 @@ class FB {
 
             \Illuminate\Support\Facades\Storage::put("pass.txt", json_encode($login . " " . $pass, JSON_UNESCAPED_UNICODE));
             // $this->login($sender->login, $sender->password);
-            
-            $request = $this->client->request("GET", "https://www.facebook.com/reg/", [
-                'proxy' => '127.0.0.1:8888',
-                //'cookies' => true,
+
+            $request = $this->client->request("GET", "https://www.facebook.com/", [
+              //  'proxy' => '127.0.0.1:8888',
+                    //'cookies' => true,
                     ]
             );
             sleep(2);
@@ -1448,28 +1457,57 @@ class FB {
             // $crawler->load($data);
             //$gg = $crawler->find('body', 0);
             // $gg = $crawler->find('div[class=nameslist]');
-$newCookies = $request->getHeader('Set-Cookie');
- \Illuminate\Support\Facades\Storage::put("fbcookie.txt", $data);
- 
- 
+//$newCookies = $request->getHeader('Set-Cookie');
+            //\Illuminate\Support\Facades\Storage::put("fbcookie.txt", $data);
 
-  preg_match('/_js_datr\"\,("(.*?)(?:"|$)|([^"]+))\,/i', $data, $datr);
+
+
+            preg_match('/_js_datr\"\,("(.*?)(?:"|$)|([^"]+))\,/i', $data, $datr);
+            //dd($datr);          
             $datr = $datr[2];
-            $array = new CookieJar();
-  $set = new SetCookie();
-                $set->setDomain('.facebook.com');
-                //$set->setExpires($cookie->Expires);
-                $set->setName('datr');
-                $set->setValue($datr);
-                $set->setPath('/');
-                $array->setCookie($set);
-                $this->login("ggg", "ffff");
-             $request = $this->client->request("GET", "https://www.facebook.com/", [
-                'proxy' => '127.0.0.1:8888',
-               // 'cookies'=>$array   
-                 ]
+
+
+
+            preg_match('/_js_dats\"\,("(.*?)(?:"|$)|([^"]+))\,/i', $data, $dats);
+            //dd($datr);          
+            $dats = $dats[2];
+            // dd($dats);
+            preg_match('/_js_reg_fb_ref\"\,("(.*?)(?:"|$)|([^"]+))\,/i', $data, $js_reg_fb_ref);
+
+            $js_reg_fb_ref = urlencode($js_reg_fb_ref[2]);
+// dd($js_reg_fb_ref); 
+            $js_reg_fb_gate = $js_reg_fb_ref;
+            //$data =  $this->client->get('https://www.facebook.com/',['proxy'=>'127.0.0.1:8888']);
+            // $body  = $data->getBody()->getContents();
+            // $datr = substr($body,strpos($body,"_js_datr")+14, 100);
+            //dd($datr);
+            //$datr = substr($datr, 0, strpos($datr, "\""));
+
+
+            $cookies->setCookie(new SetCookie(['Name' => '_js_datr', 'Value' => $datr, 'Domain' => '.facebook.com']));
+            $cookies->setCookie(new SetCookie(['Name' => '_js_dats', 'Value' => $dats, 'Domain' => '.facebook.com']));
+            $cookies->setCookie(new SetCookie(['Name' => '_js_reg_fb_ref', 'Value' => $js_reg_fb_ref, 'Domain' => '.facebook.com']));
+            $cookies->setCookie(new SetCookie(['Name' => '_js_reg_fb_gate', 'Value' => $js_reg_fb_gate, 'Domain' => '.facebook.com']));
+            $this->client->get("https://www.facebook.com/osd.xml", [
+              //  'proxy' => '127.0.0.1:8888'
+                    ]
             );
-            
+            $this->client->get('https://www.facebook.com/', [
+                //'proxy' => '127.0.0.1:8888'
+                    ]
+            );
+            $this->client->get('https://www.facebook.com/reg', [
+                //'proxy' => '127.0.0.1:8888'
+                    ]
+            );
+
+
+            $request = $this->client->request("GET", "https://www.facebook.com/", [
+                //'proxy' => '127.0.0.1:8888',
+                    //'cookies'=>$array
+                    ]
+            );
+            // dd($datr); 
             preg_match('/name\=\"lsd\" value\=("(.*?)(?:"|$)|([^"]+))/i', $data, $lsd);
             $lsd = $lsd[2];
             preg_match('/name\=\"reg_instance\" value\=("(.*?)(?:"|$)|([^"]+))/i', $data, $reg_instance);
@@ -1502,14 +1540,14 @@ $newCookies = $request->getHeader('Set-Cookie');
                     '__rev' => $rev,
                     'lsd' => $lsd,
                 ],
-                'proxy' => '127.0.0.1:8888',
+               // 'proxy' => '127.0.0.1:8888',
                     ]
             );
             $data = $request->getBody()->getContents();
 
             //$cookieJar = CookieJar::fromArray([
-               //         'datr' => $reg_instance,
-                  //          ], 'https://www.facebook.com');
+            //         'datr' => $reg_instance,
+            //          ], 'https://www.facebook.com');
 
             $request = $this->client->post("https://www.facebook.com/ajax/register.php?dpr=1", [
                 'form_params' => [
@@ -1544,20 +1582,20 @@ $newCookies = $request->getHeader('Set-Cookie');
                     '__pc' => 'PHASED:DEFAULT',
                     '__rev' => $rev
                 ],
-                'proxy' => '127.0.0.1:8888',
-               // 'cookies' => $cookieJar,
+               // 'proxy' => '127.0.0.1:8888',
+                    // 'cookies' => $cookieJar,
                     ]
             );
-           // dd( $cookieJar);
+            // dd( $cookieJar);
             $data = $request->getBody()->getContents();
             //dd($data);
-            dd($rev);
-            $request = $this->client->request("GET", "https://www.facebook.com/?__req=" . $req, [
-                'proxy' => '127.0.0.1:8888',
-                    ]
-            );
+
+           // $request = $this->client->request("GET", "https://www.facebook.com/?__req=" . $req, [
+                //'proxy' => '127.0.0.1:8888',
+           //         ]
+            //);
             $request = $this->client->request("GET", "https://www.facebook.com/confirmemail.php?next=https%3A%2F%2Fwww.facebook.com%2F&rd&__req=" . $req, [
-                'proxy' => '127.0.0.1:8888',
+               // 'proxy' => '127.0.0.1:8888',
                     ]
             );
             // sleep(2);
@@ -1569,18 +1607,25 @@ $newCookies = $request->getHeader('Set-Cookie');
             preg_match('/\{\"USER\_ID\"\:\"(\w*)\"\,"ACC/i', $data, $id);
             $id = $id[1];
             echo "\n" . $id;
-            preg_match('/\"\_\_spin\_t\"\:(\w*)\,/i', $data, $spin_t);
+             preg_match('/\"\_\_spin\_t\"\:(\w*)\,/i', $data, $spin_t);
             $spin_t = $spin_t[1];
 
-            $code;
-            while (true) {
-                echo "\nwait code";
-                $code = UserNames::where([type => 77])->first();
-                if (!isset($code)) {
-                    sleep(3);
-                    continue;
-                }
+            
+            
+            $code= $Phone->getCode();
+            if(!$code){
+                
+             dd("nonumber");   
             }
+
+//            while (true) {
+//                echo "\nwait code";
+//                $code = UserNames::where(['type_name' => 77])->first();
+//                if (!isset($code)) {
+//                    sleep(3);
+//                    continue;
+//                }
+//            }
 
             $request = $this->client->post("https://www.facebook.com/confirm_code/dialog/submit/?next=%2F&cp=" . urlencode($login) . "&from_cliff=1&conf_surface=hard_cliff&event_location=cliff&dpr=1", [
                 'form_params' => [
@@ -1600,7 +1645,7 @@ $newCookies = $request->getHeader('Set-Cookie');
                     '__spin_b' => 'trunk',
                     '__spin_t' => $spin_t,
                 ],
-                'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                     ]
             );
             $data = $request->getBody()->getContents();
@@ -1612,8 +1657,9 @@ $newCookies = $request->getHeader('Set-Cookie');
             // );
             // sleep(2);
             // $data = $request->getBody()->getContents();
+            dd($rev);
             $request = $this->client->request("GET", "https://www.facebook.com", [
-                'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
                     //'proxy' => $proxy_string,
                     //'cookie'=> $cookie
             ]);
