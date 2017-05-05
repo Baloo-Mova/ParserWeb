@@ -15,7 +15,7 @@ class PhoneNumber
 
     private $ApiKey = "41140c028e56deb1ba27199697ccbfa1"; // Может быть надо хранить в настройках, но мне влом
     private $client;
-    private $tzid = "";
+    public $tzid = "";
 
     const FaceBook = "facebook";
     const VK = "vk";
@@ -46,11 +46,7 @@ class PhoneNumber
         $this->tzid = $data->tzid;
 
         $phoneStatus = json_decode($this->get("http://onlinesim.ru/api/getState.php?apikey=$this->ApiKey&tzid=$this->tzid&form=1&message_to_code=1"));
-        if($phoneStatus[0]->response != 1){
-
-            return ['status'=>'ERROR','CODE'=> $phoneStatus[0]->response];
-        }
-
+        
         return ['status'=>'OK', 'number'=>$phoneStatus[0]->number];
     }
 
