@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Helpers\PhoneNumber;
 use App\Jobs\GetProxies;
 use App\Jobs\TestProxies;
+use Hamcrest\Core\Set;
 use PHPMailer;
 use Illuminate\Console\Command;
 use App\MyFacades\SkypeClassFacade;
@@ -16,10 +18,9 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use App\Models\GoodProxies;
 
-
 class Tester extends Command
 {
-    public $client  = null;
+    public $client = null;
     /**
      * The name and signature of the console command.
      *
@@ -49,62 +50,112 @@ class Tester extends Command
      *
      * @return mixed
      */
+
     public function handle()
     {
+        $this->client = new Client([
+            'headers'         => [
+                'User-Agent'       => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                'Accept'           => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Encoding'  => 'gzip, deflate, sdch,',
+                'Accept-Language'  => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+                'X-Requested-With' => 'XMLHttpRequest',
+                //'Content-Type'=> 'application/x-www-form-urlencoded',
+            ],
+            'verify'          => false,
+            'cookies'         => true,
+            'allow_redirects' => true,
+            'timeout'         => 20,
+        ]);
 
-        $proxy = GoodProxies::getProxy(GoodProxies::GOOGLE);
+        $crawler = new SimpleHtmlDom();
+        $crawler->clear();
+        $request = $this->client->get('https://vk.com/');
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_PROXY, $proxy['proxy']);
-        curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
-        curl_setopt($ch, CURLOPT_CONNECT_ONLY,true);
-        curl_exec($ch);
-        echo curl_error($ch);
+        $crawler->load($request->getBody()->getContents());
 
-        
-        /*$mail = new PHPMailer;
-        //$mail->SMTPDebug = 3;
-        $mail->isSMTP();
-        $mail->Host       = $arguments['from']->smtp_address;
-        $mail->SMTPAuth   = true;
-        $mail->Username   = $arguments['from']->login;
-        $mail->Password   = $arguments['from']->password;
-        $mail->SMTPSecure = 'ssl';
-        $mail->Port       = $arguments['from']->smtp_port;
-        $mail->CharSet    = 'UTF-8';
-        $mail->setFrom($arguments['from']->login);
+        $lg_h = $crawler->find('input[name="lg_h"]', 0)->value;
+        $ip_h = $crawler->find('input[name="ip_h"]', 0)->value;
 
-        foreach ($arguments['to'] as $email) {
-            if ( ! empty(trim($email))) {
-                $mail->addAddress($email);
-            }
-        }
+        $request = $this->client->post("https://vk.com/join.php?act=start", [
+            'form_params' => [
+                'al'     => '1',
+                'bday'   => 3,
+                'bmonth' => 2,
+                'byear'  => 1994,
+                'fname'  => "Валерий",
+                'frm'    => '1',
+                'lname'  => "Ефимов младший",
+                //'sex' => $gender,
+            ],
+            'proxy'       => '127.0.0.1:8888',
+        ]);
 
-        if (isset($arguments['attaches'])) {
-            foreach ($arguments['attaches'] as $attach) {
-                $mail->addAttachment(storage_path("app/" . $attach->path));
-            }
-        }
+        $request = $this->client->get("https://vk.com/join.php?__query=join&_ref=&act=finish&al=-1&al_id=0&_rndVer=" . random_int(3000,
+                9999), [
+            'proxy' => '127.0.0.1:8888',
+        ]);
+        $data    = $request->getBody()->getContents();
+        $hash    = substr($data, strpos($data, "hash") + 9, 100);
+        $hash    = substr($hash, 0, strpos($hash, "\\"));
 
-        $mail->Subject = $arguments['subject'];
-        $mail->Body    = $arguments['text'];
+        $num  = new PhoneNumber();
+        $data = $num->getNumber(PhoneNumber::VK);
 
-        if ( ! $mail->send()) {
-            $log          = new ErrorLog();
-            $log->message = 'Mailer Error: ' . $mail->ErrorInfo;
-            $log->task_id = 0;
-            $log->save();
+        $number = $data['number'];
 
-            if (strpos($mail->ErrorInfo, "SPAM") > 0) {
-                $arguments["from"]->valid = 0;
-                $arguments['from']->save();
+        $request = $this->client->post("https://vk.com/join.php", [
+            'form_params' => [
+                'act'   => 'phone',
+                'al'    => '1',
+                'hash'  => $hash,
+                'phone' => $number,
+            ],
+            'headers'     => [
+                'Referer' => 'https://vk.com/join?act=finish'
+            ],
+            'proxy'       => '127.0.0.1:8888',
+        ]);
 
-                //echo "SEND SPAM";
-            }
-        }*/
+        $code = $num->getCode();
+
+        $request = $this->client->post("https://login.vk.com/?act=check_code&_origin=https://vk.com", [
+            'form_params' => [
+                'email'     => $number,
+                'code'      => $code,
+                'recaptcha' => ''
+            ],
+            'proxy'       => '127.0.0.1:8888',
+        ]);
+
+        $num->reportOK();
+
+        $data = $request->getBody()->getContents();
+        $hash = substr($data, strpos($data, 'askPassword') + 13, 100);
+        $hash = substr($hash, 0, strpos($hash, "'"));
+
+        $password = "Nelly418390";
+
+        $this->client->post("https://login.vk.com/?act=login", [
+            'form_params' => [
+                'act'             => 'login',
+                'role'            => 'al_frame',
+                'expire'          => '',
+                'captcha_sid'     => '',
+                'captcha_key'     => '',
+                '_origin'         => 'https://vk.com',
+                'ip_h'            => $ip_h,
+                'lg_h'            => $lg_h,
+                'email'           => $number,
+                'pass'            => "Nelly418390",
+                'join_code'       => $code,
+                'join_hash'       => $hash,
+                'join_to_already' => 0
+            ],
+            'proxy'       => '127.0.0.1:8888',
+
+        ]);
 
     }
-
-
 
 }
