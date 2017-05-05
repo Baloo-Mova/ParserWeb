@@ -28,6 +28,8 @@ use App\Console\Commands\Senders\SkypeSender;
 use App\Console\Commands\Senders\OkSender;
 use App\Console\Commands\Cleaner\NotValidMailsCleaner;
 
+use App\Console\Commands\Reg\RegFB;
+
 use App\Console\Commands\Parsers\ParseGoogleUa;
 //use App\Console\Commands\Parsers\ParseYandexUa;
 use App\Console\Commands\Parsers\ParseYandexRu;
@@ -72,6 +74,7 @@ class Kernel extends ConsoleKernel
         ParseYandexRu::class,
         //ParseYandexUa::class,
         AndroidBotManager::class,
+        RegFB::class,
     ];
 
     /**
