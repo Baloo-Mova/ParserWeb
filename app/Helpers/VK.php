@@ -891,7 +891,7 @@ class VK {
 
 
             while (true) {
-                $proxy = ProxyItem::where('fb', '<>', 0)->first();
+                $proxy = ProxyItem::where('vk', '<>', 0)->first();
                 //echo($sender->login . "\n");
                 if (!isset($proxy)) {
                     sleep(10);
@@ -913,33 +913,25 @@ class VK {
                     'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                     'Accept-Encoding' => 'gzip, deflate, sdch,',
                     'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
-                    'X-Requested-With'=> 'XMLHttpRequest',
-                    //'Content-Type'=> 'application/x-www-form-urlencoded',
+                    'X-Requested-With' => 'XMLHttpRequest',
+                //'Content-Type'=> 'application/x-www-form-urlencoded',
                 ],
                 'verify' => false,
                 'cookies' => true,
                 'allow_redirects' => true,
                 'timeout' => 20,
-                    // 'proxy'=> $proxy_string,
+                'proxy'=>$proxy_string,
             ]);
-            $str_s_name;
-            $f_name;
+
 
             $rand_time = mt_rand($min, $max);
 
             $birth_date = date('m-d-Y', $rand_time);
             $birth_date = explode('-', $birth_date);
-            $Phone = new PhoneNumber();
-            print_r($Phone->getBalance());
-            //$phone = $Phone->getNumber(PhoneNumber::FaceBook);
-            $login = '+380685578956';//$phone['number']; //'+16143479906';
-           // print_r($login);
 
-            //dd($birth_date);
-            //$login = "12"; //$Phone->getNumber($Phone::FaceBook); //'+16143479906';
-            // dd($login);
-            $pass = str_random(random_int(8, 12));
-            echo("\n" . $pass);
+
+            $password = str_random(random_int(8, 12));
+            echo("\n" . $password);
             while (true) {
                 $f_name = UserNames::where(['type_name' => 0])->orderByRaw('RAND()')->first();
                 if (!isset($f_name)) {
@@ -965,37 +957,18 @@ class VK {
             } else {
                 $str_s_name = $s_name->name;
             }
-
-            \Illuminate\Support\Facades\Storage::put("pass.txt", "vk:" . json_encode($login . ":" . $pass, JSON_UNESCAPED_UNICODE));
-            // $this->login($sender->login, $sender->password);
-
-            $request = $this->client->request("GET", "https://vk.com/", [
-                'proxy' => '127.0.0.1:8888',
-                    //'cookies' => true,
-                    ]
+            $crawler = new SimpleHtmlDom();
+            $crawler->clear();
+            $request = $this->client->get('https://vk.com/', ['proxy' => '127.0.0.1:8888',]
             );
-            sleep(2);
- $data = $request->getBody()->getContents();
-       preg_match("/ip_h: ('(.*?)(?:'|$)|([^']+))\,/i", $data, $ip_h);
-            $ip_h = $ip_h[2];
-           
 
-            // $crawler->clear();
-            // $crawler->load($data);
-            //$gg = $crawler->find('body', 0);
-            // $gg = $crawler->find('div[class=nameslist]');
-//$newCookies = $request->getHeader('Set-Cookie');
-            //\Illuminate\Support\Facades\Storage::put("fbcookie.txt", $data);
-            //preg_match('/_js_datr\"\,("(.*?)(?:"|$)|([^"]+))\,/i', $data, $datr);
-            //dd($datr);          
-            // $datr = $datr[2];
-            // preg_match('/_js_dats\"\,("(.*?)(?:"|$)|([^"]+))\,/i', $data, $dats);
-            //dd($datr);          
-            //$dats = $dats[2];
+            $crawler->load($request->getBody()->getContents());
+
+            $lg_h = $crawler->find('input[name="lg_h"]', 0)->value;
+            $ip_h = $crawler->find('input[name="ip_h"]', 0)->value;
 
             $request = $this->client->post("https://vk.com/join.php?act=start", [
                 'form_params' => [
-
                     'al' => '1',
                     'bday' => $birth_date[1],
                     'bmonth' => $birth_date[0],
@@ -1003,139 +976,96 @@ class VK {
                     'fname' => $f_name->name,
                     'frm' => '1',
                     'lname' => $str_s_name,
-                    //'sex' => $gender,
+                //'sex' => $gender,
                 ],
-                'proxy' => '127.0.0.1:8888',
-                    ]
-            );
-            $data = $request->getBody()->getContents();
+               // 'proxy' => '127.0.0.1:8888',
+            ]);
 
-$request = $this->client->get("https://vk.com/js/al/join.js", [
-               
-                'proxy' => '127.0.0.1:8888',
-                    ]
-            );
-            //$cookieJar = CookieJar::fromArray([
-            //         'datr' => $reg_instance,
-            //          ], 'https://www.facebook.com');
-            $request = $this->client->get("https://vk.com/join.php?__query=join&_ref=&act=finish&al=-1&al_id=0&_rndVer=".random_int(3000,9999), [
-               
-                'proxy' => '127.0.0.1:8888',
-                    ]
-            );
+            $request = $this->client->get("https://vk.com/join.php?__query=join&_ref=&act=finish&al=-1&al_id=0&_rndVer=" . random_int(3000, 9999), [
+               // 'proxy' => '127.0.0.1:8888',
+            ]);
             $data = $request->getBody()->getContents();
-            $data =  str_replace('\\','', $data);
-\Illuminate\Support\Facades\Storage::put("vk00.html", $data);
-//dd(strpos($data,"hash"));
-            preg_match('/nextend\(cur\, \{\"hash\"\:("(.*?)(?:"|$)|([^"]+))/i', $data, $hash);
-           // dd($hash);
-            $hash =$hash[2]; //substr($hash[2], 0, -1);
-    // $hash= hash('ripemd160', RAND());
-           // dd($hash);
+            $hash = substr($data, strpos($data, "hash") + 9, 100);
+            $hash = substr($hash, 0, strpos($hash, "\\"));
+//dd('gg');
+            $num = new PhoneNumber();
+            print_r($num->getBalance());
+            $data = $num->getNumber(PhoneNumber::VK);
+
+            $number = $data['number'];
+
             $request = $this->client->post("https://vk.com/join.php", [
-            'form_params' => [
-            'act' => 'phone',
-            'al' => '1',
-            'hash' => $hash,
-            'phone' => $login,
-            ],
-            'proxy' => '127.0.0.1:8888',
-            // 'cookies' => $cookieJar,
-            ]
-            );
-            // dd( $cookieJar);
-            $data = $request->getBody()->getContents();
-            
+                'form_params' => [
+                    'act' => 'phone',
+                    'al' => '1',
+                    'hash' => $hash,
+                    'phone' => $number,
+                ],
+                'headers' => [
+                    'Referer' => 'https://vk.com/join?act=finish'
+                ],
+              //  'proxy' => '127.0.0.1:8888',
+            ]);
 
-           
-              $request = $this->client->post("https://vk.com/join.php", [
-            'form_params' => [
-            'act' => 'resend',
-            'al' => '1',
-            'hash' => $hash,
-            //'phone' => $login,
-            ],
-            'proxy' => '127.0.0.1:8888',
-            // 'cookies' => $cookieJar,
-            ]
-            );
-            // dd( $cookieJar);
-            $data = $request->getBody()->getContents();
-            $code;
+            $code = $num->getCode();
 
-            while (true) {
-                echo "\nwait code";
-                $code = UserNames::where(['type_name' => 77])->first();
-                if (!isset($code)) {
-                    sleep(3);
-                    continue;
-                }
-            }
-$code=$code->name;
             $request = $this->client->post("https://login.vk.com/?act=check_code&_origin=https://vk.com", [
                 'form_params' => [
-                  'email'=>$login,
-                  'code'=>$code,
-                  'recaptcha'=>''
+                    'email' => $number,
+                    'code' => $code,
+                    'recaptcha' => ''
                 ],
-                'proxy' => '127.0.0.1:8888',
-                    ]
-            );
+               // 'proxy' => '127.0.0.1:8888',
+            ]);
+
+            $num->reportOK();
+
+            $data = $request->getBody()->getContents();
+            $hash = substr($data, strpos($data, 'askPassword') + 13, 100);
+            $hash = substr($hash, 0, strpos($hash, "'"));
+
+            // $password = "Nelly418390";
+
+            $request= $this->client->post("https://login.vk.com/?act=login", [
+                'form_params' => [
+                    'act' => 'login',
+                    'role' => 'al_frame',
+                    'expire' => '',
+                    'captcha_sid' => '',
+                    'captcha_key' => '',
+                    '_origin' => 'https://vk.com',
+                    'ip_h' => $ip_h,
+                    'lg_h' => $lg_h,
+                    'email' => $number,
+                    'pass' => $password,
+                    'join_code' => $code,
+                    'join_hash' => $hash,
+                    'join_to_already' => 0
+                ],
+                //'proxy' => '127.0.0.1:8888',
+            ]);
             $data = $request->getBody()->getContents();
             //dd($data);
-            \Illuminate\Support\Facades\Storage::put("vk2.html", $data);
-            // $request = $this->client->request("GET", "https://www.facebook.com/confirmemail.php?next=https%3A%2F%2Fwww.facebook.com%2F&rd&__req=".$req, [
-            //   'proxy' => '127.0.0.1:8888',
-            //       ]
-            // );
-            // sleep(2);
-            // $data = $request->getBody()->getContents();
-            dd($rev);
-            $request = $this->client->request("GET", "https://www.facebook.com", [
-                'proxy' => '127.0.0.1:8888',
-                    //'proxy' => $proxy_string,
-                    //'cookie'=> $cookie
-            ]);
-            sleep(2);
-            $data = $request->getBody()->getContents();
-            $cookie = $this->client->getConfig('cookies');
+            echo("\n".$number.":".$password);
+            if (strpos($data, "parent.onLoginDone") !== false) {
 
-
-            $gg = $cookie->toArray();
-            $user_id = "";
-            foreach ($gg as $value) {
-                if ($value["Name"] == "c_user") {
-                    $user_id = $value["Value"];
-                    break;
+                $account = new AccountsData();
+                $account->login = str_replace('+','',$number);
+                $account->password = $password;
+                $account->type_id = 1;
+                $account->vk_cookie = '';
+                $account->user_id = 0;
+                //$account->fb_user_id = $id;
+                $account->proxy_id = $proxy->id;
+                try {
+                    $account->save();
+                } catch (\Exception $e) {
+                    // dd($e->getMessage());
                 }
+                //dd("stop");
+                return true;
             }
-
-            if (empty($user_id) == true) {
-                // dd($cookie);
-                echo "\nddd";
-                return false;
-            }
-
-
-            $json = json_encode($cookie->toArray());
-
-            // $account = AccountsData::where(['login' => $fb_login, 'type_id' => 6])->first();
-
-
-            $account = new AccountsData();
-            $account->login = $login;
-            $account->password = $pass;
-            $account->type_id = 6;
-            $account->fb_cookie = $json;
-            $account->user_id = 0;
-            $account->fb_user_id = $id;
-            try {
-                $account->save();
-            } catch (\Exception $e) {
-                // dd($e->getMessage());
-            }
-            dd("stop");
-            return true;
+            else return false;
         } catch (\Exception $ex) {
 
             dd($ex->getMessage());
