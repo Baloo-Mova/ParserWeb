@@ -15,6 +15,7 @@ use Illuminate\Console\Command;
 //use App\Models\Parser\FBLinks;
 use App\Models\UserNames;
 use App\Helpers\PhoneNumber;
+use App\Models\AccountsData;
 
 class RegOK extends Command {
 
