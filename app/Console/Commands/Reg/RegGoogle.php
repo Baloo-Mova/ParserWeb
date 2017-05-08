@@ -164,7 +164,8 @@ class RegGoogle extends Command {
                 );
 
                 sleep(2);
-
+$counter = 17;                
+$email = 
                 $request = $this->client->request("POST", "https://accounts.google.com/InputValidator?resource=SignUp&service=mail", [
                         'json'=>[
                             'input01'=>[

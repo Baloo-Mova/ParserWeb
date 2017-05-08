@@ -13,7 +13,7 @@ class AddColToUsersName extends Migration
      */
     public function up() {
         Schema::table('user_names', function ($table) {
-            $table->integer('en_name')->after('name');
+            $table->string('en_name',300)->after('name');
 
 
 

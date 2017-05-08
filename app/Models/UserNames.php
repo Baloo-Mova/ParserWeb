@@ -14,6 +14,7 @@ class UserNames extends Model
         //'id',
         'name',
         'type_name',
+        'en_name',
         'gender',
     ];
 
