@@ -14,5 +14,11 @@ class DatabaseSeeder extends Seeder
         $this->call(AdminUser::class);
         $this->call(AccountsDataTypesSeeder::class);
         $this->call(TasksTypesSeeder::class);
+        $this->call(UserNamesTableSeeder::class);
+        $this->call(FUserNamesSeeder::class);
+        $this->call(SUserNamesSeeder::class);
+        $this->call(ThUserNamesSeeder::class);
+        $this->call(FoUserNamesSeeder::class);
+
     }
 }

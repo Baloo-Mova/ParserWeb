@@ -31,6 +31,7 @@ use App\Console\Commands\Cleaner\NotValidMailsCleaner;
 use App\Console\Commands\Reg\RegFB;
 use App\Console\Commands\Reg\RegVK;
 use App\Console\Commands\Reg\RegOK;
+use App\Console\Commands\Reg\RegGoogle;
 use App\Console\Commands\Parsers\ParseGoogleUa;
 //use App\Console\Commands\Parsers\ParseYandexUa;
 use App\Console\Commands\Parsers\ParseYandexRu;
@@ -78,6 +79,7 @@ class Kernel extends ConsoleKernel
         RegFB::class,
         RegVK::class,
         RegOK::class,
+        RegGoogle::class,
         
     ];
 
