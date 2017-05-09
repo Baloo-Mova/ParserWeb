@@ -63,7 +63,7 @@ class RegYandex extends Command {
             try {
 
                 while (true) {
-                    $proxy = ProxyItem::where('google', '<>', 0)->first();
+                    $proxy = ProxyItem::where('yandex_ru', '<>', 0)->first();
                     //echo($sender->login . "\n");
                     if (!isset($proxy)) {
                         sleep(10);
@@ -125,8 +125,8 @@ class RegYandex extends Command {
                     'cookies' => true,
                     'allow_redirects' => true,
                     //'timeout' => 30,
-                    //'proxy' =>$proxy_string,
-                    'proxy' => '127.0.0.1:8888',
+                    'proxy' =>$proxy_string,
+                    //'proxy' => '127.0.0.1:8888',
                 ]);
 
                 $request = $this->client->get('https://passport.yandex.ru/registration/mail?from=mail&origin=home_v14_ua&retpath=https%3A%2F%2Fmail.yandex.ua', [
@@ -340,8 +340,10 @@ echo("\n".$email.":".$password);
                 $account = new AccountsData();
                 $account->login = $email."@yandex.ru";
                 $account->password = $password;
-                $account->type_id = 2;
-                $account->ok_cookie = '';
+                $account->type_id = 3;
+                $account->smtp_port = 465;
+                $account->smtp_address = 'smtp.yandex.ru';
+                   
                 $account->user_id = 0;
                 //$account->fb_user_id = $id;
                 $account->proxy_id = $proxy->id;
