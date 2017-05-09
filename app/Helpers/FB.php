@@ -1437,7 +1437,7 @@ class FB {
             }
             if ($f_name->gender == 1) {
 
-                $str_s_name = $s_name->name .= 'а';
+                $str_s_name = $s_name->name . 'а';
             } else {
                 $str_s_name = $s_name->name;
             }

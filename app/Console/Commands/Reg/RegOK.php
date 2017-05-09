@@ -103,7 +103,7 @@ class RegOK extends Command {
                 $gender = 1;
                 if ($f_name->gender == 1) {
 
-                    $str_s_name = $s_name->name .= 'а';
+                    $str_s_name = $s_name->name . 'а';
                     $gender = 2;
                 } else {
                     $str_s_name = $s_name->name;

@@ -952,7 +952,7 @@ class VK {
             $gender = 2;
             if ($f_name->gender == 1) {
 
-                $str_s_name = $s_name->name .= 'а';
+                $str_s_name = $s_name->name . 'а';
                 $gender = 1;
             } else {
                 $str_s_name = $s_name->name;
