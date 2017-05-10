@@ -146,7 +146,7 @@ class RegYandex extends Command {
 
               
 
-                https://passport.yandex.ru/registration-validations/checkjsload
+                //https://passport.yandex.ru/registration-validations/checkjsload
                 $request = $this->client->request("POST", "https://passport.yandex.ru/registration-validations/checkjsload", [
                     'headers' => [
                         'Referer' => 'https://passport.yandex.ru/registration/mail?from=mail&origin=home',
@@ -361,11 +361,7 @@ echo("\n".$email.":".$password);
                 //$log->task_id = $task_id;
                 $log->save();
                 //$this->cur_proxy->reportBad();
-                $from->proxy_id = 0;
-                $from->ok_user_gwt = null;
-                $from->ok_user_tkn = null;
-                $from->ok_cookie = null;
-                $from->save();
+
                 sleep(random_int(1, 5));
             }
        // }
