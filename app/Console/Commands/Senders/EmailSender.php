@@ -137,7 +137,7 @@ class EmailSender extends Command {
                     $emails->email_reserved = 0;
                     $emails->save();
                 }
-
+                $emails->email_sended=1;
                 $emails->save();
                 sleep(30);
             } catch (\Exception $ex) {
@@ -146,16 +146,17 @@ class EmailSender extends Command {
                 $log->task_id = 1;
 
                 $log->save();
-                dd($ex->getMessage());
+               // dd($ex->getMessage());
                 if (strpos($ex->getMessage(), "Operation timed out") !==false ) {
                     $proxy = ProxyTemp::where(['mail' => 1])->orWhere(['mail' => 2])->first();
-                    dd($ex->getMessage());
+                   // dd($ex->getMessage());
                     try {
 
                         $proxy->delete();
                     } catch (\Exception $ex) {
                         
                     }
+                    continue;
                 }
             }
         }

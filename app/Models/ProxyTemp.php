@@ -18,11 +18,11 @@ class ProxyTemp extends Model {
         'country',
     ];
 
-    public function reportBad() {
+    public function reportBad(){
         try {
             self::delete();
-        } catch (\Exception $ex) {
-            
+        }catch (\Exception $ex){
+
         }
     }
 

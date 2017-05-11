@@ -53,7 +53,7 @@ class OkSender extends Command {
      */
     public function handle() {
         sleep(random_int(1, 3));
-        $from;
+        //$from;
         $this->crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
 
         while (true) {
@@ -75,7 +75,7 @@ class OkSender extends Command {
 
                 $task_id = $ok_query->task_id;
 
-                $ok_query->ok_reserved = 1;
+                //$ok_query->ok_reserved = 1;
                 $ok_query->save();
 
                 $message = TemplateDeliveryOK::where('task_id', '=', $ok_query->task_id)->first();
@@ -88,27 +88,29 @@ class OkSender extends Command {
 
 
                 while (true) {
-                    $from = AccountsData::where(['type_id' => '2'])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
+                    $from = AccountsData::where(['type_id' => '2','is_sender'=>1])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
 
                     if (!isset($from)) {
                         sleep(10);
                         continue;
                     }
-                    if ($from->proxy_id == "") {
 
-                        $this->cur_proxy = ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
+                    if ($from->proxy_id == 0) {
+
+                        $this->cur_proxy = ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->first();
+                       // dd($this->cur_proxy);
                         if (!isset($this->cur_proxy)) {
                            sleep(random_int(5, 10));
                             continue;
                         }
-                       
+
                         $from->proxy_id = $this->cur_proxy->id;
                         $from->ok_user_gwt = null;
                         $from->ok_user_tkn = null;
                         $from->ok_cookie = null;
                         $from->save();
                     } else {
-                        $this->cur_proxy = ProxyItem::where(['id' => $from->proxy_id, 'valid' => 1])->where('ok', '<>', '0')->first();
+                        $this->cur_proxy = ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->first();
                         if (!isset($this->cur_proxy)) {
                             sleep(random_int(5, 10));
                             $from->proxy_id = 0;
@@ -209,9 +211,10 @@ class OkSender extends Command {
                 }
                 $ok_query->ok_sended = 1;
                 $ok_query->save();
-
+//dd("stop");
                 sleep(rand(1, 5));
             } catch (\Exception $ex) {
+               // dd($ex->getMessage());
                 $log = new ErrorLog();
                 $log->message = $ex->getTraceAsString();
                 $log->task_id = $task_id;

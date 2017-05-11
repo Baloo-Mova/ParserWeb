@@ -248,6 +248,7 @@ class FB {
                     'allow_redirects' => true,
                     'timeout' => 15,
                     'proxy' => $proxy->proxy,
+                    //'proxy' => '127.0.0.1:8888',
                 ]);
 
 

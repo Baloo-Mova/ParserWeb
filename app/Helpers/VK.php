@@ -37,7 +37,7 @@ class VK {
             'cookies' => true,
             'allow_redirects' => true,
             'timeout' => 10,
-                //'proxy' => '127.0.0.1:8888',
+            //'proxy' => '127.0.0.1:8888',
         ]);
     }
 
@@ -69,7 +69,7 @@ class VK {
         $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
 
         $request = $this->client->request("GET", "https://vk.com", [
-                // 'proxy' => '127.0.0.1:8888',
+            // 'proxy' => '127.0.0.1:8888',
         ]);
         $data = $request->getBody()->getContents();
         $crawler->clear();
@@ -84,19 +84,19 @@ class VK {
         // print_r($vk_login . "\n");
         //dd(urlencode($login));
         $request = $this->client->request("POST", "https://login.vk.com/?act=login", [
-            'form_params' => [
-                'act' => 'login',
-                'role' => 'al_frame',
-                'captcha_sid' => '',
-                'captcha_key' => '',
-                'email' => $vk_login,
-                'pass' => $pass,
-                '_origin' => urlencode('http://vk.com'),
-                'lg_h' => $lg_h,
-                'ip_h' => $ip_h,
-            ],
-                ]
-                //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
+                'form_params' => [
+                    'act' => 'login',
+                    'role' => 'al_frame',
+                    'captcha_sid' => '',
+                    'captcha_key' => '',
+                    'email' => $vk_login,
+                    'pass' => $pass,
+                    '_origin' => urlencode('http://vk.com'),
+                    'lg_h' => $lg_h,
+                    'ip_h' => $ip_h,
+                ],
+            ]
+        //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
         );
         sleep(2);
         $data = $request->getBody()->getContents();
@@ -110,8 +110,8 @@ class VK {
         }
         //check phone number
         $request = $this->client->request("GET", "https://vk.com", [
-                // 'proxy' => '127.0.0.1:8888',
-                //'cookie'=> $cookie
+            // 'proxy' => '127.0.0.1:8888',
+            //'cookie'=> $cookie
         ]);
 
 
@@ -129,16 +129,16 @@ class VK {
             echo("\n" . $hash);
             $request = $this->client->post("https://vk.com/login.php?act=security_check", [
 
-                'form_params' => [
-                    'al' => 1,
-                    'al_page' => 3,
-                    'code' => substr($vk_login, 1, strlen($vk_login) - 3),
-                    'hash' => $hash,
-                    'to' => '',
-                ],
+                    'form_params' => [
+                        'al' => 1,
+                        'al_page' => 3,
+                        'code' => substr($vk_login, 1, strlen($vk_login) - 3),
+                        'hash' => $hash,
+                        'to' => '',
+                    ],
                     // 'proxy' => '127.0.0.1:8888',
-                    ]
-                    //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
+                ]
+            //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
             );
 
             $data = $request->getBody()->getContents();
@@ -150,8 +150,8 @@ class VK {
 
 
         $request = $this->client->request("GET", "https://vk.com", [
-                // 'proxy' => '127.0.0.1:8888',
-                //'cookie'=> $cookie
+            // 'proxy' => '127.0.0.1:8888',
+            //'cookie'=> $cookie
         ]);
         sleep(2);
         $data = $request->getBody()->getContents();
@@ -167,13 +167,13 @@ class VK {
         //$data = $crawler->find('#login_blocked_wrap', 0);
 
         $request = $this->client->post("https://vk.com/al_im.php", [
-            'form_params' => [
-                'act' => 'a_get_comms_key',
-                'al' => 1,
-            ],
+                'form_params' => [
+                    'act' => 'a_get_comms_key',
+                    'al' => 1,
+                ],
                 //'proxy' => '127.0.0.1:8888',
-                ]
-                //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
+            ]
+        //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
         );
 
 
@@ -244,7 +244,7 @@ class VK {
                 }
 
                 // $this->proxy_arr = parse_url($this->cur_proxy->proxy);
-//        
+//
                 //$cookiejar = new CookieJar($cookie);
 //$this->cur_proxy->proxy='127.0.0.1:8888';
                 $this->client = new Client([
@@ -259,6 +259,7 @@ class VK {
                     'allow_redirects' => true,
                     'timeout' => 10,
                     'proxy' => $this->cur_proxy->proxy,
+                    // 'proxy' => '127.0.0.1:8888',
                 ]);
 
                 if ($array->count() < 1) {
@@ -277,12 +278,15 @@ class VK {
 
                 $request = $this->client->request("GET", "https://vk.com/id" . $to_userId, [
                         // 'proxy' => '127.0.0.1:8888',
-                        ]
+                    ]
                 );
                 sleep(2);
                 $data = $request->getBody()->getContents();
 
-                if (strpos($data, "quick_login_button")) {
+                if (strpos($data, "quick_login_button")!==false) {\
+                $sender->vk_cookie = null;
+                $sender->save();
+
                     continue;
                 };
 
@@ -303,19 +307,19 @@ class VK {
                 $chas = $chas[1];
                 //dd($chas);
                 $request = $this->client->post("https://vk.com/al_mail.php", [
-                    'form_params' => [
-                        'act' => 'a_send',
-                        'al' => 1,
-                        'chas' => $chas[0],
-                        'from' => 'box',
-                        'media' => '',
-                        'message' => $messages,
-                        'title' => '',
-                        'to_ids' => $to_userId,
-                    ],
+                        'form_params' => [
+                            'act' => 'a_send',
+                            'al' => 1,
+                            'chas' => $chas[0],
+                            'from' => 'box',
+                            'media' => '',
+                            'message' => $messages,
+                            'title' => '',
+                            'to_ids' => $to_userId,
+                        ],
                         // 'proxy' => '127.0.0.1:8888',
-                        ]
-                        //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
+                    ]
+                //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
                 );
                 $data = $request->getBody()->getContents();
                 //dd($data);
@@ -393,8 +397,8 @@ class VK {
                 if ($sender->proxy_id == 0) {
 
                     $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
-                                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where('proxy.vk', '<>', '0')
-                                    ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
+                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where('proxy.vk', '<>', '0')
+                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
 
                     if (!isset($this->cur_proxy)) {
                         sleep(random_int(5, 10));
@@ -431,7 +435,7 @@ class VK {
 
                 $this->proxy_arr = parse_url($this->cur_proxy->proxy);
 
-//        
+//
                 //$cookiejar = new CookieJar($cookie);
 
 
@@ -466,7 +470,7 @@ class VK {
                 // $this->login($sender->login, $sender->password);
                 $request = $this->client->request("GET", "https://vk.com/feed", [
                         // 'proxy' => '127.0.0.1:8888',
-                        ]
+                    ]
                 );
 
                 $data = $request->getBody()->getContents();
@@ -480,16 +484,16 @@ class VK {
                 //}
                 //$this->login($sender->login, $sender->password);
                 $request = $this->client->request("POST", "https://vk.com/groups?act=catalog", [
-                    //'proxy' => '127.0.0.1:8888',
-                    'form_params' => [
-                        'al' => 1,
-                        'c[q]' => $find,
-                        'c[section]' => 'commutities',
-                        'c[type]' => 1,
-                        'change' => 1,
-                        'search_loc' => "groups?act=catalog",
-                    ]
+                        //'proxy' => '127.0.0.1:8888',
+                        'form_params' => [
+                            'al' => 1,
+                            'c[q]' => $find,
+                            'c[section]' => 'commutities',
+                            'c[type]' => 1,
+                            'change' => 1,
+                            'search_loc' => "groups?act=catalog",
                         ]
+                    ]
                 );
                 // $data = $request->getBody()->getContents();
 
@@ -500,16 +504,16 @@ class VK {
                     // if($counter>=$summary) break;
                     if ($counter != 0) {
                         $request = $this->client->request("POST", "https://vk.com/al_search.php", [
-                            //  'proxy' => '127.0.0.1:8888',
-                            'form_params' => [
-                                'al' => 1,
-                                'al_ad' => 0,
-                                'c[q]' => $find,
-                                'c[section]' => 'communities',
-                                'c[type]' => 1,
-                                'offset' => $counter,
-                            ]
+                                //  'proxy' => '127.0.0.1:8888',
+                                'form_params' => [
+                                    'al' => 1,
+                                    'al_ad' => 0,
+                                    'c[q]' => $find,
+                                    'c[section]' => 'communities',
+                                    'c[type]' => 1,
+                                    'offset' => $counter,
                                 ]
+                            ]
                         );
                     }
                     $data = $request->getBody()->getContents();
@@ -583,8 +587,8 @@ class VK {
                 if ($sender->proxy_id == 0) {
 
                     $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
-                                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where('proxy.vk', '<>', '0')
-                                    ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
+                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where('proxy.vk', '<>', '0')
+                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
 
                     if (!isset($this->cur_proxy)) {
                         sleep(random_int(5, 10));
@@ -621,7 +625,7 @@ class VK {
 
                 $this->proxy_arr = parse_url($this->cur_proxy->proxy);
 
-//        
+//
                 //$cookiejar = new CookieJar($cookie);
 
 
@@ -655,7 +659,7 @@ class VK {
                 // $this->login($sender->login, $sender->password);
                 $request = $this->client->request("GET", "https://vk.com/feed", [
                         // 'proxy' => '127.0.0.1:8888',
-                        ]
+                    ]
                 );
 
                 $data = $request->getBody()->getContents();
@@ -671,7 +675,7 @@ class VK {
 
                 $request = $this->client->request("GET", $vklink->link, [
                         // 'proxy' => '127.0.0.1:8888',
-                        ]
+                    ]
                 );
                 sleep(random_int(1, 5));
                 $data = $request->getBody()->getContents();
@@ -914,7 +918,7 @@ class VK {
                     'Accept-Encoding' => 'gzip, deflate, sdch,',
                     'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
                     'X-Requested-With' => 'XMLHttpRequest',
-                //'Content-Type'=> 'application/x-www-form-urlencoded',
+                    //'Content-Type'=> 'application/x-www-form-urlencoded',
                 ],
                 'verify' => false,
                 'cookies' => true,
@@ -976,13 +980,13 @@ class VK {
                     'fname' => $f_name->name,
                     'frm' => '1',
                     'lname' => $str_s_name,
-                //'sex' => $gender,
+                    //'sex' => $gender,
                 ],
-               // 'proxy' => '127.0.0.1:8888',
+                // 'proxy' => '127.0.0.1:8888',
             ]);
 
             $request = $this->client->get("https://vk.com/join.php?__query=join&_ref=&act=finish&al=-1&al_id=0&_rndVer=" . random_int(3000, 9999), [
-               // 'proxy' => '127.0.0.1:8888',
+                // 'proxy' => '127.0.0.1:8888',
             ]);
             $data = $request->getBody()->getContents();
             $hash = substr($data, strpos($data, "hash") + 9, 100);
@@ -1004,7 +1008,7 @@ class VK {
                 'headers' => [
                     'Referer' => 'https://vk.com/join?act=finish'
                 ],
-              //  'proxy' => '127.0.0.1:8888',
+                //  'proxy' => '127.0.0.1:8888',
             ]);
 
             $code = $num->getCode();
@@ -1015,7 +1019,7 @@ class VK {
                     'code' => $code,
                     'recaptcha' => ''
                 ],
-               // 'proxy' => '127.0.0.1:8888',
+                // 'proxy' => '127.0.0.1:8888',
             ]);
 
             $num->reportOK();

@@ -66,8 +66,8 @@ class Proxy extends Command {
            //     'country' => ''
            // ];
 
-            $job = dispatch(new GetProxies($data));
-            sleep(30);
+            //$job = dispatch(new GetProxies($data));
+          //  sleep(30);
 
             $data = [
                 'limit' => 100,
