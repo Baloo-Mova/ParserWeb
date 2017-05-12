@@ -142,6 +142,12 @@
                     </li>
                 </ul>
             </li>
+            <li class="{{ Request::path() == 'emails-templates' ? 'active' : '' }}">
+                <a href="{{ route('email_templates.index') }}">
+                    <i class='fa fa-envelope'></i>
+                    <span>Email Шаблоны</span>
+                </a>
+            </li>
             <li class="{{ Request::path() == 'settings' ? 'active' : '' }}">
                 <a href="{{ route('settings.index') }}">
                     <i class='fa fa-wrench'></i>

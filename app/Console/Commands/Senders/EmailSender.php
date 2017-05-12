@@ -135,7 +135,9 @@ class EmailSender extends Command {
                     $notvalidmess->id_sender = $from->id;
                     $notvalidmess->save();
                     $emails->email_reserved = 0;
+                    $emails->email_sended = 0;
                     $emails->save();
+                    continue;
                 }
                 $emails->email_sended=1;
                 $emails->save();
@@ -160,6 +162,7 @@ class EmailSender extends Command {
                 }
             }
         }
+        return false;
     }
 
     public function sendMessage($arguments) {
@@ -272,6 +275,9 @@ class EmailSender extends Command {
                     }
 
                     continue;
+                }
+                if(strpos($response,"spam")!==false){
+
                 }
 
 

@@ -12,3 +12,6 @@ window.Laravel = <?php echo json_encode([
         'csrfToken' => csrf_token(),
 ]); ?>
 </script>
+<script type="text/javascript" src="{{ asset("vue/js/manifest.6e33f3aabb779380d5b5.js") }}"></script>
+<script type="text/javascript" src="{{ asset("vue/js/vendor.6376e9d6ed05ea5f28f6.js") }}"></script>
+<script type="text/javascript" src="{{ asset("vue/js/app.dcdcb89f99d817e638e0.js") }}"></script>

@@ -135,6 +135,17 @@ Route::group(['prefix' => 'android-bots', 'middleware' => 'auth'], function () {
     Route::get('/destroy-androids', ['uses'=>'AndroidBotsController@destroyAndroidBots', 'as'=>'android_bots.destroy']);
 });
 
+Route::group(['prefix' => 'email-templates', 'middleware' => 'auth'], function () {
+    Route::get('/', ['uses' => 'EmailTemplatesController@index', 'as' => 'email_templates.index']);
+    Route::get('/create', ['uses' => 'EmailTemplatesController@create', 'as' => 'email_templates.create']);
+    Route::post('/create', ['uses' => 'EmailTemplatesController@store', 'as' => 'email_templates.store']);
+    Route::post('/mass-upload', ['uses'=>'EmailTemplatesController@massupload', 'as'=>'email_templates.mass.upload']);
+    Route::get('/edit/{id}', ['uses' => 'EmailTemplatesController@edit', 'as' => 'email_templates.edit']);
+    Route::post('/edit/{id}', ['uses'=>'EmailTemplatesController@update', 'as'=>'email_templates.update']);
+    Route::get('/delete/{id}', ['uses'=>'EmailTemplatesController@delete', 'as'=>'email_templates.delete']);
+    Route::get('/destroy-androids', ['uses'=>'EmailTemplatesController@destroyAndroidBots', 'as'=>'email_templates.destroy']);
+});
+
 Route::group(['prefix' => 'proxy', 'middleware' => 'auth'], function () {
     Route::get('/get-proxies', ['uses' => 'ProxyController@getProxies', 'as' => 'proxy.getproxies']);
     Route::post('/get-proxies', ['uses' => 'ProxyController@saveProxies', 'as' => 'proxy.saveproxies']);
