@@ -10,8 +10,8 @@
     <script src="{{ asset('/js/jquery-2.2.4.min.js') }}" type="text/javascript"></script>
     <script src="{{ asset('/js/common.js') }}" type="text/javascript"></script>
     <?php
-    if(Request::path() == 'email-templates/create'){
-        echo ('<link href="'. asset('vue/css/app.affdecaa7379c3feb4393b1990823495.css') .'" rel="stylesheet" type="text/css" />'.
+    if(Request::path() == 'email-templates/create' || strpos(Request::path(),"email-templates/edit")!==false){
+        echo ('<link href="'. asset('vue/css/app.css') .'" rel="stylesheet" type="text/css" />'.
    '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">');
     }
 

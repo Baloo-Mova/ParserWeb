@@ -11,13 +11,18 @@
                 <div class="box box-primary">
                     <div class="box-body">
                         <form action="" method="post">
-                            {{csrf_field()}}
+                            <input type="hidden" id="_token" name="_token" ref="token"  value="{{ csrf_token() }}" >
                             <div class="form-group has-feedback">
-                                <label for="name" class="control-label">Имя устройства (зашифрованное название android устройства)</label>
-                                <input type="text" class="form-control" placeholder="Имя" name="name" value="{{ $data->name }}" id="name"/>
+                                <label for="name" class="control-label">Имя Шаблона</label>
+                                <input type="text" class="form-control" placeholder="Имя" name="name"
+                                       value="{{ $data->name }}" id="name"/>
                             </div>
 
                             <button type="submit" class="btn btn-primary btn-flat">Сохранить</button>
+
+                            <div id="email_template">
+
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -25,3 +30,11 @@
         </div>
     </div>
 @endsection
+@section('js')
+    <script>
+
+       localStorage.setItem('dropped', '{!! $data->body !!}');
+
+    </script>
+
+@stop

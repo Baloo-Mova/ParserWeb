@@ -25,9 +25,11 @@ class EmailTemplatesController extends Controller
 
     public function store(Request $request)
     {
+       // dd($request);
 
         $email_templates = new EmailTemplates;
         $email_templates->fill($request->all());
+        $email_templates->user_id = Auth::user()->id;
         //$skype->valid = 1;
         $email_templates->save();
         
@@ -38,7 +40,7 @@ class EmailTemplatesController extends Controller
     public function edit($id)
     {
         $data = EmailTemplates::whereId($id)->first();
-
+        //dd(addcslashes($data->body,quot;));
         return view("email_templates.edit", ["data" => $data]);
     }
 
