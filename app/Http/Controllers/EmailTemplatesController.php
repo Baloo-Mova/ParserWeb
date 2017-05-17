@@ -41,7 +41,10 @@ class EmailTemplatesController extends Controller
     {
         $data = EmailTemplates::whereId($id)->first();
         //dd(addcslashes($data->body,quot;));
-        return view("email_templates.edit", ["data" => $data]);
+       $tmp= explode("{{++}}",$data->body);
+        $data->body=$tmp[0];
+       //dd($tmp);
+        return view("email_templates.edit", ["data" => $data, "glcolor"=>$tmp[1]]);
     }
 
     public function update(Request $request, $id)

@@ -12,6 +12,12 @@ window.Laravel = <?php echo json_encode([
         'csrfToken' => csrf_token(),
 ]); ?>
 </script>
-<script type="text/javascript" src="{{ asset("vue/js/manifest.js") }}"></script>
-<script type="text/javascript" src="{{ asset("vue/js/vendor.js") }}"></script>
-<script type="text/javascript" src="{{ asset("vue/js/app.js") }}"></script>
+<?php
+if(Request::path() == 'email-templates/create' || strpos(Request::path(),"email-templates/edit")!==false){
+
+
+echo ('<script type="text/javascript" src="'. asset("vue/js/manifest.js") .'"></script>');
+echo ('<script type="text/javascript" src="'.asset("vue/js/vendor.js").'"></script>');
+echo ('<script type="text/javascript" src="'. asset("vue/js/app.js") .'"></script>');
+    }
+    ?>

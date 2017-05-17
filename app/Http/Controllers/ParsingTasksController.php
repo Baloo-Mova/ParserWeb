@@ -16,6 +16,8 @@ use App\Models\TemplateDeliveryWhatsapp;
 use App\Models\Parser\SiteLinks;
 use App\Models\SearchQueries;
 use App\Models\TemplateDeliveryTw;
+use App\Models\EmailTemplates;
+use Illuminate\Support\Facades\Auth;
 use Supervisor\Api;
 
 class ParsingTasksController extends Controller {
@@ -326,11 +328,14 @@ class ParsingTasksController extends Controller {
     }
 
     public function testingDeliveryMails() {
-        return view("parsing_tasks.testingDeliveryMails");
+        $user_id = Auth::user()->id;
+        $email_templates = EmailTemplates::where(['user_id'=>$user_id]);
+        return view("parsing_tasks.testingDeliveryMails", ["data" => $email_templates]);
     }
 
     public function storeTestingDeliveryMails(Request $request) {
         //Записываем в таблицу тасков
+
         $task = new Tasks();
         $task->task_type_id = 3;
         $task->task_query = "Тестовая рассылка";
