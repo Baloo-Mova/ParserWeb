@@ -42,12 +42,8 @@ class TestFB extends Command {
      * @return mixed
      */
     public function handle() {
-        
         $web = new FB;
-        
         $web->login("login", "pass");
-            
-        
     }
 
 }

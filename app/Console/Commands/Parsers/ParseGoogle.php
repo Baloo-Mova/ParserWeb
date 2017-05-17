@@ -12,17 +12,18 @@ use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\ProxyTemp;
+use Illuminate\Support\Facades\DB;
 
+class ParseGoogle extends Command
+{
 
-class ParseGoogle extends Command {
-
+    public $content = [];
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
     protected $signature = 'parse:google';
-
     /**
      * The console command description.
      *
@@ -35,7 +36,8 @@ class ParseGoogle extends Command {
      *
      * @return void
      */
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
     }
 
@@ -44,48 +46,62 @@ class ParseGoogle extends Command {
      *
      * @return mixed
      */
-    public function handle() {
-        sleep(random_int(1, 3));
+    public function handle()
+    {
         while (true) {
-            $task = Tasks::where(['task_type_id' => TasksType::WORD, 'reserved' => 0, 'active_type' => 1])->first();
+            $this->content['task'] = null;
+            DB::transaction(function () {
+                $task = Tasks::where([
+                    'task_type_id' => TasksType::WORD,
+                    'google_ru'    => 0,
+                    'active_type'  => 1
+                ])->lockForUpdate()->first();
 
-            if (!isset($task)) {
+                if ( ! isset($task)) {
+                    return;
+                }
+
+                $task->google_ru = 1;
+                $task->save();
+                $this->content['task'] = $task;
+            });
+
+            if ( ! isset($this->content['task'])) {
                 sleep(10);
                 continue;
             }
 
-            $task->reserved = 1;
-            $task->save();
             $ignore = IgnoreDomains::all();
 
             try {
-                $web = new Web();
-                $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
+                $web           = new Web();
+                $crawler       = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
                 $sitesCountNow = 0;
                 $sitesCountWas = 0;
-                $proxy = ProxyItem::where(['google'=>1,'valid'=>1])->first();//ProxyTemp::where(['google'=>1])->first();
-                if(!isset($proxy)){
-                    sleep(random_int(5, 10));
-                continue;
-                }
-                $i = 0;
-                do {
+                $proxy         = ProxyItem::getProxy(ProxyItem::GOOGLE);
 
+                if ( ! isset($proxy)) {
+                    $this->content['task']->google_ru = 0;
+                    $this->content['task']->save();
+                    sleep(random_int(5, 10));
+                    continue;
+                }
+
+                $i = $this->content['task']->google_ru_offset;
+                do {
                     $data = "";
                     while (strlen($data) < 200) {
-
-                        $data = $web->get("https://www.google.ru/search?q=" . urlencode($task->task_query) . "&start=" . $i * 10,
-                                $proxy
-                                //'127.0.0.1:8888'
-                        );
-
+                        $data = $web->get("https://www.google.ru/search?q=" . urlencode($this->content['task']->task_query) . "&start=" . $i * 10,
+                            $proxy);
+                        $proxy->increment('google');
+                        $proxy->save();
+                        $proxy = ProxyItem::find($proxy->id);
+                        if ($proxy->google > 50) {
+                            $proxy = ProxyItem::getProxy(ProxyItem::GOOGLE);
+                        }
                         if ($data == "NEED_NEW_PROXY") {
-                            // dd('ff');
-                           // $proxy->reportBad();
-                            $proxy->google=0;
-                            $proxy->save();
                             while (true) {
-                                $proxy = ProxyItem::where(['google'=>1,'valid'=>1])->first();//ProxyItem::orderBy('id', 'desc')->first();
+                                $proxy = ProxyItem::getProxy(ProxyItem::GOOGLE);
                                 if (isset($proxy)) {
                                     break;
                                 }
@@ -99,15 +115,17 @@ class ParseGoogle extends Command {
                     $listLinks = [];
                     foreach ($crawler->find('.r') as $item) {
                         $link = $item->find('a', 0);
-                        if (isset($link) && !empty($link->href)) {
+                        if (isset($link) && ! empty($link->href)) {
                             if ($this->validate($link->href, $ignore)) {
-
-
-                                $tmp = SiteLinks::where(['task_id' => $task->id, 'link' => $link->href])->first();
+                                $data = parse_url($link->href,PHP_URL_HOST);
+                                $tmp = SiteLinks::where([
+                                    ['task_id', '=', $this->content['task']->id],
+                                    ['link', 'like', '%' . $data . '%']
+                                ])->first();
                                 if (is_null($tmp)) {
                                     array_push($listLinks, [
-                                        'link' => $link->href,
-                                        'task_id' => $task->id,
+                                        'link'     => $link->href,
+                                        'task_id'  => $this->content['task']->id,
                                         'reserved' => 0
                                     ]);
                                 }
@@ -118,31 +136,39 @@ class ParseGoogle extends Command {
                     try {
                         SiteLinks::insert($listLinks);
                     } catch (\Exception $ex) {
-                        $log = new ErrorLog();
+                        $log          = new ErrorLog();
                         $log->message = $ex->getMessage() . " line:" . __LINE__;
-                        $log->task_id = $task->id;
+                        $log->task_id = $this->content['task']->id;
                         $log->save();
                     }
                     $i++;
+
                     $listLinks = [];
-                    $task = Tasks::where('id', '=', $task->id)->first();
-                    if (!isset($task) || $task->active_type == 2) {
+                    $task      = Tasks::where('id', '=', $this->content['task']->id)->first();
+                    if (isset($task)) {
+                        $task->google_ru_offset = $i;
+                        $task->save();
+                        if ($task->active_type == 2) {
+                            $task->google_ru = 0;
+                            $task->save();
+                            break;
+                        }
+                    } else {
                         break;
                     }
                 } while ($sitesCountNow > $sitesCountWas);
             } catch (\Exception $ex) {
-                $log = new ErrorLog();
-                $log->task_id = $task->id;
+                $log          = new ErrorLog();
+                $log->task_id = $this->content['task']->id;
                 $log->message = $ex->getMessage() . " line:" . __LINE__;
                 $log->save();
             }
         }
     }
 
-    public function validate($url, $check) {
-
+    public function validate($url, $check)
+    {
         $valid = true;
-
         foreach ($check as $val) {
 
             if (stripos($url, $val->domain) !== false) {
@@ -150,6 +176,7 @@ class ParseGoogle extends Command {
                 break;
             }
         }
+
         return $valid;
     }
 
