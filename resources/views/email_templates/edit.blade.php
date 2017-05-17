@@ -6,8 +6,8 @@
 
 @section('main-content')
     <div class="container-fluid spark-screen">
-        <div class="row">
-            <div class="col-md-8 col-md-offset-2">
+        <div class="col-md-12">
+
                 <div class="box box-primary">
                     <div class="box-body">
                         <form action="" method="post">
@@ -18,7 +18,7 @@
                                        value="{{ $data->name }}" id="name"/>
                             </div>
 
-                            <button type="submit" class="btn btn-primary btn-flat">Сохранить</button>
+                            <button type="submit" onClick="delDropped()" class="btn btn-primary btn-flat">Сохранить</button>
 
                             <div id="email_template">
 
@@ -27,14 +27,18 @@
                     </div>
                 </div>
             </div>
-        </div>
+
     </div>
 @endsection
 @section('js')
     <script>
 
        localStorage.setItem('dropped', '{!! $data->body !!}');
-
+       function delDropped(){
+           localStorage.removeItem('dropped');
+           localStorage.removeItem('autoEdit');
+       }
+       localStorage.setItem('globalcolor', '{!! $glcolor !!}');
     </script>
 
 @stop
