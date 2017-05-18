@@ -91,7 +91,7 @@ class VK {
                     'captcha_key' => '',
                     'email' => $vk_login,
                     'pass' => $pass,
-                    '_origin' => urlencode('http://vk.com'),
+                    '_origin' => urlencode('https://vk.com'),
                     'lg_h' => $lg_h,
                     'ip_h' => $ip_h,
                 ],
@@ -199,7 +199,7 @@ class VK {
     public function sendRandomMessage($to_userId, $messages) {
         while (true) {
             try {
-                $sender = AccountsData::where(['type_id' => 1, 'valid' => 1, 'is_sender' => 1])->orderByRaw('RAND()')->first();
+                $sender = AccountsData::where(['type_id' => 1, 'valid' => 1, 'is_sender' => 1])->where('count_request','<',config('config.total_requets_limit'))->orderByRaw('RAND()')->first();
                 if (!isset($sender)) {
                     sleep(10);
                     continue;
@@ -257,8 +257,10 @@ class VK {
                     'verify' => false,
                     'cookies' => $array->count() > 0 ? $array : true,
                     'allow_redirects' => true,
-                    'timeout' => 10,
+                    'timeout' => 15,
                     'proxy' => $this->cur_proxy->proxy,
+                   // 'proxy' => "socks5://hV6eLT:FKHbPQ@185.39.151.76:8000",
+
                     // 'proxy' => '127.0.0.1:8888',
                 ]);
 
@@ -269,8 +271,9 @@ class VK {
                         $sender = AccountsData::where(['id' => $sender->id])->first();
                         //dd($sender->vk_cookie);
                     } else {
-                        //$sender->valid = 0;
-                        $sender->delete();
+                        $sender->valid = 0;
+                        $sender->save();
+                       // $sender->delete();
                         //  echo "account not valid\n";
                         continue;
                     }
@@ -283,7 +286,7 @@ class VK {
                 sleep(2);
                 $data = $request->getBody()->getContents();
 
-                if (strpos($data, "quick_login_button")!==false) {\
+                if (strpos($data, "quick_login_button")!==false) {
                 $sender->vk_cookie = null;
                 $sender->save();
 
@@ -334,8 +337,9 @@ class VK {
                 $sender->save();
                 return true;
             } catch (\Exception $ex) {
-                echo "\n" . $ex->getMessage();
+                echo "\n!!!!" . $ex->getMessage();
                 if (strpos($ex->getMessage(), "cURL") !== false) {
+
                     $this->cur_proxy->delete();
                     continue;
                 }
@@ -387,17 +391,17 @@ class VK {
             try {
                 //while (true) {
 
-                $sender = AccountsData::where(['type_id' => 1, 'valid' => 1, 'is_sender' => 0])->orderByRaw('RAND()')->first();
+                $sender = AccountsData::where(['type_id' => 1, 'valid' => 1, 'is_sender' => 0])->where('count_request','<',config('config.total_requets_limit'))->orderByRaw('RAND()')->first();
                 // echo($sender->login . "\n Find groups " . $find . "\n");
                 if (!isset($sender)) {
                     sleep(random_int(5, 10));
                     continue;
                 }
-                //
+
                 if ($sender->proxy_id == 0) {
 
                     $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
-                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where('proxy.vk', '<>', '0')
+                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where([['proxy.vk', '<', 1000],['proxy.vk', '>',-1 ], ])
                         ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
 
                     if (!isset($this->cur_proxy)) {
@@ -408,7 +412,8 @@ class VK {
                     $sender->vk_cookie = null;
                     $sender->save();
                 } else {
-                    $this->cur_proxy = ProxyItem::where(['id' => $sender->proxy_id, 'valid' => 1])->where('vk', '<>', '0')->first();
+                    $this->cur_proxy = ProxyItem::where(['id' => $sender->proxy_id, 'valid' => 1])->where([['vk', '<', 1000],['vk', '>',-1 ], ])->first();
+
                     if (!isset($this->cur_proxy)) {
                         sleep(random_int(5, 10));
                         $sender->proxy_id = 0;
@@ -459,8 +464,10 @@ class VK {
                         $sender = AccountsData::where(['id' => $sender->id])->first();
                         //dd($sender->vk_cookie);
                     } else {
-                        //$sender->valid = 0;
-                        $sender->delete();
+                        $sender->valid = 0;
+                        $sender->save();
+                        //$sender->delete();
+
                         //  echo "account not valid\n";
                         continue;
                     }
@@ -472,6 +479,11 @@ class VK {
                         // 'proxy' => '127.0.0.1:8888',
                     ]
                 );
+                $this->cur_proxy->vk+=1;
+                $this->cur_proxy->save();
+
+                $sender->count_request+=1;
+                $sender->save();
 
                 $data = $request->getBody()->getContents();
 
@@ -480,6 +492,7 @@ class VK {
                     continue;
                 }
                 sleep(random_int(1, 3));
+
                 //break;
                 //}
                 //$this->login($sender->login, $sender->password);
@@ -543,7 +556,7 @@ class VK {
                             continue;
                         }
                         $vklink = new VKLinks;
-                        $vklink->link = "http://vk.com/" . $value;
+                        $vklink->link = "https://vk.com/" . $value;
                         $vklink->task_id = $task_id;
                         $vklink->vkuser_id = $vkuser_id;
                         $vklink->type = 0; //0=groups
@@ -557,12 +570,12 @@ class VK {
                     $counter+=20;
                 }
             } catch (\Exception $ex) {
-                //dd($ex->getMessage());
+                dd($ex->getMessage());
                 if (strpos($ex->getMessage(), 'cURL') !== false) {
                     $sender->proxy_id = 0;
                     $sender->vk_cookie = null;
                     $sender->save();
-                    $this->cur_proxy->vk = 0;
+                    $this->cur_proxy->vk = -1;
                     $this->cur_proxy->save();
                 }
                 //$this->cur_proxy->reportBad();
@@ -577,7 +590,7 @@ class VK {
         while (true) {
             try {
                 // while (true) {
-                $sender = AccountsData::where(['type_id' => 1, 'valid' => 1, 'is_sender' => 0])->orderByRaw('RAND()')->first();
+                $sender = AccountsData::where(['type_id' => 1, 'valid' => 1, 'is_sender' => 0])->where('count_request','<',config('config.total_requets_limit'))->orderByRaw('RAND()')->first();
                 // echo($sender->login . "\n Parse group " . $vklink->link . "\n");
                 if (!isset($sender)) {
                     sleep(random_int(5, 10));
@@ -587,7 +600,7 @@ class VK {
                 if ($sender->proxy_id == 0) {
 
                     $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
-                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where('proxy.vk', '<>', '0')
+                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where([['proxy.vk', '<', 1000],['proxy.vk', '>',-1 ], ])
                         ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
 
                     if (!isset($this->cur_proxy)) {
@@ -598,7 +611,7 @@ class VK {
                     $sender->vk_cookie = null;
                     $sender->save();
                 } else {
-                    $this->cur_proxy = ProxyItem::where(['id' => $sender->proxy_id, 'valid' => 1])->where('vk', '<>', '0')->first();
+                    $this->cur_proxy = ProxyItem::where(['id' => $sender->proxy_id, 'valid' => 1])->where([['proxy.vk', '<', 1000],['proxy.vk', '>',-1 ], ])->first();
                     if (!isset($this->cur_proxy)) {
                         sleep(random_int(5, 10));
                         $sender->proxy_id = 0;
@@ -649,8 +662,9 @@ class VK {
                         $sender = AccountsData::where(['id' => $sender->id])->first();
                         //dd($sender->vk_cookie);
                     } else {
-                        //$sender->valid = 0;
-                        $sender->delete();
+                        $sender->valid = 0;
+                        $sender->save();
+                       // $sender->delete();
                         //  echo "account not valid\n";
                         continue;
                     }
@@ -663,6 +677,11 @@ class VK {
                 );
 
                 $data = $request->getBody()->getContents();
+
+                $this->cur_proxy->vk+=1;
+                $this->cur_proxy->save();
+                $sender->count_request+=1;
+                $sender->save();
 
                 if (strpos($data, "login_button")) {
                     sleep(random_int(1, 5));
@@ -715,7 +734,7 @@ class VK {
             } catch (\Exception $ex) {
                 if (strpos($ex->getMessage(), 'cURL') !== false) {
 
-                    $this->cur_proxy->vk = 0;
+                    $this->cur_proxy->vk = -1;
                     $this->cur_proxy->save();
                 }
             }
@@ -727,7 +746,7 @@ class VK {
         while (true) {
             try {
                 if (!isset($this->cur_proxy)) {
-                    $this->cur_proxy = ProxyItem::where('vk', '<>', 0)->where(['valid' => 1])->first();
+                    $this->cur_proxy = ProxyItem::where(['valid' => 1])->where([['vk', '<', 1000],['vk', '>',-1 ], ])->first();
 
                     continue;
                 }
@@ -738,6 +757,8 @@ class VK {
                 $query = $request->getBody()->getContents();
                 $userstmp = json_decode($query, true);
                 sleep(1);
+                $this->cur_proxy->vk+=1;
+                $this->cur_proxy->save();
 
                 $count = intval($userstmp["response"]["count"]);
                 $users = $userstmp["response"]["items"];
@@ -752,7 +773,7 @@ class VK {
                         continue;
                     }
                     $vkuser = new VKLinks;
-                    $vkuser->link = "http://vk.com/id" . $value;
+                    $vkuser->link = "https://vk.com/id" . $value;
                     $vkuser->task_id = $group->task_id;
                     $vkuser->vkuser_id = $value;
                     $vkuser->type = 1; //0=groups
@@ -785,7 +806,7 @@ class VK {
                                 continue;
                             }
                             $vkuser = new VKLinks;
-                            $vkuser->link = "http://vk.com/id" . $value;
+                            $vkuser->link = "https://vk.com/id" . $value;
                             $vkuser->task_id = $group->task_id;
                             $vkuser->vkuser_id = $value;
                             $vkuser->type = 1; //0=groups
@@ -804,7 +825,7 @@ class VK {
             } catch (\Exception $ex) {
                 if (strpos($ex->getMessage(), 'cURL') !== false) {
 
-                    $this->cur_proxy->vk = 0;
+                    $this->cur_proxy->vk = -1;
                     $this->cur_proxy->save();
                 }
             }
@@ -816,7 +837,7 @@ class VK {
         while (true) {
             try {
                 if (!isset($this->cur_proxy)) {
-                    $this->cur_proxy = ProxyItem::where('vk', '<>', 0)->where(['valid' => 1])->first();
+                    $this->cur_proxy = ProxyItem::where(['valid' => 1])->where([['vk', '<', 1000],['vk', '>',-1 ], ])->first();
                     sleep(random_int(3, 5));
                     continue;
                 }
@@ -825,6 +846,9 @@ class VK {
 
                 $request = $this->client->request("GET", "https://api.vk.com/method/users.get?v=5.60&&fields=can_write_private_message,connections,contacts,city,deactivated&user_ids=" . $user->vkuser_id);
                 $query = $request->getBody()->getContents();
+                $this->cur_proxy->vk+=1;
+                $this->cur_proxy->save();
+
                 // $query = file_get_contents("https://api.vk.com/method/users.get?v=5.60&&fields=can_write_private_message,connections,contacts,city,deactivated&user_ids=" . $user->vkuser_id);
                 $usertmp = json_decode($query, true);
                 $usertmp = $usertmp["response"][0];
@@ -880,7 +904,7 @@ class VK {
             } catch (\Exception $ex) {
                 if (strpos($ex->getMessage(), 'cURL') !== false) {
 
-                    $this->cur_proxy->vk = 0;
+                    $this->cur_proxy->vk = -1;
                     $this->cur_proxy->save();
                 }
             }
@@ -895,7 +919,7 @@ class VK {
 
 
             while (true) {
-                $proxy = ProxyItem::where('vk', '<>', 0)->first();
+                $proxy = ProxyItem::where([['vk', '<', 1000],['vk', '>',-1 ], ])->first();
                 //echo($sender->login . "\n");
                 if (!isset($proxy)) {
                     sleep(10);
@@ -963,14 +987,15 @@ class VK {
             }
             $crawler = new SimpleHtmlDom();
             $crawler->clear();
-            $request = $this->client->get('https://vk.com/', ['proxy' => '127.0.0.1:8888',]
+            $request = $this->client->get('https://vk.com/', []
             );
 
             $crawler->load($request->getBody()->getContents());
 
             $lg_h = $crawler->find('input[name="lg_h"]', 0)->value;
             $ip_h = $crawler->find('input[name="ip_h"]', 0)->value;
-
+            $proxy->vk+=1;
+            $proxy->save();
             $request = $this->client->post("https://vk.com/join.php?act=start", [
                 'form_params' => [
                     'al' => '1',
@@ -1040,6 +1065,7 @@ class VK {
                     '_origin' => 'https://vk.com',
                     'ip_h' => $ip_h,
                     'lg_h' => $lg_h,
+                   // 'expire' => '',
                     'email' => $number,
                     'pass' => $password,
                     'join_code' => $code,

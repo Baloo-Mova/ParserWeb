@@ -10,9 +10,10 @@ use App\Models\Parser\VKLinks;
 use App\Models\Tasks;
 use App\Helpers\VK;
 use App\Models\Parser\ErrorLog;
-
+use Illuminate\Support\Facades\DB;
 class VKSender extends Command
 {
+    public $content;
 
     /**
      * The name and signature of the console command.
@@ -45,48 +46,54 @@ class VKSender extends Command
      */
     public function handle()
     {
-        sleep(random_int(1,3));
+        //sleep(random_int(1,3));
         while (true) {
             try {
-                 $sk_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
-                    ['search_queries.vk_id','<>',''],
-                     'search_queries.vk_sended'   => 0,
-                    'search_queries.vk_reserved' => 0,
-                    'tasks.need_send'            => 1,
-                    'tasks.active_type'          => 1,
-                    
-                ])->select('search_queries.*')->first();
-               
-                if ( !isset($sk_query)) {
+                $this->content['vkquery'] = null;
+                DB::transaction(function () {
+                    $sk_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
+                        ['search_queries.vk_id', '<>', ''],
+                        'search_queries.vk_sended' => 0,
+                        'search_queries.vk_reserved' => 0,
+                        'tasks.need_send' => 1,
+                        'tasks.active_type' => 1,
+
+                    ])->select('search_queries.*')->lockForUpdate()->first();
+
+                    $sk_query->vk_reserved = 1;
+                    $sk_query->save();
+                    $this->content['vkquery'] = $sk_query;
+                });
+                if ( !isset(  $this->content['vkquery'])) {
                     sleep(10);
                      
                     continue;
                 }
 
                 //$sk_query->vk_reserved = 1;
-                $sk_query->save();
+                //$sk_query->save();
 
                 
-                $message = TemplateDeliveryVK::where('task_id', '=', $sk_query->task_id)->first();
+                $message = TemplateDeliveryVK::where('task_id', '=',   $this->content['vkquery']->task_id)->first();
                 // dd($message);
                 
                 if ( ! isset($message)) {
                     sleep(10);
-                    $sk_query->vk_reserved = 0;
-                    $sk_query->save();
+                    $this->content['vkquery']->vk_reserved = 0;
+                    $this->content['vkquery']->save();
                     continue;
                 }
 
                  $web = new VK();
-                if($web->sendRandomMessage($sk_query->vk_id, $message->text)==true){
-                $sk_query->vk_sended = 1;
-                $sk_query->vk_reserved = 0;
-                
-                $sk_query->save();
+                if($web->sendRandomMessage($this->content['vkquery']->vk_id, $message->text)==true){
+                    $this->content['vkquery']->vk_sended = 1;
+                    $this->content['vkquery']->vk_reserved = 0;
+
+                    $this->content['vkquery']->save();
                 }
                 else{
-                $sk_query->vk_reserved = 2;
-                $sk_query->save();
+                    $this->content['vkquery']->vk_reserved = 2;
+                    $this->content['vkquery']->save();
                     
                 }
                 sleep(random_int(1, 5));

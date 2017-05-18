@@ -11,9 +11,10 @@ use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\Parser\VKLinks;
-
+use Illuminate\Support\Facades\DB;
 class ParseVKGetUsers extends Command
 {
+    public $content;
     /**
      * The name and signature of the console command.
      *
@@ -47,29 +48,36 @@ class ParseVKGetUsers extends Command
     {
         sleep(random_int(1, 3));
         while (true) {
-            
-            $group = VKLinks::join('tasks', 'tasks.id', '=', 'vk_links.task_id')->
-                    where(['vk_links.type' => 0, 'vk_links.getusers_reserved' => 0, 'vk_links.getusers_status' => 0,'tasks.active_type' => 1,])
-                    ->select('vk_links.*')->first();
-                   
+            $this->content['vklink'] = null;
+            DB::transaction(function () {
+                $group = VKLinks::join('tasks', 'tasks.id', '=', 'vk_links.task_id')->
+                where(['vk_links.type' => 0, 'vk_links.getusers_reserved' => 0, 'vk_links.getusers_status' => 0, 'tasks.active_type' => 1,])
+                    ->select('vk_links.*')->lockForUpdate()->first();
+                if ( !isset($group)) {
+                    return;
+                }
 
-            if ( !isset($group)) {
+                $group->getusers_reserved = 1;
+                $group->save();
+                $this->content['vklink'] = $group;
+            });
+
+            if ( !isset($this->content['vklink'])) {
             sleep(10);
                 continue;
             }
 
-            $group->getusers_reserved = 1;
-            $group->save();
+
             try {
                 $web           = new VK();
                                
                 $proxy         = ProxyItem::orderBy('id', 'desc')->first();
                 $i             = 0;
                 
-                if($web->getUsersOfGroup($group)){
-                $group->getusers_reserved = 0;
-                $group->getusers_status = 1;
-                $group->save();
+                if($web->getUsersOfGroup($this->content['vklink'])){
+                    $this->content['vklink']->getusers_reserved = 0;
+                    $this->content['vklink']->getusers_status = 1;
+                    $this->content['vklink']->save();
                  sleep(random_int(1,5));
                     
                 }
@@ -77,7 +85,7 @@ class ParseVKGetUsers extends Command
                 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->task_id = $group->task_id;
+                $log->task_id = $this->content['vklink']->task_id;
                 $log->message = $ex->getMessage(). " line:".__LINE__ ;
                 $log->save();
             }
