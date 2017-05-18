@@ -84,6 +84,7 @@ class ParseOk extends Command {
                         sleep(random_int(5,10));
                         continue;
                     }
+
                     //$this->cur_proxy = ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
                     //  if (!isset($this->cur_proxy)) {
                     //     sleep(random_int(5,10));

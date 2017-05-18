@@ -35,16 +35,12 @@ class Web {
     public function get($url, $proxy = "") {
         $tries = 0;
         $errorMessage = "";
-        
-        //dd($proxy);
-        $request;
+
         while ($tries < 4) {
             try {
                 if(gettype($proxy)=="object"&& isset($proxy)){
-                  //  dd("yes");
                 $proxy_arr = parse_url($proxy->proxy);
                 $request = $this->client->request("GET", $url, [
-                    // 'proxy' => $proxy,
                      'proxy' =>$proxy_arr['scheme']."://". $proxy->login . ':' . $proxy->password.'@'.$proxy_arr['host'].':'.$proxy_arr['port'],
                 ]);}
                 else{

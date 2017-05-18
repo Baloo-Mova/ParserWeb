@@ -13,7 +13,9 @@
         "guzzlehttp/guzzle": "~6.0",
         "supervisorphp/configuration": "^0.2.1",
         "league/flysystem": "^1.0",
-        "phpmailer/phpmailer": "^5.2"
+        "phpmailer/phpmailer": "^5.2",
+        "doctrine/dbal":"2.5.*",
+        "barryvdh/laravel-ide-helper": "^2.3"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",

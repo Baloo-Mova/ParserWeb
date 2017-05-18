@@ -9,3 +9,5 @@ Homestead.yaml
 /composer.lock
 /nbproject
 /node/nodemailer/node_modules
+/.phpstorm.meta.php
+/_ide_helper.php

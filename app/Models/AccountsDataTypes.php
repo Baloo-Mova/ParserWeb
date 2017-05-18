@@ -4,6 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * App\Models\AccountsDataTypes
+ *
+ * @property int $id
+ * @property string $type_name
+ * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsDataTypes whereId($value)
+ * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsDataTypes whereTypeName($value)
+ * @mixin \Eloquent
+ */
 class AccountsDataTypes extends Model
 {
     const VK    = 1;
