@@ -11,6 +11,7 @@ use App\Models\Parser\TwLinks;
 use App\Models\Parser\FBLinks;
 use App\Models\Parser\InsLinks;
 use App\Models\Parser\OkGroups;
+use App\Models\EmailTemplates;
 
 class APIController extends Controller
 {
@@ -75,4 +76,29 @@ class APIController extends Controller
             'result' => $results
         ]);
     }
+    public function getSelectEmailTemplate(Request $request, $id)
+    {
+
+        $results = EmailTemplates::where('id', '=', $id)->first();
+
+        if(!isset($results)){
+            json_encode([
+                'success'=>false,
+                'message' => "template not found",
+
+                'result' => "null"
+            ]);
+        }
+
+
+        $tmp= explode("{{++}}",$results->body);
+
+        return json_encode([
+            'success'=>true,
+            'globalcolor'=>$tmp[1],
+            'result' => $tmp[0],
+        ]);
+    }
+
+
 }

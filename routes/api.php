@@ -15,3 +15,4 @@ use Illuminate\Http\Request;
 
 Route::get('/actualParsed/{taskId}/{lastId}', ["uses" => "APIController@getActualTaskData", "as" => "get.actual.parsed.data"]);
 Route::get('/paginateParsed/{page}/{taskId}', ["uses" => "APIController@getPaginateTaskData", "as" => "get.paginate.parsed.data"]);
+Route::get('/selectEmailTemplate/{id}', ["uses" => "APIController@getSelectEmailTemplate", "as" => "get.select.email.template"]);

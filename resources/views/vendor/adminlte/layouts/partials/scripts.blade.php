@@ -13,7 +13,7 @@ window.Laravel = <?php echo json_encode([
 ]); ?>
 </script>
 <?php
-if(Request::path() == 'email-templates/create' || strpos(Request::path(),"email-templates/edit")!==false){
+if(Request::path() == 'email-templates/create' || strpos(Request::path(),"email-templates/edit")!==false || Request::path() == 'parsing-tasks/testing-delivery-mails'){
 
 
 echo ('<script type="text/javascript" src="'. asset("vue/js/manifest.js") .'"></script>');
