@@ -23,6 +23,7 @@ use App\Models\TasksType;
  * @property int $fb_complete
  * @property int $google_ua_reserved
  * @property int $yandex_ua_reserved
+ * @property int $ok_reserved
  * @property int $yandex_ru_reserved
  * @property int $google_ua_offset
  * @property-read \App\Models\TasksType $tasksType

@@ -19,6 +19,6 @@ class DatabaseSeeder extends Seeder
         $this->call(SUserNamesSeeder::class);
         $this->call(ThUserNamesSeeder::class);
         $this->call(FoUserNamesSeeder::class);
-
+        $this->call(IgnoreDomainSeeder::class);
     }
 }

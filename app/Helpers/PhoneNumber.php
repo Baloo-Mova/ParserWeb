@@ -56,12 +56,15 @@ class PhoneNumber
         }
         $ticks = 0;
         while($ticks < 40) {
+            $ticks++;
             $phoneStatus = json_decode($this->get("http://onlinesim.ru/api/getState.php?apikey=$this->ApiKey&tzid=$this->tzid&form=1&message_to_code=1"));
             if($phoneStatus[0]->response == "TZ_NUM_ANSWER"){
                 return $phoneStatus[0]->msg;
             }
             sleep(5);
         }
+
+        $this->reportOK();
         return false;
     }
 
