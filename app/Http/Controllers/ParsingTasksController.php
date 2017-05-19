@@ -38,8 +38,8 @@ class ParsingTasksController extends Controller {
         $task->task_type_id = $request->get('task_type_id');
         $task->task_query = $request->get('task_query');
         $task->active_type = 1;
-        $task->reserved = 0;
-        $task->google_offset = 0;
+        //$task->reserved = 0;
+        //$task->google_offset = 0;
         $task->tw_offset = "1";
         $task->need_send = $request->get('send_directly') != null;
         $task->save();
@@ -190,7 +190,7 @@ class ParsingTasksController extends Controller {
 
     public function reserved($id) {
         $task = Tasks::whereId($id)->first();
-        $task->reserved = 0;
+       // $task->reserved = 0;
         $task->save();
 
         return redirect()->back();
