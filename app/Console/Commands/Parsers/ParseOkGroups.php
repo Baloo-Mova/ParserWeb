@@ -16,23 +16,25 @@ use GuzzleHttp\Cookie\SetCookie;
 use App\Models\GoodProxies;
 use App\Models\ProxyTemp;
 use App\Models\Parser\Proxy as ProxyItem;
-
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 
 class ParseOkGroups extends Command
 {
-    public $client  = null;
-    public $crawler = null;
-    public $gwt     = "";
-    public $tkn     = "";
+    public $client      = null;
+    public $crawler     = null;
+    public $gwt         = "";
+    public $tkn         = "";
     public $cur_proxy;
     public $proxy_arr;
+    public $userOrGroup = "";
+    public $data        = [];
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
     protected $signature = 'parse:okgroups';
-
     /**
      * The console command description.
      *
@@ -57,87 +59,119 @@ class ParseOkGroups extends Command
      */
     public function handle()
     {
-        sleep(random_int(1,3));
         $this->crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
-$from;
+
         while (true) {
-
-
             try {
- 
-           
-                $query_data = OkGroups::join('tasks', 'tasks.id', '=', 'ok_groups.task_id')->where([
-                    ['ok_groups.offset', '<>', -1],
-                    ['ok_groups.reserved', '=', 0],
-                    ['tasks.active_type',  '=', 1]
-                    ])->select('ok_groups.*')->first(); // Забираем 1 групп для этого таска
+                $this->data['task'] = null;
+                $this->userOrGroup = "";
+                DB::transaction(function () {
+                    $query_data = OkGroups::join('tasks', 'tasks.id', '=', 'ok_groups.task_id')->where([
+                        ['ok_groups.offset', '<>', -1],
+                        ['ok_groups.reserved', '=', 0],
+                        ['ok_groups.type', '=', 2],
+                        ['tasks.active_type', '=', 1]
+                    ])->select('ok_groups.*')->lockForUpdate()->limit(100)->get(); // Забираем 1 групп для этого таска
 
+                    if (count($query_data) > 0) {
+                        foreach ($query_data as $item) {
+                            $item->reserved = 1;
+                            $item->save();
+                        }
+                        $this->data['task'] = $query_data;
+                        $this->userOrGroup  = "user";
+                    } else {
+                        $query_data = OkGroups::join('tasks', 'tasks.id', '=', 'ok_groups.task_id')->where([
+                            ['ok_groups.offset', '<>', -1],
+                            ['ok_groups.reserved', '=', 0],
+                            ['ok_groups.type', '=', 1],
+                            ['tasks.active_type', '=', 1]
+                        ])->select('ok_groups.*')->lockForUpdate()->first(); // Забираем 1 групп для этого таска
+                        if (isset($query_data)) {
+                            $query_data->reserved = 1;
+                            $query_data->save();
+                            $this->data['task'] = $query_data;
+                            $this->userOrGroup  = "group";
+                        }
+                    }
+                });
 
+                $query_data = $this->data['task'];
                 if (!isset($query_data)) {
-                    sleep(random_int(5,10));
+                    sleep(random_int(5, 10));
                     continue;
                 }
 
-                $query_data->reserved = 1;
-                $query_data->save();
-
-                $page_numb = $query_data->offset;
                 $from      = null;
-                $mails = [];
-                $skypes = [];
-
-                while (true) {
-                    
-                    $from = AccountsData::where(['type_id' => '2','is_sender'=>0])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
+                $mails     = [];
+                $skypes    = [];
+                $needLogin = false;
+                $needFindAccount = true;
+                while ($needFindAccount) {
+                    $from = AccountsData::where([
+                        ['type_id', '=', 2],
+                        ['is_sender', '=', 0],
+                        ['valid', '=', 1],
+                        [
+                            'count_request',
+                            '<',
+                            1000
+                        ]
+                    ])->orderByRaw('RAND()')->first();
 
                     if ( ! isset($from)) {
-                        sleep(random_int(5,10));
+                        Artisan::call('reg:ok');
+                        sleep(random_int(5, 10));
                         continue;
                     }
-                    if ($from->proxy_id == "") {
 
-                        $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
-                                        where(['proxy.valid' => 1, 'accounts_data.type_id' => $from->type_id, 'accounts_data.is_sender'=>0])->where('proxy.ok', '<>', '0')
-                                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
-
-                        if (!isset($this->cur_proxy)) {
-                            sleep(random_int(5,10));
+                    if ($from->proxy_id == 0) {
+                        $this->cur_proxy = ProxyItem::where([
+                            ['ok', '<', 1000],
+                            ['ok', '>', -1]
+                        ])->first();
+                        if ( ! isset($this->cur_proxy)) {
+                            sleep(random_int(5, 10));
                             continue;
                         }
-                        $from->proxy_id = $this->cur_proxy->id;
+                        $needLogin         = true;
+                        $from->proxy_id    = $this->cur_proxy->id;
                         $from->ok_user_gwt = null;
                         $from->ok_user_tkn = null;
-                        $from->ok_cookie = null;
+                        $from->ok_cookie   = null;
                         $from->save();
                     } else {
-                        $this->cur_proxy = ProxyItem::where(['id' => $from->proxy_id, 'valid' => 1])->where('ok', '<>', '0')->first();
-                        if (!isset($this->cur_proxy)) {
-                            sleep(random_int(5,10));
-                            $from->proxy_id = 0;
+                        $this->cur_proxy = ProxyItem::where(['id' => $from->proxy_id])->where('ok', '<', 1000)->first();
+
+                        if ( ! isset($this->cur_proxy)) {
+                            $from->proxy_id    = 0;
                             $from->ok_user_gwt = null;
                             $from->ok_user_tkn = null;
-                            $from->ok_cookie = null;
+                            $from->ok_cookie   = null;
                             $from->save();
                             continue;
                         }
                     }
 
-                    $cookies = json_decode($from->ok_cookie);
-                    $array   = new CookieJar();
 
-                    if (isset($cookies)) {
-                        foreach ($cookies as $cookie) {
-                            $set = new SetCookie();
-                            $set->setDomain($cookie->Domain);
-                            $set->setExpires($cookie->Expires);
-                            $set->setName($cookie->Name);
-                            $set->setValue($cookie->Value);
-                            $set->setPath($cookie->Path);
-                            $array->setCookie($set);
+                    if (isset($from->ok_cookie)) {
+                        $cookies = json_decode($from->ok_cookie);
+                        if (is_array($cookies)) {
+                            $array = new CookieJar();
+                            foreach ($cookies as $cookie) {
+                                $set = new SetCookie();
+                                $set->setDomain($cookie->Domain);
+                                $set->setExpires($cookie->Expires);
+                                $set->setName($cookie->Name);
+                                $set->setValue($cookie->Value);
+                                $set->setPath($cookie->Path);
+                                $array->setCookie($set);
+                            }
                         }
                     }
+
                     $this->proxy_arr = parse_url($this->cur_proxy->proxy);
-                    $this->client = new Client([
+                    $this->client    = new Client([
                         'headers'         => [
                             'User-Agent'      => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
                             'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -145,70 +179,78 @@ $from;
                             'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
                         ],
                         'verify'          => false,
-                        'cookies'         => $array->count() > 0 ? $array : true,
+                        'cookies'         => isset($from->ok_cookie) ? $array : true,
                         'allow_redirects' => true,
                         'timeout'         => 20,
-                        'proxy' => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
+                        'proxy'           => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
                     ]);
-                   
-                    if ($array->count() < 1) {
+
+                    $data = $this->client->request('GET', 'http://ok.ru')->getBody()->getContents();
+                    file_put_contents('test.html', $data);
+
+                    if (strpos($data, "Ваш профиль заблокирован") > 0) {
+                        $from->valid = -1;
+                        $from->save();
+                        continue;
+                    }
+
+                    if (strpos($data, "anonym__rich anonym__feed") > 0) {
+                        $needLogin = true;
+                    }
+
+                    echo $from->login . PHP_EOL;
+
+                    if ($needLogin) {
                         if ($this->login($from->login, $from->password)) {
                             $from->ok_user_gwt = $this->gwt;
                             $from->ok_user_tkn = $this->tkn;
                             $from->ok_cookie   = json_encode($this->client->getConfig('cookies')->toArray());
                             $from->save();
+                            $needFindAccount = false;
                             break;
                         } else {
-                            $from->delete();
+                            $from->valid = -1;
+                            $from->save();
+                            continue;
                         }
-                    } else {
-                        $this->gwt = $from->ok_user_gwt;
-                        $this->tkn = $from->ok_user_tkn;
-                        break;
+                    }else{
+                       $needFindAccount = false;
                     }
                 }
 
-                if($query_data->type == 1){ // Это группа, парсим данные, достаем всех пользователей
+                if ($this->userOrGroup != "user") { // Это группа, парсим данные, достаем всех пользователей
 
-                    $gr_url = $query_data->group_url;
-
-
+                    $gr_url      = $query_data->group_url;
+                    $page_numb   = $query_data->offset;
                     $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url);
 
                     $html_doc = $groups_data->getBody()->getContents();
                     $this->crawler->clear();
                     $this->crawler->load($html_doc);
 
-
                     //Ищем все мыла на странице, сохраняем в $mails[]
 
                     $mails_group = $this->extractEmails($html_doc);
 
-
-                    if (!empty($mails_group)) {
+                    if ( ! empty($mails_group)) {
 
                         foreach ($mails_group as $m) {
                             $mails[] = $m;
                         }
-
                     }
 
                     //Ищем все скайпы на странице, сохраняем в $skypes[]
 
                     $skypes_group = $this->extractSkype($html_doc);
 
-
-                    if (!empty($skypes_group)) {
+                    if ( ! empty($skypes_group)) {
 
                         foreach ($skypes_group as $s) {
                             $skypes[] = $s;
                         }
-
-                    }else{
+                    } else {
                         $skypes = [];
                     }
-
-
 
                     $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url . "/members");
 
@@ -216,11 +258,10 @@ $from;
                     $this->crawler->clear();
                     $this->crawler->load($html_doc);
 
-                    $gr_id = str_replace(['"', '=',":"], "", substr($html_doc, strripos($html_doc, "groupId") + 8, 15));
+                    $gr_id = str_replace(['"', '=', ":"], "",
+                        substr($html_doc, strripos($html_doc, "groupId") + 8, 15));
 
-
-
-                    if($query_data->offset == 1) {
+                    if ($query_data->offset == 1) {
                         $this->parsePage($html_doc, $query_data->task_id);
                     }
 
@@ -230,26 +271,24 @@ $from;
                      */
                     do {
 
-
                         $groupname = str_replace(["/"], "", $gr_url);
 
-                        if(strpos($gr_url, "/group") !== false){
-                            $groupname = substr($gr_url, 7);
-                            $group_members_query = 'https://ok.ru'.$gr_url.'/members?cmd=GroupMembersResultsBlock&gwt.requested='.$this->gwt.'&st.cmd=altGroupMembers&st.groupId='.$gr_id.'&st.vpl.mini=false&';
-                        }else{
-                            $groupname = substr($gr_url, 1);
-                            $group_members_query = 'https://ok.ru'.$gr_url.'/members?cmd=GroupMembersResultsBlock&gwt.requested='.$this->gwt.'&st.cmd=altGroupMembers&st.groupId='.$gr_id.'&st.referenceName='.$groupname.'&st.vpl.mini=false&';
+                        if (strpos($gr_url, "/group") !== false) {
+                            $groupname           = substr($gr_url, 7);
+                            $group_members_query = 'https://ok.ru' . $gr_url . '/members?cmd=GroupMembersResultsBlock&gwt.requested=' . $this->gwt . '&st.cmd=altGroupMembers&st.groupId=' . $gr_id . '&st.vpl.mini=false&';
+                        } else {
+                            $groupname           = substr($gr_url, 1);
+                            $group_members_query = 'https://ok.ru' . $gr_url . '/members?cmd=GroupMembersResultsBlock&gwt.requested=' . $this->gwt . '&st.cmd=altGroupMembers&st.groupId=' . $gr_id . '&st.referenceName=' . $groupname . '&st.vpl.mini=false&';
                         }
 
-
-                        $groups_data = $this->client->request('POST',  $group_members_query, [
-                            'headers' => [
+                        $groups_data = $this->client->request('POST', $group_members_query, [
+                            'headers'     => [
                                 'Referer' => 'https://ok.ru/',
-                                'TKN' => $this->tkn
+                                'TKN'     => $this->tkn
                             ],
                             "form_params" => [
-                                "fetch" => "false",
-                                "st.page" => $page_numb++,
+                                "fetch"       => "false",
+                                "st.page"     => $page_numb++,
                                 "st.loaderid" => "GroupMembersResultsBlockLoader"
 
                             ]
@@ -262,116 +301,152 @@ $from;
                         $gr_doc = $groups_data->getBody()->getContents();
                         $this->parsePage($gr_doc, $query_data->task_id);
 
-
                         $query_data->offset = $page_numb;
                         $query_data->save();
-                        sleep(random_int(5,10));
 
+                        $this->cur_proxy->increment('ok');
+                        $this->cur_proxy->save();
+                        $this->cur_proxy = ProxyItem::find($this->cur_proxy->id);
+                        if ($this->cur_proxy->ok > 1000) {
+                            $proxy = ProxyItem::where(['id' => $from->proxy_id])->where('ok', '<', 1000)->first();
+                        }
+                        sleep(random_int(3, 7));
                     } while (strlen($gr_doc) > 200);
+
+                    $from->increment('count_request');
+                    $from->save();
+                    $from = AccountsData::find($from->id);
+                    if ($from->count_request > 1000) {
+                        $task              = $this->data['task'];
+                        $task->ok_reserved = 0;
+                        $task->save();
+                        break;
+                    }
 
                     $this->saveInfo($gr_url, null, null, $mails, $skypes, $query_data->task_id, null);
 
                     $query_data->delete();    // Получили всех пользователей, удаляем группу
 
-                }else{                // Это человек, парсим данные
+                } else {                // Это человек, парсим данные
 
-                    $groups_data = $this->client->request('GET', 'http://ok.ru'.$query_data->group_url);
+                    foreach ($query_data as $item) {
+                        $groups_data = $this->client->request('GET', 'http://ok.ru' . $item->group_url);
+                        $html_doc = $groups_data->getBody()->getContents();
 
-                    $html_doc = $groups_data->getBody()->getContents();
+                        $mails = [];
+                        $skypes = [];
+                        $phones = [];
+                        $this->crawler->clear();
+                        $this->crawler->load($html_doc);
 
-                    $this->crawler->clear();
-                    $this->crawler->load($html_doc);
+                        $html_doc = $this->crawler->find('body', 0);
 
-                    $html_doc = $this->crawler->find('body', 0);
+                        $people_id_tmp = substr($html_doc, strripos($html_doc, "st.friendId=") + 12, 20);
 
+                        $people_id = preg_replace('~\D+~', '', $people_id_tmp);
 
-                    $people_id_tmp = substr($html_doc, strripos($html_doc, "st.friendId=") + 12, 20);
+                        $mails_users = $this->extractEmails($html_doc);
 
-                    $people_id = preg_replace('~\D+~','',$people_id_tmp);
+                        if ( ! empty($mails_users)) {
 
-                    $mails_users = $this->extractEmails($html_doc);
-
-                    if(!empty($mails_users)) {
-
-                        foreach ($mails_users as $m1) {
-                            $mails[] = $m1;
+                            foreach ($mails_users as $m1) {
+                                $mails[] = $m1;
+                            }
                         }
 
-                    }
+                        $skypes_users = $this->extractSkype($html_doc);
 
-                    $skypes_users = $this->extractSkype($html_doc);
+                        if ( ! empty($skypes_users)) {
 
-                    if(!empty($skypes_users)) {
-
-                        foreach ($skypes_users as $s1) {
-                            $skypes[] = $s1;
+                            foreach ($skypes_users as $s1) {
+                                $skypes[] = $s1;
+                            }
                         }
 
+                        $fio           = $html_doc->find("h1.mctc_name_tx", 0)->plaintext;
+                        $user_info_tmp = $html_doc->find("span.mctc_infoContainer_not_block", 0)->plaintext;
+
+                        if (preg_match('/[0-9]/', $user_info_tmp)) {
+                            $user_info = substr($user_info_tmp, strpos($user_info_tmp, ",") + 1);
+                        } else {
+                            $user_info = $user_info_tmp;
+                        }
+
+                        $this->saveInfo($item->group_url, $fio, $user_info, $mails, $skypes, $item->task_id,
+                            $people_id);
+
+                        $item->delete();
+
+                        $this->cur_proxy->increment('ok');
+                        $this->cur_proxy->save();
+                        $this->cur_proxy = ProxyItem::find($this->cur_proxy->id);
+                        if ($this->cur_proxy->ok > 1000) {
+                            $proxy = ProxyItem::where(['id' => $from->proxy_id])->where('ok', '<', 1000)->first();
+                        }
+
+                        $from->increment('count_request');
+                        $from->save();
+                        $from = AccountsData::find($from->id);
+                        if ($from->count_request > 1000) {
+                            $task              = $this->data['task'];
+                            $task->ok_reserved = 0;
+                            $task->save();
+                            break;
+                        }
+
+                        sleep(rand(2, 8));
                     }
-
-
-                    $fio = $html_doc->find("h1.mctc_name_tx", 0)->plaintext;
-                    $user_info_tmp = $html_doc->find("span.mctc_infoContainer_not_block", 0)->plaintext;
-
-                    if(preg_match('/[0-9]/', $user_info_tmp)){
-                        $user_info = substr($user_info_tmp, strpos($user_info_tmp, ",") + 1);
-                    }else{
-                        $user_info = $user_info_tmp;
-                    }
-
-                    $this->saveInfo($query_data->group_url, $fio, $user_info, $mails, $skypes, $query_data->task_id, $people_id);
-
-                    $query_data->delete();
-
-                    sleep(rand(2, 8));
-
                 }
-
-
-
             } catch (\Exception $ex) {
-                //dd($ex->getMessage());
-                $log = new ErrorLog();
+                $log          = new ErrorLog();
                 $log->task_id = 0;
-                $log->message = $ex->getTraceAsString();
+                $log->message = $ex->getMessage() . "\n" . $ex->getTraceAsString();
                 $log->save();
-                if (strpos($ex->getMessage(), 'cURL') !== false) {
-                    $from->proxy_id = 0;
-                    $from->ok_user_gwt = null;
-                    $from->ok_user_tkn = null;
-                    $from->ok_cookie = null;
-                    $from->save();
-                    $this->cur_proxy->ok = 0;
-                    $this->cur_proxy->save();
-                }
-                //$this->cur_proxy->reportBad();
-                sleep(random_int(1, 5));
             }
-
         }
-
     }
 
-    public function saveInfo($gr_url, $fio, $user_info, $mails, $skypes, $task_id, $people_id)
+    public function login($login, $password)
     {
+        echo "LOGIn";
+        $data = $this->client->request('POST', 'https://www.ok.ru/https', [
+            'form_params' => [
+                "st.redirect"       => "",
+                "st.asr"            => "",
+                "st.posted"         => "set",
+                "st.originalaction" => "https://www.ok.ru/dk?cmd=AnonymLogin&st.cmd=anonymLogin",
+                "st.fJS"            => "on",
+                "st.st.screenSize"  => "1920 x 1080",
+                "st.st.browserSize" => "947",
+                "st.st.flashVer"    => "23.0.0",
+                "st.email"          => $login,
+                "st.password"       => $password,
+                "st.iscode"         => "false"
+            ]
+        ]);
 
-        /*
-         * Сохраняем мыла и скайпы
-         */
-        $search_query = new SearchQueries;
-        $search_query->link = "https://ok.ru".$gr_url;
-        $search_query->vk_name = isset($fio) && strlen($fio) > 0 && strlen($fio) < 500 ? $this->clearstr($fio) : "";
-        $search_query->vk_city = isset($user_info) && strlen($user_info) > 0 && strlen($user_info) < 500 ? $user_info : null;
-        $search_query->mails = count($mails) != 0 ? implode(",", $mails) : null;
-        $search_query->phones = null;
-        $search_query->skypes = count($skypes) != 0 ? implode(",", $skypes) : null;
-        $search_query->task_id = $task_id;
-        $search_query->email_reserved = 0;
-        $search_query->email_sended = 0;
-        $search_query->sk_recevied = 0;
-        $search_query->sk_sended = 0;
-        $search_query->ok_user_id = isset($people_id) ? $people_id : null;
-        $search_query->save();
+        $html_doc = $data->getBody()->getContents();
+
+        if ($this->client->getConfig("cookies")->count() > 2) { // Куков больше 2, возможно залогинились
+
+            $this->crawler->clear();
+            $this->crawler->load($html_doc);
+
+            if (count($this->crawler->find('Мы отправили')) > 0) { // Вывелось сообщение безопасности, значит не залогинились
+                return false;
+            }
+
+            if (strripos($html_doc, "OK.tkn.set('") === false) {
+                return false;
+            }
+
+            $this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
+            $this->tkn = substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
+
+            return true;
+        } else {  // Точно не залогинись
+            return false;
+        }
     }
 
     public function extractEmails($data, $before = [])
@@ -379,7 +454,7 @@ $from;
         if (preg_match_all('~[-a-z0-9_]+(?:\\.[-a-z0-9_]+)*@[-a-z0-9]+(?:\\.[-a-z0-9]+)*\\.[a-z]+~i', $data, $M)) {
 
             foreach ($M as $m) {
-                foreach($m as $mi){
+                foreach ($m as $mi) {
                     if ( ! in_array(trim($mi), $before) && ! strpos($mi,
                             "Rating@Mail.ru") && ! $this->endsWith(trim($mi), "png")
                     ) {
@@ -390,6 +465,16 @@ $from;
         }
 
         return $before;
+    }
+
+    function endsWith($haystack, $needle)
+    {
+        $length = strlen($needle);
+        if ($length == 0) {
+            return true;
+        }
+
+        return (substr($haystack, -$length) === $needle);
     }
 
     public function extractSkype($data, $before = [])
@@ -423,103 +508,82 @@ $from;
 
         foreach ($this->crawler->find("a.photoWrapper") as $query_data2) {
 
-            $ok_group = new OkGroups();
+            $ok_group            = new OkGroups();
             $ok_group->group_url = substr($query_data2->href, 0, strripos($query_data2->href, "?st."));
-            $ok_group->task_id = $task_id;
-            $ok_group->type = 2;
-            $ok_group->reserved = 0;
+            $ok_group->task_id   = $task_id;
+            $ok_group->type      = 2;
+            $ok_group->reserved  = 0;
             $ok_group->save();
-
         }
     }
 
-    public function login($login, $password)
+    public function saveInfo($gr_url, $fio, $user_info, $mails, $skypes, $task_id, $people_id)
     {
 
-        $data = $this->client->request('POST', 'https://www.ok.ru/https', [
-            'form_params' => [
-                "st.redirect"       => "",
-                "st.asr"            => "",
-                "st.posted"         => "set",
-                "st.originalaction" => "https://www.ok.ru/dk?cmd=AnonymLogin&st.cmd=anonymLogin",
-                "st.fJS"            => "on",
-                "st.st.screenSize"  => "1920 x 1080",
-                "st.st.browserSize" => "947",
-                "st.st.flashVer"    => "23.0.0",
-                "st.email"          => $login,
-                "st.password"       => $password,
-                "st.iscode"         => "false"
-            ]
-        ]);
-
-        $html_doc = $data->getBody()->getContents();
-
-        if ($this->client->getConfig("cookies")->count() > 2) { // Куков больше 2, возможно залогинились
-
-            $this->crawler->clear();
-            $this->crawler->load($html_doc);
-
-            if (count($this->crawler->find('Мы отправили')) > 0) { // Вывелось сообщение безопасности, значит не залогинились
-                return false;
-            }
-
-            $this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
-            $this->tkn = substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
-
-            return true;
-        } else {  // Точно не залогинись
-            return false;
-        }
+        /*
+         * Сохраняем мыла и скайпы
+         */
+        $search_query                 = new SearchQueries;
+        $search_query->link           = "https://ok.ru" . $gr_url;
+        $search_query->vk_name        = isset($fio) && strlen($fio) > 0 && strlen($fio) < 500 ? $this->clearstr($fio) : "";
+        $search_query->vk_city        = isset($user_info) && strlen($user_info) > 0 && strlen($user_info) < 500 ? $user_info : null;
+        $search_query->mails          = count($mails) != 0 ? implode(",", $mails) : null;
+        $search_query->phones         = null;
+        $search_query->skypes         = count($skypes) != 0 ? implode(",", $skypes) : null;
+        $search_query->task_id        = $task_id;
+        $search_query->email_reserved = 0;
+        $search_query->email_sended   = 0;
+        $search_query->sk_recevied    = 0;
+        $search_query->sk_sended      = 0;
+        $search_query->ok_user_id     = isset($people_id) ? $people_id : null;
+        $search_query->save();
     }
 
-    function endsWith($haystack, $needle)
+    function clearstr($str)
     {
-        $length = strlen($needle);
-        if ($length == 0) {
-            return true;
-        }
-
-        return (substr($haystack, -$length) === $needle);
-    }
-
-    function utf8_str_split($str) {
-        // place each character of the string into and array
-        $split=1;
-        $array = array();
-        for ( $i=0; $i < strlen( $str ); ){
-            $value = ord($str[$i]);
-            if($value > 127){
-                if($value >= 192 && $value <= 223)
-                    $split=2;
-                elseif($value >= 224 && $value <= 239)
-                    $split=3;
-                elseif($value >= 240 && $value <= 247)
-                    $split=4;
-            }else{
-                $split=1;
-            }
-            $key = NULL;
-            for ( $j = 0; $j < $split; $j++, $i++ ) {
-                $key .= $str[$i];
-            }
-            array_push( $array, $key );
-        }
-        return $array;
-    }
-
-    function clearstr($str){
-        $sru = 'ёйцукенгшщзхъфывапролджэячсмитьбю';
-        $s1 = array_merge($this->utf8_str_split($sru), $this->utf8_str_split(strtoupper($sru)), range('A', 'Z'), range('a','z'), range('0', '9'), array('&',' ','#',';','%','?',':','(',')','-','_','=','+','[',']',',','.','/','\\'));
-        $codes = array();
-        for ($i=0; $i<count($s1); $i++){
+        $sru   = 'ёйцукенгшщзхъфывапролджэячсмитьбю';
+        $s1    = array_merge($this->utf8_str_split($sru), $this->utf8_str_split(strtoupper($sru)), range('A', 'Z'),
+            range('a', 'z'), range('0', '9'),
+            ['&', ' ', '#', ';', '%', '?', ':', '(', ')', '-', '_', '=', '+', '[', ']', ',', '.', '/', '\\']);
+        $codes = [];
+        for ($i = 0; $i < count($s1); $i++) {
             $codes[] = ord($s1[$i]);
         }
         $str_s = $this->utf8_str_split($str);
-        for ($i=0; $i<count($str_s); $i++){
-            if (!in_array(ord($str_s[$i]), $codes)){
+        for ($i = 0; $i < count($str_s); $i++) {
+            if ( ! in_array(ord($str_s[$i]), $codes)) {
                 $str = str_replace($str_s[$i], '', $str);
             }
         }
+
         return $str;
+    }
+
+    function utf8_str_split($str)
+    {
+        // place each character of the string into and array
+        $split = 1;
+        $array = [];
+        for ($i = 0; $i < strlen($str);) {
+            $value = ord($str[$i]);
+            if ($value > 127) {
+                if ($value >= 192 && $value <= 223) {
+                    $split = 2;
+                } elseif ($value >= 224 && $value <= 239) {
+                    $split = 3;
+                } elseif ($value >= 240 && $value <= 247) {
+                    $split = 4;
+                }
+            } else {
+                $split = 1;
+            }
+            $key = null;
+            for ($j = 0; $j < $split; $j++, $i++) {
+                $key .= $str[$i];
+            }
+            array_push($array, $key);
+        }
+
+        return $array;
     }
 }
