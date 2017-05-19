@@ -44,7 +44,7 @@ class FB
                     'type_id'   => 6,
                     'valid'     => 1,
                     'is_sender' => 1
-                ])->orderByRaw('RAND()')->first();
+                ])->where('count_request','<',config('config.total_requets_limit'))->orderByRaw('RAND()')->first();
 
                 if ( ! isset($sender)) {
                     sleep(10);
@@ -77,7 +77,9 @@ class FB
                             // dd($response);
                             continue;
                         } else {
-                            $sender->delete();
+                            //$sender->delete();
+                            $sender->valid=0;
+                            $sender->save();
                             echo "Send Rand Mess: sender not valid\n";
                         }
                         //$sender->valid = 0;
@@ -131,7 +133,8 @@ class FB
                     echo "----fb Login false\n";
                     continue;
                 }
-
+                $sender->count_request+=1;
+                $sender->save();
                 preg_match("/.actorID.\:.(\w*)/s", $data, $sender_id);
                 echo "sender: " . $sender_id[1] . "\n";
                 preg_match("/profile\_id\&quot\;\:(\w*)/s", $data, $dd);
@@ -190,10 +193,10 @@ class FB
     public function login($fb_login, $pass, $proxy = "")
     {
 
-        $proxy_string;
+     //   $proxy_string;
 
         $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
-        $request;
+      //  $request;
         try {
             //$proxy='127.0.0.1:8888';
             if (isset($proxy) && gettype($proxy) == "object") {
@@ -326,7 +329,7 @@ class FB
                     'type_id'   => 6,
                     'valid'     => 1,
                     'is_sender' => 0
-                ])->orderByRaw('RAND()')->first();
+                ])->where('count_request','<',config('config.total_requets_limit'))->orderByRaw('RAND()')->first();
 
                 if ( ! isset($sender)) {
                     sleep(10);
@@ -338,8 +341,8 @@ class FB
                         'proxy.valid'             => 1,
                         'accounts_data.type_id'   => $sender->type_id,
                         'accounts_data.is_sender' => 0
-                    ])->where('proxy.fb', '<>', '0')->select('proxy.*')->first();
-
+                    ])->where([['proxy.fb','>','-1'],['proxy.fb','<', '1000']])->select('proxy.*')->first();
+//
                     if ( ! isset($this->proxy)) {
                         sleep(random_int(5, 10));
                         continue;
@@ -347,8 +350,8 @@ class FB
                     $sender->proxy_id = $this->proxy->id;
                     $sender->save();
                 } else {
-                    $this->proxy = ProxyItem::where(['id' => $sender->proxy_id, 'valid' => 1])->where('fb', '<>',
-                        '0')->first();
+                    $this->proxy = ProxyItem::where(['id' => $sender->proxy_id, 'valid' => 1])->
+                    where([['fb','>','-1'],['fb','<', '1000']])->first();
                 }
                 if ( ! isset($this->proxy)) {
                     sleep(random_int(5, 10));
@@ -369,7 +372,7 @@ class FB
                         // dd($sender->fb_cookie);
                     } else {
                         if ($response == "bad proxy") {
-                            $this->proxy->fb = 0;
+                            $this->proxy->fb = -1;
                             $this->proxy->save();
                             $sender->proxy_id  = 0;
                             $sender->fb_cookie = null;
@@ -378,8 +381,9 @@ class FB
                             $sender->save();
                             continue;
                         } else {
-                            //$sender->valid = 0;
-                            $sender->delete();
+                            $sender->valid = 0;
+                            $sender->save();
+                            //$sender->delete();
                             echo "1Acc not valid\n";
                         }
                         continue;
@@ -416,7 +420,8 @@ class FB
                     'cookies'         => $array->count() > 0 ? $array : true,
                     'allow_redirects' => true,
                     'timeout'         => 10,
-                    'proxy'           => $this->proxy_arr['scheme'] . "://" . $this->proxy->login . ':' . $this->proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
+                   // 'proxy'           => $this->proxy_arr['scheme'] . "://" . $this->proxy->login . ':' . $this->proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
+               // 'proxy'=>'127.0.0.1:8888',
                 ]);
 
                 // $this->login($sender->login, $sender->password);
@@ -435,6 +440,10 @@ class FB
 
                     //$this->login($sender->login, $sender->password);
                     //dd("adadada");
+                    $sender->count_request+=1;
+                    $sender->save();
+                    $this->proxy->fb+=1;
+                    $this->proxy->save();
                     $after = "";
                     try {
                         $request = $this->client->request("GET",
@@ -466,7 +475,7 @@ class FB
                         $sender->fb_access_token = null;
                         $sender->save();
 
-                        $this->proxy->fb = 0;
+                        $this->proxy->fb = -1;
                         $this->proxy->save();
                         continue;
                     }
@@ -482,7 +491,7 @@ class FB
                             //'proxy' => '127.0.0.1:8888',
                             //'proxy' => $proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port']
                         ]);
-                    sleep(2);
+                    //sleep(2);
                 } catch (\Exception $e) {
                     if (strpos($e->getMessage(), "400 Bad Request")) {
                         echo "\n400 Error\n";
@@ -496,7 +505,7 @@ class FB
                         //$sender->fb_user_id = null;
                         $sender->fb_access_token = null;
                         $sender->save();
-                        $this->proxy->fb = 0;
+                        $this->proxy->fb = -1;
                         $this->proxy->save();
                         continue;
                     }
@@ -556,8 +565,9 @@ class FB
                     $sender = AccountsData::where(['id' => $sender->id])->first();
                     // dd($sender->fb_cookie);
                 } else {
-                    //$sender->valid = 0;
-                    $sender->delete();
+                    $sender->valid = 0;
+                    $sender->save();
+                    //$sender->delete();
                     echo "Access^Acc not valid\n";
 
                     //continue;
@@ -594,7 +604,8 @@ class FB
                 'cookies'         => $array->count() > 0 ? $array : true,
                 'allow_redirects' => true,
                 'timeout'         => 10,
-                'proxy'           => $this->proxy_arr['scheme'] . "://" . $this->proxy->login . ':' . $this->proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port']
+                //'proxy'           => $this->proxy_arr['scheme'] . "://" . $this->proxy->login . ':' . $this->proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port']
+                //'proxy'=>'127.0.0.1:8888'
             ]);
 
             // $this->login($sender->login, $sender->password);
@@ -700,41 +711,53 @@ class FB
             sleep(2);
             $data = $request->getBody()->getContents();
 //file_put_contents("test1.html", $data);
-
+            preg_match('/\#access\_token\=(\w*)\&/s', $data, $acc_token);
+            //file_put_contents("test.html", $data);
+            //dd(empty($acc_token));
+            if(!empty($acc_token)) {
+                $acc_token = $acc_token[1];
+            }
+            else{}
             $request = $this->client->request("GET", "https://developers.facebook.com/tools/explorer/" . $app_id . "", [
                     //'proxy' => $proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port']
-                    //'proxy' => '127.0.0.1:8888',
+                   // 'proxy' => '127.0.0.1:8888',
                 ]);
             $data    = $request->getBody()->getContents();
             // file_put_contents("test2.html", $data);
 
-            preg_match('/\{.accessToken.\:\"(\w*)/s', $data, $acc_token);
-            //file_put_contents("test.html", $data);
-            $acc_token = $acc_token[1];
-            // return $acc_token;
-            //echo("\n".$acc_token);
+            preg_match('/react\"\}\,\{\"accessToken\"\:("(.*?)(?:"|$)|([^"]+))\,/s', $data, $acc_token);
+           // file_put_contents("test.html", $data);
             if (empty($acc_token)) {
                 return false;
             }
+            $acc_token = $acc_token[2];
+                //}
+            //dd($acc_token);
+            // return $acc_token;
+            //echo("\n".$acc_token);
+            if ($acc_token=='') {
+                return false;
+            }
+
             $sender->fb_access_token = $acc_token;
             $sender->save();
 
             return true;
         } catch (\Exception $ex) {
-            //dd($ex->getMessage());
+          //  dd($ex->getMessage());
         }
     }
 
     public function parseGroup(FBLinks $fblink)
     {
-        $proxy;
-        $proxy_arr;
+       // $proxy;
+        //$proxy_arr;
         while (true) {
             $sender = AccountsData::where([
                 'type_id'   => 6,
                 'valid'     => 1,
                 'is_sender' => 0
-            ])->orderByRaw('RAND()')->first();
+            ])->where('count_request','<',config('config.total_requets_limit'))->orderByRaw('RAND()')->first();
 
             if ( ! isset($sender)) {
                 sleep(10);
@@ -746,7 +769,7 @@ class FB
                     'proxy.valid'             => 1,
                     'accounts_data.type_id'   => $sender->type_id,
                     'accounts_data.is_sender' => 0
-                ])->where('proxy.fb', '<>', '0')->select('proxy.*')->first();
+                ])->where([['proxy.fb', '<', 1000],['proxy.fb', '>',-1 ], ])->select('proxy.*')->first();
                 if ( ! isset($proxy)) {
                     sleep(random_int(5, 10));
                     continue;
@@ -754,7 +777,7 @@ class FB
                 $sender->proxy_id = $proxy->id;
                 $sender->save();
             } else {
-                $proxy = ProxyItem::where(['id' => $sender->proxy_id, 'valid' => 1])->where('fb', '<>', '0')->first();
+                $proxy = ProxyItem::where(['id' => $sender->proxy_id, 'valid' => 1])->where([['fb', '<', 1000],['fb', '>',-1 ], ])->first();
             }
             if ( ! isset($proxy)) {
                 sleep(random_int(5, 10));
@@ -775,7 +798,7 @@ class FB
                     // dd($sender->fb_cookie);
                 } else {
                     if ($response == "bad proxy") {
-                        $proxy->fb = 0;
+                        $proxy->fb = -1;
                         $proxy->save();
                         $sender->proxy_id  = 0;
                         $sender->fb_cookie = null;
@@ -784,8 +807,9 @@ class FB
                         $sender->save();
                         continue;
                     } else {
-                        //$sender->valid = 0;
-                        $sender->delete();
+                        $sender->valid = 0;
+                        $sender->save();
+                        //$sender->delete();
                         echo "Acc not valid\n";
                     }
                     continue;
@@ -839,20 +863,23 @@ class FB
                 }
                 break;
             } catch (\Exception $ex) {
-                if (strpos($exd->getMessage(), "cURL")) {
+                if (strpos($ex->getMessage(), "cURL")) {
 
                     $sender->proxy_id  = 0;
                     $sender->fb_cookie = null;
                     //$sender->fb_user_id = null;
                     $sender->fb_access_token = null;
                     $sender->save();
-                    $proxy->fb = 0;
+                    $proxy->fb = -1;
                     $proxy->save();
                     continue;
                 }
             }
         }
-
+        $sender->count_request+=1;
+        $sender->save();
+        $proxy->fb+=1;
+        $proxy->save();
         try {
             $request = $this->client->request("GET", $fblink->link, [
                     //'proxy' => '127.0.0.1:8888',
@@ -860,7 +887,7 @@ class FB
                 ]);
             sleep(2);
         } catch (\Exception $ex) {
-            if (strpos($exd->getMessage(), "cURL")) {
+            if (strpos($ex->getMessage(), "cURL")) {
 
                 $sender->proxy_id  = 0;
                 $sender->fb_cookie = null;
@@ -915,14 +942,15 @@ class FB
     public function getUsersOfGroup(FBLinks $group)
     {
         //$group->vkuser_id = "6138125";
-        $proxy;
-        $proxy_arr;
+        //$proxy;
+       // $proxy_arr;
+
         while (true) {
             $sender = AccountsData::where([
                 'type_id'   => 6,
                 'valid'     => 1,
                 'is_sender' => 0
-            ])->orderByRaw('RAND()')->first();
+            ])->where('count_request','<',config('config.total_requets_limit'))->orderByRaw('RAND()')->first();
 
             if ( ! isset($sender)) {
                 sleep(10);
@@ -934,7 +962,7 @@ class FB
                     'proxy.valid'             => 1,
                     'accounts_data.type_id'   => $sender->type_id,
                     'accounts_data.is_sender' => 0
-                ])->where('proxy.fb', '<>', '0')->select('proxy.*')->first();
+                ])->where([['proxy.fb', '<', 1000],['proxy.fb', '>',-1 ], ])->select('proxy.*')->first();
                 if ( ! isset($proxy)) {
                     sleep(random_int(5, 10));
                     continue;
@@ -942,7 +970,7 @@ class FB
                 $sender->proxy_id = $proxy->id;
                 $sender->save();
             } else {
-                $proxy = ProxyItem::where(['id' => $sender->proxy_id, 'valid' => 1])->where('fb', '<>', '0')->first();
+                $proxy = ProxyItem::where(['id' => $sender->proxy_id, 'valid' => 1])->where([['fb', '<', 1000],['fb', '>',-1 ], ])->first();
             }
             if ( ! isset($proxy)) {
                 sleep(random_int(5, 10));
@@ -951,6 +979,9 @@ class FB
                 $sender->fb_user_id      = null;
                 $sender->fb_access_token = null;
                 $sender->save();
+                $group->getusers_reserved = 0;
+                $group->save();
+
                 continue;
             }
 
@@ -974,6 +1005,7 @@ class FB
                         continue;
                     } else {
                         $sender->valid = 0;
+                        $sender->save();
                         //$sender->delete();
                         echo "1Acc not valid\n";
                     }
@@ -1010,6 +1042,7 @@ class FB
                 'cookies'         => $array->count() > 0 ? $array : true,
                 'allow_redirects' => true,
                 'timeout'         => 10,
+                //'proxy' => '127.0.0.1:8888',
             ]);
             $proxy_arr    = parse_url($proxy->proxy);
             try {
@@ -1018,7 +1051,7 @@ class FB
                         //'proxy' => '127.0.0.1:8888',
                         'proxy' => $proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port']
                     ]);
-                sleep(2);
+               // sleep(2);
                 $data = $request->getBody()->getContents();
                 //dd($data);
                 if (strpos($data, "facebook.com/login/")) {
@@ -1027,7 +1060,7 @@ class FB
                 }
                 break;
             } catch (\Exception $ex) {
-                if (strpos($exd->getMessage(), "cURL")) {
+                if (strpos($ex->getMessage(), "cURL")) {
 
                     $sender->proxy_id        = 0;
                     $sender->fb_cookie       = null;
@@ -1041,12 +1074,18 @@ class FB
             }
         }
 
+        $sender->count_request+=1;
+        $sender->save();
+        $proxy->fb+=1;
+        $proxy->save();
+
         try {
+
             $request = $this->client->get("https://www.facebook.com/groups/" . $group->user_id . "/members/", [
-                    //'proxy' => '127.0.0.1:8888',
-                    'proxy' => $proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port']
+                 //   'proxy' => '127.0.0.1:8888',
+                   'proxy' => $proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port']
                 ]);
-            sleep(2);
+            //sleep(2);
 
             $counter = 96;
             $data    = $request->getBody()->getContents();
@@ -1125,6 +1164,7 @@ class FB
                 $counter += 96;
             }
         } catch (\Exception $ex) {
+
             if (strpos($ex->getMessage(), "cURL")) {
 
                 $sender->proxy_id        = 0;
@@ -1143,14 +1183,14 @@ class FB
     public function parseUser(FBLinks $user)
     {
 
-        $proxy;
-        $proxy_arr;
+       // $proxy;
+       // $proxy_arr;
         while (true) {
             $sender = AccountsData::where([
                 'type_id'   => 6,
                 'valid'     => 1,
                 'is_sender' => 0
-            ])->orderByRaw('RAND()')->first();
+            ])->where('count_request','<',config('config.total_requets_limit'))->orderByRaw('RAND()')->first();
 
             if ( ! isset($sender)) {
                 sleep(10);
@@ -1162,7 +1202,7 @@ class FB
                     'proxy.valid'             => 1,
                     'accounts_data.type_id'   => $sender->type_id,
                     'accounts_data.is_sender' => 0
-                ])->where('proxy.fb', '<>', '0')->select('proxy.*')->first();
+                ])->where([['proxy.fb', '<', 1000],['proxy.fb', '>',-1 ], ])->select('proxy.*')->first();
                 if ( ! isset($proxy)) {
                     sleep(random_int(5, 10));
                     continue;
@@ -1173,7 +1213,7 @@ class FB
                 $sender->fb_access_token = null;
                 $sender->save();
             } else {
-                $proxy = ProxyItem::where(['id' => $sender->proxy_id, 'valid' => 1])->where('fb', '<>', '0')->first();
+                $proxy = ProxyItem::where(['id' => $sender->proxy_id, 'valid' => 1])->where([['fb', '<', 1000],['fb', '>',-1 ], ])->first();
             }
             if ( ! isset($proxy)) {
                 sleep(random_int(5, 10));
@@ -1203,8 +1243,9 @@ class FB
                         $sender->save();
                         continue;
                     } else {
-                        //$sender->valid = 0;
-                        $sender->delete();
+                        $sender->valid = 0;
+                        $sender->save();
+                        //$sender->delete();
                         echo "Acc not valid\n";
                     }
                     continue;
@@ -1281,6 +1322,10 @@ class FB
                 //'proxy' => '127.0.0.1:8888',
                 'proxy' => $proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port']
             ]);
+        $sender->count_request+=1;
+        $sender->save();
+        $proxy->fb+=1;
+        $proxy->save();
         $data    = $request->getBody()->getContents();
         preg_match("/href\=.(\S*).\ data-tab-key=.about.\>/s", $data, $req_link);
 
@@ -1551,7 +1596,7 @@ class FB
                 [
                     'form_params' => [
                         'fb_dtsg'  => $fb_dtsg,
-                        'code'     => $code->name,
+                        //'code'     => $code->name,
                         'confirm'  => '1',
                         '__user'   => $id,
                         '__a'      => '1',

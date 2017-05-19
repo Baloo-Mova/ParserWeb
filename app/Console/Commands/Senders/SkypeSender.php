@@ -7,10 +7,10 @@ use App\MyFacades\SkypeClassFacade;
 use App\Models\TemplateDeliverySkypes;
 use App\Models\SearchQueries;
 use App\Models\Parser\ErrorLog;
-
+use Illuminate\Support\Facades\DB;
 class SkypeSender extends Command
 {
-
+    public $content;
     /**
      * The name and signature of the console command.
      *
@@ -44,24 +44,33 @@ class SkypeSender extends Command
     {
         while (true) {
             try {
-                $sk_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
-                    ['search_queries.skypes', '<>', ''],
-                    'search_queries.sk_sended'   => 0,
-                    'search_queries.sk_recevied' => 0,
-                    'tasks.need_send'            => 1,
-                    'tasks.active_type'           => 1,
-                ])->select('search_queries.*')->first();
+                $this->content['query'] = null;
+                DB::transaction(function () {
+                    $sk_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
+                        ['search_queries.skypes', '<>', ''],
+                        'search_queries.sk_sended' => 0,
+                        'search_queries.sk_recevied' => 0,
+                        'tasks.need_send' => 1,
+                        'tasks.active_type' => 1,
+                    ])->select('search_queries.*')->lockForUpdate()->first();
 
-                if ( ! isset($sk_query)) {
+                    if ( !isset($sk_query)) {
+                        return;
+                    }
+                    $sk_query->sk_recevied = 1;
+                    $sk_query->save();
+                    $this->content['query'] = $sk_query;
+                });
+                if ( ! isset($this->content['query'])) {
                     sleep(10);
                     continue;
                 }
 
-                $sk_query->sk_recevied = 1;
-                $sk_query->save();
+               // $this->content['query']->sk_recevied = 1;
+               // $this->content['query']->save();
 
-                $skypes  = array_filter(explode(",", trim($sk_query->skypes)));
-                $message = TemplateDeliverySkypes::where('task_id', '=', $sk_query->task_id)->first();
+                $skypes  = array_filter(explode(",", trim($this->content['query']->skypes)));
+                $message = TemplateDeliverySkypes::where('task_id', '=', $this->content['query']->task_id)->first();
 
                 if ( ! isset($message)) {
                     sleep(10);
@@ -73,8 +82,8 @@ class SkypeSender extends Command
                     sleep(random_int(1, 5));
                 }
 
-                $sk_query->sk_sended = count($skypes);
-                $sk_query->save();
+                $this->content['query']->sk_sended = count($skypes);
+                $this->content['query']->save();
 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
