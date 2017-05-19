@@ -11,7 +11,8 @@ use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\Parser\FBLinks;
 
-class RegFB extends Command {
+class RegFB extends Command
+{
 
     /**
      * The name and signature of the console command.
@@ -32,7 +33,8 @@ class RegFB extends Command {
      *
      * @return void
      */
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
     }
 
@@ -41,30 +43,17 @@ class RegFB extends Command {
      *
      * @return mixed
      */
-    public function handle() {
-      //  while (true) {
-            sleep(random_int(1,3));
-           
-            try {
-                $web = new FB();
-
-               
-                    $web->registrateUser();
-                    //$fblink->reserved =0;
-                   // $fblink->parsed =1;
-                   //  $fblink->save();
-                    //$fblink->delete();
-                    
-               
-            } catch (\Exception $ex) {
-                dd($ex->getMessage());
-                $log = new ErrorLog();
-                $log->task_id = $fblink->task_id;
-                $log->message = $ex->getMessage() . " line:" . __LINE__;
-                $log->save();
-                
-            }
+    public function handle()
+    {
+        try {
+            $web = new FB();
+            $web->registrateUser();
+        } catch (\Exception $ex) {
+            $log          = new ErrorLog();
+            $log->task_id = 0;
+            $log->message = $ex->getMessage() . " line:" . __LINE__;
+            $log->save();
         }
-    //}
+    }
 
 }

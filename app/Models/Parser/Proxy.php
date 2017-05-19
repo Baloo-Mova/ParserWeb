@@ -73,6 +73,7 @@ class Proxy extends Model
     {
         return static::where([
             [$type, '<', 50],
+            [$type , '>', -1],
             ['valid', '=', 1]
         ])->first();
     }

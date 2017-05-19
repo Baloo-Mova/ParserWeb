@@ -64,7 +64,7 @@ class Web {
 
             if (!empty($errorMessage)) {
                 $err = new ErrorLog();
-                $err->message = $ex->getMessage() . " line:" . __LINE__;
+                $err->message = $errorMessage . " line:" . __LINE__;
                 $err->task_id = 0;
                 $err->save();
 
