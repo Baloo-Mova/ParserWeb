@@ -10,10 +10,10 @@ use App\Models\Parser\FBLinks;
 use App\Models\Tasks;
 use App\Helpers\FB;
 use App\Models\Parser\ErrorLog;
-
+use Illuminate\Support\Facades\DB;
 class FBSender extends Command
 {
-
+    public $content;
     /**
      * The name and signature of the console command.
      *
@@ -45,45 +45,53 @@ class FBSender extends Command
      */
     public function handle()
     {
-        sleep(random_int(1,3));
+
         while (true) {
             try {
-                 $sk_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
-                    ['search_queries.fb_id','<>',''],
-                     'search_queries.fb_sended'   => 0,
-                    'search_queries.fb_reserved' => 0,
-                    'tasks.need_send'            => 1,
-                    'tasks.active_type'          => 1, 
-                    
-                ])->select('search_queries.*')->first();
-               
-                if ( !isset($sk_query)) {
+                $this->content['query'] = null;
+                DB::transaction(function () {
+                    $sk_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
+                        ['search_queries.fb_id', '<>', ''],
+                        'search_queries.fb_sended' => 0,
+                        'search_queries.fb_reserved' => 0,
+                        'tasks.need_send' => 1,
+                        'tasks.active_type' => 1,
+
+                    ])->select('search_queries.*')->lockForUpdate()->first();
+                    if ( !isset($sk_query)) {
+                        return;
+                    }
+                    $sk_query->fb_reserved = 1;
+                    $sk_query->save();
+                    $this->content['query'] = $sk_query;
+                });
+                if ( !isset($this->content['query'])) {
                     sleep(10);
                      
                     continue;
                 }
 
-                $sk_query->fb_reserved = 1;
-                $sk_query->save();
+               // $sk_query->fb_reserved = 1;
+               // $sk_query->save();
 
                 
-                $message = TemplateDeliveryFB::where('task_id', '=', $sk_query->task_id)->first();
+                $message = TemplateDeliveryFB::where('task_id', '=', $this->content['query']->task_id)->first();
                 // dd($message);
                 
                 if ( ! isset($message)) {
                     sleep(10);
-                    $sk_query->fb_reserved = 0;
-                    $sk_query->save();
+                    $this->content['query']->fb_reserved = 0;
+                    $this->content['query']->save();
                     continue;
                 }
 
                  $web = new FB();
-                $web->sendRandomMessage($sk_query->fb_id, $message->text);
+                $web->sendRandomMessage($this->content['query']->fb_id, $message->text);
                     sleep(random_int(1, 5));
-                
 
-                $sk_query->fb_sended = 1;
-                $sk_query->save();
+
+                $this->content['query']->fb_sended = 1;
+                $this->content['query']->save();
 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();

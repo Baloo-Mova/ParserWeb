@@ -10,9 +10,9 @@ use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\Parser\FBLinks;
-
+use Illuminate\Support\Facades\DB;
 class ParseFB extends Command {
-
+    public $content;
     /**
      * The name and signature of the console command.
      *
@@ -43,39 +43,47 @@ class ParseFB extends Command {
      */
     public function handle() {
         while (true) {
-            sleep(random_int(1,3));
-            $fblink = FBLinks::join('tasks', 'tasks.id', '=', 'fb_links.task_id')->where(['fb_links.parsed' => 0, 'fb_links.reserved'=>0,'tasks.active_type' => 1,])->select('fb_links.*')->first();
-          
-            if (!isset($fblink)) {
+            $this->content['link'] = null;
+            DB::transaction(function () {
+                $fblink = FBLinks::join('tasks', 'tasks.id', '=', 'fb_links.task_id')->where(['fb_links.parsed' => 0, 'fb_links.reserved' => 0, 'tasks.active_type' => 1,])->select('fb_links.*')->
+                lockForUpdate()->first();
+                if ( !isset($fblink)) {
+                    return;
+                }
+                $fblink->reserved = 1;
+                $fblink->save();
+                $this->content['link'] = $fblink;
+            });
+            if (!isset($this->content['link'])) {
                 sleep(10);
 
                 continue;
             }
 //echo("\n".$fblink->link);
-            $fblink->reserved = 1;
-            $fblink->save();
+        //    $fblink->reserved = 1;
+           // $fblink->save();
             try {
                 $web = new FB();
 
-                if ($fblink->type == 0) {
+                if ($this->content['link']->type == 0) {
                    
-                    $web->parseGroup($fblink);
-                    $fblink->reserved =0;
-                    $fblink->parsed =1;
-                     $fblink->save();
+                    $web->parseGroup($this->content['link']);
+                    $this->content['link']->reserved =0;
+                    $this->content['link']->parsed =1;
+                    $this->content['link']->save();
                     //$fblink->delete();
                     
-                } else if ($fblink->type == 1) {
+                } else if ($this->content['link']->type == 1) {
                    // echo($fblink->user_id."\n");
-                    $web->parseUser($fblink);
-                    $fblink->delete();
+                    $web->parseUser($this->content['link']);
+                    $this->content['link']->delete();
                     //echo($fblink->user_id."deleted\n");
                    // $fblink->reserved =0;
            // $fblink->save();
                 }
             } catch (\Exception $ex) {
                 $log = new ErrorLog();
-                $log->task_id = $fblink->task_id;
+                $log->task_id = $this->content['link']->task_id;
                 $log->message = $ex->getMessage() . " line:" . __LINE__;
                 $log->save();
                 

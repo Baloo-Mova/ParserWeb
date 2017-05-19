@@ -13,13 +13,14 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use App\Models\SearchQueries;
 use App\Models\TemplateDeliveryTw;
-
+use Illuminate\Support\Facades\DB;
 class TwitterSender extends Command
 {
     public $client  = null;
     public $crawler = null;
     public $tkn     = "";
     public $max_position = "";
+    public $content;
     /**
      * The name and signature of the console command.
      *
@@ -56,27 +57,35 @@ class TwitterSender extends Command
         while (true) {
 
             try {
+                $this->content['query'] = null;
+                DB::transaction(function () {
+                    $tw_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
+                        ['search_queries.tw_user_id', '<>', ''],
+                        'search_queries.tw_sended' => 0,
+                        'search_queries.tw_reserved' => 0,
+                        'tasks.need_send' => 1,
+                        'tasks.active_type' => 1,
 
-                $tw_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
-                    ['search_queries.tw_user_id','<>',''],
-                    'search_queries.tw_sended'   => 0,
-                    'search_queries.tw_reserved' => 0,
-                    'tasks.need_send'            => 1,
-                    'tasks.active_type'          => 1,
+                    ])->select('search_queries.*')->lockForUpdate()->first();
+                    if ( !isset($tw_query)) {
+                        return;
+                    }
+                    $tw_query->tw_reserved = 1;
+                    $tw_query->save();
+                    $this->content['query'] = $tw_query;
+                });
 
-                ])->select('search_queries.*')->first();
-
-                if ( !isset($tw_query)) {
+                if ( !isset( $this->content['query'])) {
                     sleep(10);
                     continue;
                 }
 
-                $task_id = $tw_query->task_id;
+                $task_id =  $this->content['query']->task_id;
 
-                $tw_query->tw_reserved = 1;
-                $tw_query->save();
+               // $tw_query->tw_reserved = 1;
+               // $tw_query->save();
 
-                $message = TemplateDeliveryTw::where('task_id', '=', $tw_query->task_id)->first();
+                $message = TemplateDeliveryTw::where('task_id', '=',  $this->content['query']->task_id)->first();
 
                 if ( ! isset($message)) {
                     sleep(10);
@@ -136,20 +145,20 @@ class TwitterSender extends Command
 
                 $data = $this->client->request('POST', 'https://twitter.com/i/tweet/create', [
                     'headers' => [
-                        'Referer' => 'https://twitter.com/'.substr($tw_query->tw_user_id, 1)
+                        'Referer' => 'https://twitter.com/'.substr( $this->content['query']->tw_user_id, 1)
                     ],
                     'form_params' => [
                         "authenticity_token" => $this->tkn,
                         "is_permalink_page" => "false",
                         "page_context" => "profile",
                         "place_id" => "",
-                        "status" => $tw_query->tw_user_id." ".$message->text,
+                        "status" =>  $this->content['query']->tw_user_id." ".$message->text,
                         "tagged_users" => ""
                     ]
                 ]);
 
-                $tw_query->tw_sended = 1;
-                $tw_query->save();
+                $this->content['query']->tw_sended = 1;
+                $this->content['query']->save();
 
                 $from->count_sended_messages++;
                 $from->save();

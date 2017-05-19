@@ -11,9 +11,10 @@ use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\Parser\FBLinks;
-
+use Illuminate\Support\Facades\DB;
 class ParseFBGetUsers extends Command
 {
+    public $content;
     /**
      * The name and signature of the console command.
      *
@@ -45,38 +46,49 @@ class ParseFBGetUsers extends Command
      */
     public function handle()
     {
-        sleep(random_int(1,3));
+       // sleep(random_int(1,3));
         while (true) {
-            
-           
-            $group = FBLinks::join('tasks', 'tasks.id', '=', 'fb_links.task_id')->where(['fb_links.type' => 0, 'fb_links.getusers_reserved' => 0, 'fb_links.getusers_status' => 0,'tasks.active_type' => 1,])->select('fb_links.*')->first();
 
-            if ( !isset($group)) {
+            $this->content['link'] = null;
+            DB::transaction(function () {
+                $group = FBLinks::join('tasks', 'tasks.id', '=', 'fb_links.task_id')->where(['fb_links.type' => 0, 'fb_links.getusers_reserved' => 0, 'fb_links.getusers_status' => 0, 'tasks.active_type' => 1,])->
+                select('fb_links.*')->lockForUpdate()->first();
+                if ( !isset( $group)) {
+                    return;
+                }
+                $group->getusers_reserved = 1;
+                $group->save();
+                $this->content['link']=$group;
+            });
+
+            if ( !isset($this->content['link'])) {
             sleep(10);
                 continue;
             }
 //echo("\n".$group->link);
-            $group->getusers_reserved = 1;
-            $group->save();
+           // $group->getusers_reserved = 1;
+           // $group->save();
             try {
                 $web  = new FB();
                                
                 
                 
-                if($web->getUsersOfGroup($group)){
-                $group->getusers_reserved = 0;
-                $group->getusers_status = 1;
-                $group->save();
+                if($web->getUsersOfGroup($this->content['link'])){
+                    $this->content['link']->getusers_reserved = 0;
+                    $this->content['link']->getusers_status = 1;
+                    $this->content['link']->save();
                // $group->delete();
                  
                     
                 }
-                else $group->delete();
-                
+                else {
+                     $this->content['link']->delete();
+                }
+                if($this->content['link']->parsed==1 && $this->content['link']->getusers_status==1) $this->content['link']->delete();
                 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->task_id = $group->task_id;
+                $log->task_id = $this->content['link']->task_id;
                 $log->message = $ex->getMessage(). " line:".__LINE__ ;
                 $log->save();
             }

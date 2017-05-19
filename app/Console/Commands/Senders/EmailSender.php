@@ -16,7 +16,7 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 
 class EmailSender extends Command {
-
+    public $content;
     /**
      * The name and signature of the console command.
      *
@@ -59,36 +59,46 @@ class EmailSender extends Command {
      * @return mixed
      */
     public function handle() {
-       sleep(random_int(1,2));
-        while (true) {
-            sleep(1);
-            try {
-                $emails = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
-                            ['search_queries.mails', '<>', ''],
-                            'search_queries.email_reserved' => 0,
-                            'search_queries.email_sended' => 0,
-                            'tasks.need_send' => 1,
-                            'tasks.active_type' => 1,
-                        ])->select('search_queries.*')->first();
 
-                if (!isset($emails)) {
+        while (true) {
+
+            try {
+
+                $this->content['emails'] = null;
+                DB::transaction(function () {
+
+                    $emails = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
+                        ['search_queries.mails', '<>', ''],
+                        'search_queries.email_reserved' => 0,
+                        'search_queries.email_sended' => 0,
+                        'tasks.need_send' => 1,
+                        'tasks.active_type' => 1,
+                    ])->select('search_queries.*')->lockForUpdate()->first();
+                    if ( !isset($emails)) {
+                        return;
+                    }
+                    $emails->email_reserved = 1;
+                    $emails->save();
+                    $this->content['emails'] = $emails;
+                });
+                if (!isset($this->content['emails'])) {
 
                     sleep(10);
                     continue;
                 }
 
-                $emails->email_reserved = 1;
-                $emails->save();
+                //$emails->email_reserved = 1;
+               // $emails->save();
 
-                $template = $emails->getEmailTemplate();
+                $template = $this->content['emails']->getEmailTemplate();
 
                 if (empty($template->text) || empty($template->subject)) {
                     $log = new ErrorLog();
                     $log->message = "Невозможно отравить email сообщение без шаблона";
-                    $log->task_id = $emails->task_id;
+                    $log->task_id = $this->content['emails']->task_id;
                     $log->save();
-                    $emails->email_reserved = 0;
-                    $emails->save();
+                    $this->content['emails']->email_reserved = 0;
+                    $this->content['emails']->save();
 
                     sleep(10);
                     continue;
@@ -106,15 +116,15 @@ class EmailSender extends Command {
                 if (!isset($from)) {
                     $log = new ErrorLog();
                     $log->message = "Невозможно отравить email сообщение без отправителей";
-                    $log->task_id = $emails->task_id;
+                    $log->task_id = $this->content['emails']->task_id;
                     $log->save();
-                    $emails->email_reserved = 0;
-                    $emails->save();
+                    $this->content['emails']->email_reserved = 0;
+                    $this->content['emails']->save();
 
                     sleep(10);
                     continue;
                 }
-                $to = explode(',', $emails->mails);
+                $to = explode(',', $this->content['emails']->mails);
 
                 if ($this->sendMessage([
                             'text' => $template->text,
@@ -122,11 +132,11 @@ class EmailSender extends Command {
                             'attaches' => $template->attaches,
                             "from" => $from,
                             "to" => $to,
-                            "id" => $emails->id,
+                            "id" => $this->content['emails']->id,
                         ])
                 ) {
 
-                    $emails->email_sended = count($to);
+                    $this->content['emails']->email_sended = count($to);
                     //  dd("hhhhhhh");
                 } else {
 
@@ -134,13 +144,13 @@ class EmailSender extends Command {
                     $notvalidmess->id_text = $template->id;
                     $notvalidmess->id_sender = $from->id;
                     $notvalidmess->save();
-                    $emails->email_reserved = 0;
-                    $emails->email_sended = 0;
-                    $emails->save();
+                    $this->content['emails']->email_reserved = 0;
+                    $this->content['emails']->email_sended = 0;
+                    $this->content['emails']->save();
                     continue;
                 }
-                $emails->email_sended=1;
-                $emails->save();
+                $this->content['emails']->email_sended=1;
+                $this->content['emails']->save();
                 sleep(30);
             } catch (\Exception $ex) {
                 $log = new ErrorLog();

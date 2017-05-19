@@ -14,7 +14,7 @@ use GuzzleHttp;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
-
+use Illuminate\Support\Facades\DB;
 class OkSender extends Command {
 
     public $client = null;
@@ -22,7 +22,7 @@ class OkSender extends Command {
     public $gwt = "";
     public $tkn = "";
     public $cur_proxy;
-
+    public $content;
     /**
      * The name and signature of the console command.
      *
@@ -52,33 +52,42 @@ class OkSender extends Command {
      * @return mixed
      */
     public function handle() {
-        sleep(random_int(1, 3));
+
         //$from;
         $this->crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
 
         while (true) {
             try {
+                $this->content['query'] = null;
+                DB::transaction(function () {
+                    $ok_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
+                        ['search_queries.ok_user_id', '<>', ''],
+                        'search_queries.ok_sended' => 0,
+                        'search_queries.ok_reserved' => 0,
+                        'tasks.need_send' => 1,
+                        'tasks.active_type' => 1,
+                    ])->select('search_queries.*')->lockForUpdate()->first();
 
-                $ok_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
-                            ['search_queries.ok_user_id', '<>', ''],
-                            'search_queries.ok_sended' => 0,
-                            'search_queries.ok_reserved' => 0,
-                            'tasks.need_send' => 1,
-                            'tasks.active_type' => 1,
-                        ])->select('search_queries.*')->first();
+                    if ( !isset($ok_query)) {
+                        return;
+                    }
+                    $ok_query->ok_reserved = 1;
+                    $ok_query->save();
+                    $this->content['query'] = $ok_query;
+                });
 
-                if (!isset($ok_query)) {
+                if (!isset($this->content['query'])) {
                     sleep(10);
                     continue;
                 }
 
 
-                $task_id = $ok_query->task_id;
+                $task_id = $this->content['query']->task_id;
 
                 //$ok_query->ok_reserved = 1;
-                $ok_query->save();
+                //$this->content['query']->save();
 
-                $message = TemplateDeliveryOK::where('task_id', '=', $ok_query->task_id)->first();
+                $message = TemplateDeliveryOK::where('task_id', '=', $this->content['query']->task_id)->first();
 
                 if (!isset($message)) {
                     sleep(10);
@@ -171,7 +180,7 @@ class OkSender extends Command {
                     }
                 }
 
-                $data = $this->client->request('POST', 'https://ok.ru/dk?cmd=MessagesController&st.convId=PRIVATE_' . $ok_query->ok_user_id . '&st.cmd=userMain', [
+                $data = $this->client->request('POST', 'https://ok.ru/dk?cmd=MessagesController&st.convId=PRIVATE_' . $this->content['query']->ok_user_id . '&st.cmd=userMain', [
                     'headers' => [
                         'Referer' => 'https://ok.ru/',
                         'TKN' => $this->tkn,
@@ -209,8 +218,8 @@ class OkSender extends Command {
                     $from->save;
                     continue;
                 }
-                $ok_query->ok_sended = 1;
-                $ok_query->save();
+                $this->content['query']->ok_sended = 1;
+                $this->content['query']->save();
 //dd("stop");
                 sleep(rand(1, 5));
             } catch (\Exception $ex) {

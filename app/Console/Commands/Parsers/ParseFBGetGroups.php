@@ -11,9 +11,10 @@ use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\Parser\FBLinks;
-
+use Illuminate\Support\Facades\DB;
 class ParseFBGetGroups extends Command
 {
+    public $content;
     /**
      * The name and signature of the console command.
      *
@@ -45,24 +46,34 @@ class ParseFBGetGroups extends Command
      */
     public function handle()
     {
-        sleep(random_int(1,3));
-        while (true) {
-            $task = Tasks::where(['task_type_id' => 1, 'fb_reserved' => 0, 'fb_complete' => 0,'active_type'=>1])->first();
 
-            if ( !isset($task)) {
+        while (true) {
+            $this->content['task'] = null;
+            DB::transaction(function () {
+                $task = Tasks::where(['task_type_id' => 1, 'fb_reserved' => 0, 'fb_complete' => 0, 'active_type' => 1])->lockForUpdate()->first();
+                if ( ! isset($task)) {
+                    return;
+                }
+
+                $task->fb_reserved = 1;
+                $task->save();
+                $this->content['task'] = $task;
+
+            });
+            if ( !isset($this->content['task'])) {
             sleep(10);
                 continue;
             }
 //dd($task);
-            $task->fb_reserved = 1;
-            $task->save();
+            // $task->fb_reserved = 1;
+           // $task->save();
             try {
                 $web           = new FB();
-               //if($web->getGroups($task->task_query,$task->id)){
-                if($web->getGroupsWithApi($task->task_query,$task->id)){
-                $task->fb_reserved = 0;
-                $task->fb_complete = 1;
-                $task->save();
+              // if($web->getGroups($task->task_query,$task->id)){
+                if($web->getGroupsWithApi($this->content['task']->task_query,$this->content['task']->id)){
+                    $this->content['task']->fb_reserved = 0;
+                    $this->content['task']->fb_complete = 1;
+                    $this->content['task']->save();
                     
                     
                 }
@@ -72,7 +83,7 @@ class ParseFBGetGroups extends Command
                 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->task_id = $task->id;
+                $log->task_id = $this->content['task']->id;
                 $log->message = $ex->getMessage(). " line:".__LINE__ ;
                 $log->save();
             }
