@@ -341,8 +341,8 @@ class ParsingTasksController extends Controller {
         $task->task_type_id = 3;
         $task->task_query = "Тестовая рассылка";
         $task->active_type = 1;
-        $task->reserved = 0;
-        $task->google_offset = 0;
+        $task->google_ru = 0;
+        $task->google_ru_offset = 0;
         $task->tw_offset = "-1";
         $task->need_send = 1;
         $task->save();
@@ -447,8 +447,8 @@ class ParsingTasksController extends Controller {
         $task->task_type_id = 3;
         $task->task_query = "Тестовая рассылка";
         $task->active_type = 1;
-        $task->reserved = 0;
-        $task->google_offset = 0;
+        $task->google_ru = 0;
+        $task->google_ru_offset = 0;
         $task->need_send = 1;
         $task->tw_offset = "-1";
         $task->fb_complete = "1";
@@ -499,8 +499,8 @@ class ParsingTasksController extends Controller {
         $task->task_type_id = 3;
         $task->task_query = "Тестовая рассылка";
         $task->active_type = 1;
-        $task->reserved = 0;
-        $task->google_offset = 0;
+        $task->google_ru = 0;
+        $task->google_ru_offset = 0;
         $task->need_send = 1;
         $task->tw_offset = "-1";
         $task->fb_complete = "1";
@@ -553,8 +553,8 @@ class ParsingTasksController extends Controller {
         $task->task_type_id = 3;
         $task->task_query = "Тестовая рассылка";
         $task->active_type = 1;
-        $task->reserved = 0;
-        $task->google_offset = 0;
+        $task->google_ru = 0;
+        $task->google_ru_offset = 0;
         $task->need_send = 1;
         $task->tw_offset = "-1";
         $task->fb_complete = "1";
@@ -608,8 +608,8 @@ class ParsingTasksController extends Controller {
         $task->task_type_id = 3;
         $task->task_query = "Тестовая рассылка";
         $task->active_type = 1;
-        $task->reserved = 0;
-        $task->google_offset = 0;
+        $task->google_ru = 0;
+        $task->google_ru_offset = 0;
         $task->need_send = 1;
         $task->tw_offset = "-1";
         $task->fb_complete = "1";
@@ -662,8 +662,8 @@ class ParsingTasksController extends Controller {
         $task->task_type_id = 3;
         $task->task_query = "Тестовая рассылка";
         $task->active_type = 1;
-        $task->reserved = 0;
-        $task->google_offset = 0;
+        //$task->reserved = 0;
+        //$task->google_offset = 0;
         $task->need_send = 1;
         $task->tw_offset = "-1";
         $task->fb_complete = "1";
@@ -715,8 +715,8 @@ class ParsingTasksController extends Controller {
         $task->task_type_id = 3;
         $task->task_query = "Тестовая рассылка";
         $task->active_type = 1;
-        $task->reserved = 0;
-        $task->google_offset = 0;
+        //$task->reserved = 0;
+       // $task->google_offset = 0;
         $task->need_send = 1;
         $task->tw_offset = "-1";
         $task->fb_complete = "1";
