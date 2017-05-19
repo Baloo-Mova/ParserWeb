@@ -11,9 +11,9 @@ use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\Parser\VKLinks;
-
+use Illuminate\Support\Facades\DB;
 class ParseVK extends Command {
-
+    public $content;
     /**
      * The name and signature of the console command.
      *
@@ -43,48 +43,56 @@ class ParseVK extends Command {
      * @return mixed
      */
     public function handle() {
-        sleep(random_int(1,3));
+       // sleep(random_int(1,3));
         while (true) {
-        $vklink = VKLinks::
+            $this->content['vklink'] = null;
+            DB::transaction(function () {
+                $vklink = VKLinks::
                 join('tasks', 'tasks.id', '=', 'vk_links.task_id')->
-                    where(['vk_links.parsed' => 0,'vk_links.reserved'=> 0,'tasks.active_type' => 1,])
-                   ->select('vk_links.*')->first();
-
-        if (!isset($vklink)) {
+                where(['vk_links.parsed' => 0, 'vk_links.reserved' => 0, 'tasks.active_type' => 1,])
+                    ->select('vk_links.*')->lockForUpdate()->first();
+                if ( !isset($vklink)) {
+                    return;
+                }
+                $vklink->reserved = 1;
+                $vklink->save();
+                $this->content['vklink'] = $vklink;
+            });
+        if (!isset($this->content['vklink'])) {
             sleep(random_int(5,10));
             
             continue;
         }
 
-        $vklink->reserved= 1;
-        $vklink->save();
+       // $vklink->reserved= 1;
+      //  $vklink->save();
         try {
             $web = new VK();
 
-            $proxy = ProxyItem::orderBy('id', 'desc')->first();
+           // $proxy = ProxyItem::orderBy('id', 'desc')->first();
             $i = 0;
 
-            if ($vklink->type == 0) {
-               $web->parseGroup($vklink);
-                    $vklink->reserved= 0;
-                    $vklink->parsed= 1;
-                    $vklink->save();
-                    if ($vklink->getusers_status== 1){
-                        $vklink->delete();
+            if ($this->content['vklink']->type == 0) {
+               $web->parseGroup($this->content['vklink']);
+                $this->content['vklink']->reserved= 0;
+                $this->content['vklink']->parsed= 1;
+                $this->content['vklink']->save();
+                    if ($this->content['vklink']->getusers_status== 1){
+                        $this->content['vklink']->delete();
                     }
                    
                
             } 
-            else if ($vklink->type == 1) {
-                $web->parseUser($vklink) ;
-                $vklink->delete();
+            else if ($this->content['vklink']->type == 1) {
+                $web->parseUser($this->content['vklink']) ;
+                $this->content['vklink']->delete();
             }
            sleep(random_int(1, 5));
 
            
         } catch (\Exception $ex) {
             $log = new ErrorLog();
-            $log->task_id = $vklink->task_id;
+            $log->task_id = $this->content['vklink']->task_id;
             $log->message = $ex->getMessage() . " line:" . __LINE__;
             $log->save();
         }

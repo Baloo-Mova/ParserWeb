@@ -81,6 +81,8 @@ class AccountsData extends Model
         'process_id',
         'proxy_id',
         'is_sender',
+        'valid',
+        'count_request',
     ];
 
     public function accountType()

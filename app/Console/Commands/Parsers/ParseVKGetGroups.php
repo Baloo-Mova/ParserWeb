@@ -11,9 +11,10 @@ use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\Parser\VKLinks;
-
+use Illuminate\Support\Facades\DB;
 class ParseVKGetGroups extends Command
 {
+    public $content;
     /**
      * The name and signature of the console command.
      *
@@ -45,27 +46,37 @@ class ParseVKGetGroups extends Command
      */
     public function handle()
     {
-        sleep(random_int(1,3));
+       // sleep(random_int(1,3));
         while (true) {
-            $task = Tasks::where(['task_type_id' => 1, 'vk_reserved' => 0, 'active_type' => 1])->first();
+            $this->content['task'] = null;
+            DB::transaction(function () {
+                $task = Tasks::where(['task_type_id' => 1, 'vk_reserved' => 0, 'active_type' => 1])->lockForUpdate()->first();
+                if ( ! isset($task)) {
+                    return;
+                }
 
-            if ( !isset($task)) {
+                $task->vk_reserved = 1;
+                $task->save();
+                $this->content['task'] = $task;
+            });
+            //dd($this->content['task']);
+            if ( !isset($this->content['task'])) {
             sleep(10);
                 continue;
             }
 
-            $task->vk_reserved = 1;
-            $task->save();
+            //$task->vk_reserved = 1;
+            //$task->save();
             try {
                 $web           = new VK();
                                
                 $proxy         = ProxyItem::orderBy('id', 'desc')->first();
                 $i             = 0;
                 
-                if($web->getGroups($task->task_query,$task->id)){
-                $task->vk_reserved = 2;
+                if($web->getGroups($this->content['task']->task_query,$this->content['task']->id)){
+                    $this->content['task']->vk_reserved = 2;
                 //$task->active_type = 0;
-                $task->save();
+                    $this->content['task']->save();
                     
                     
                 }
@@ -75,7 +86,7 @@ class ParseVKGetGroups extends Command
                 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->task_id = $task->id;
+                $log->task_id = $this->content['task']->id;
                 $log->message = $ex->getMessage(). " line:".__LINE__ ;
                 $log->save();
             }

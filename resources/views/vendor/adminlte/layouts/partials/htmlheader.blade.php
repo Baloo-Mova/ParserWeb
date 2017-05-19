@@ -10,7 +10,7 @@
     <script src="{{ asset('/js/jquery-2.2.4.min.js') }}" type="text/javascript"></script>
     <script src="{{ asset('/js/common.js') }}" type="text/javascript"></script>
     <?php
-    if(Request::path() == 'email-templates/create' || strpos(Request::path(),"email-templates/edit")!==false){
+    if(Request::path() == 'email-templates/create' || strpos(Request::path(),"email-templates/edit")!==false ||Request::path() == 'parsing-tasks/testing-delivery-mails' ){
         echo ('<link href="'. asset('vue/css/app.css') .'" rel="stylesheet" type="text/css" />'.
    '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">');
     }

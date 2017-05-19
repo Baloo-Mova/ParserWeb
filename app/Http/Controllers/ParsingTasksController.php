@@ -329,7 +329,8 @@ class ParsingTasksController extends Controller {
 
     public function testingDeliveryMails() {
         $user_id = Auth::user()->id;
-        $email_templates = EmailTemplates::where(['user_id'=>$user_id]);
+        $email_templates = EmailTemplates::where(['user_id'=>$user_id])->get();
+        //dd($email_templates);
         return view("parsing_tasks.testingDeliveryMails", ["data" => $email_templates]);
     }
 
