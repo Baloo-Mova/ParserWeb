@@ -158,7 +158,7 @@ class Proxy extends Model
         $this->{$this->reservedFor}++;
     }
 
-    public function count(){
-        return $this->{$this->reservedFor};
+    public function canProcess(){
+        return !($this->{$this->reservedFor} >= 1000);
     }
 }
