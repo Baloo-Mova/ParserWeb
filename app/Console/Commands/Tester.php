@@ -2,9 +2,24 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Proxy;
+use App\Helpers\PhoneNumber;
+use App\Jobs\GetProxies;
+use App\Jobs\TestProxies;
+use App\Models\Parser\Proxy;
 use App\MyFacades\SkypeClass;
+use Hamcrest\Core\Set;
+use PHPMailer;
 use Illuminate\Console\Command;
+use App\MyFacades\SkypeClassFacade;
+use App\Helpers\VK;
+use App\Helpers\FB;
+use App\Models\AccountsData;
+use App\Helpers\SimpleHtmlDom;
+use GuzzleHttp\Client;
+use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Cookie\SetCookie;
+use App\Models\GoodProxies;
+
 
 class Tester extends Command
 {
@@ -41,6 +56,7 @@ class Tester extends Command
 
     public function handle()
     {
+
 
     }
 

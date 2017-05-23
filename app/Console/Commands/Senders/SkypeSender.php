@@ -57,7 +57,7 @@ class SkypeSender extends Command
                     if ( !isset($sk_query)) {
                         return;
                     }
-                    $sk_query->sk_recevied = 1;
+                   // $sk_query->sk_recevied = 1;
                     $sk_query->save();
                     $this->content['query'] = $sk_query;
                 });

@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $valid
  * @property int $proxy_id
  * @property int $process_id
+ * @property int $skype_id
  * @method static \Illuminate\Database\Query\Builder|\App\Models\SkypeLogins whereExpiry($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\SkypeLogins whereId($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\SkypeLogins whereLogin($value)
@@ -35,6 +36,7 @@ class SkypeLogins extends Model
     public $fillable = [
         'login',
         'password',
+        'skype_id',
         'skypeToken',
         'registrationToken',
         'expiry',

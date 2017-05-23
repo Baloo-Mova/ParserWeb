@@ -63,7 +63,8 @@ class RegYandex extends Command {
             try {
 
                 while (true) {
-                    $proxy = ProxyItem::where('yandex_ru', '<>', 0)->first();
+                    $proxy = ProxyItem::where([['yandex_ru', '<', 1000],['yandex_ru', '>',-1 ], ])->first();
+                    //echo($sender->login . "\n");
                     //echo($sender->login . "\n");
                     if (!isset($proxy)) {
                         sleep(10);

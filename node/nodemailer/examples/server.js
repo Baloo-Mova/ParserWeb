@@ -47,7 +47,13 @@ app.get('/', function(req, res) {
 	connectionTimeout: 20000,
     greetingTimeout: 15000,
     // define proxy configuration
-    proxy: req.body.proxy//'socks5://94.27.22.250:32550/'
+    proxy: {
+		 host:"socks5://185.147.124.33",
+    port:8000,
+    user:"7zxShe",
+    password:"FhB871"
+		//req.body.proxy//'socks5://94.27.22.250:32550/'
+	}
 
 });
 
