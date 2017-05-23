@@ -115,9 +115,12 @@ class Proxy extends Model
      *
      * @return Proxy
      */
-    public static function getProxy($type)
+    public static function getProxy($type,$proxy_id=0)
     {
         $proxy = null;
+
+
+        if($proxy_id==0){
         DB::transaction(function () use ($type, &$proxy) {
             $proxy = static::where([
                 [$type, '<', 1000],
@@ -130,6 +133,21 @@ class Proxy extends Model
                 $proxy->reserve();
             }
         });
+        }else{
+            DB::transaction(function () use ($type,$proxy_id, &$proxy) {
+                $proxy = static::where([
+                    [$type, '<', 1000],
+                    [$type . '_reserved', '=', 0],
+                    ['valid', '=', 1],
+                    ['id','=',$proxy_id],
+                ])->first();
+
+                if (isset($proxy)) {
+                    $proxy->reservedFor = $type;
+                    $proxy->reserve();
+                }
+            });
+        }
 
         return $proxy;
     }
