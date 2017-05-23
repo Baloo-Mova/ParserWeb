@@ -8,17 +8,18 @@
         @if (! Auth::guest())
             <div class="user-panel">
                 <div class="pull-left image">
-                    <img src="{{ Gravatar::get($user->email) }}" class="img-circle" alt="User Image" />
+                    <img src="{{ Gravatar::get($user->email) }}" class="img-circle" alt="User Image"/>
                 </div>
                 <div class="pull-left info">
                     <p>{{ Auth::user()->name }}</p>
                     <!-- Status -->
-                    <a href="#"><i class="fa fa-circle text-success"></i> {{ trans('adminlte_lang::message.online') }}</a>
+                    <a href="#"><i class="fa fa-circle text-success"></i> {{ trans('adminlte_lang::message.online') }}
+                    </a>
                 </div>
             </div>
-        @endif
+    @endif
 
-        <!-- Sidebar Menu -->
+    <!-- Sidebar Menu -->
         <ul class="sidebar-menu">
             <li class="header">Меню</li>
             <!-- Optionally, you can add icons to the links -->
@@ -38,7 +39,7 @@
                     </span>
                 </a>
                 <ul class="treeview-menu" style="display: none;">
-                    <li >
+                    <li>
                         <a href="{{ route('parsing_tasks.testingDeliverySkypes') }}" class="{{ Request::path() == 'parsing_tasks/parsing_tasks.testingDeliverySkypes' ? 'link_active' : ''}}">
                             <i class='fa fa-skype'></i>
                             <span>Skype</span>
@@ -67,7 +68,7 @@
                             <i class='fa fa-whatsapp'></i>
                             <span>Viber, Whatsapp</span>
                         </a>
-                       
+
                     </li>
                 </ul>
             </li>
@@ -91,7 +92,7 @@
                     </span>
                 </a>
                 <ul class="treeview-menu" style="display: none;">
-                    <li >
+                    <li>
                         <a href="{{ route('accounts_data.vk') }}" class="{{ Request::path() == 'accounts-data/vk' ? 'link_active' : ''}}">
                             <i class='fa fa-vk'></i>
                             <span>VK Аккаунты</span>
@@ -118,7 +119,7 @@
                         </a>
                     </li>
                     <li class="">
-                            <a href="{{ route('accounts_data.ins') }}" class="{{ Request::path() == 'accounts-data/ins' ? 'link_active' : ''}}">
+                        <a href="{{ route('accounts_data.ins') }}" class="{{ Request::path() == 'accounts-data/ins' ? 'link_active' : ''}}">
                             <i class='fa fa-instagram'></i>
                             <span>Instagram Аккаунты</span>
                         </a>
@@ -127,13 +128,14 @@
                         <a href="{{ route('accounts_data.fb') }}" class="{{ Request::path() == 'accounts-data/fb' ? 'link_active' : ''}}">
                             <i class='fa fa-facebook'></i>
                             <span>Facebook Аккаунты</span>
-                    </li>  
+                        </a>
+                    </li>
                     <li class="">
                         <a href="{{ route('android_bots.index') }}" class="{{ Request::path() == 'accounts-data/fb' ? 'link_active' : ''}}">
                             <i class='fa fa-android'></i>
                             <span>Android Боты</span>
-                    </li>  
-                    
+                        </a>
+                    </li>
                     <li class="">
                         <a href="{{ route('smtpbase.index') }}" class="{{ Request::path() == 'smtp-base' ? 'link_active' : ''}}">
                             <i class='fa fa-envelope'></i>
@@ -152,12 +154,6 @@
                 <a href="{{ route('settings.index') }}">
                     <i class='fa fa-wrench'></i>
                     <span>Общие Настройки</span>
-                </a>
-            </li>
-            <li class="{{ Request::path() == 'proxy' ? 'active' : '' }}">
-                <a href="{{ route('proxy.getproxies') }}">
-                    <i class='fa fa-link'></i>
-                    <span>Proxy</span>
                 </a>
             </li>
         </ul><!-- /.sidebar-menu -->

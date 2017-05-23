@@ -2,22 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Helpers\PhoneNumber;
-use App\Jobs\GetProxies;
-use App\Jobs\TestProxies;
-use App\Models\Parser\Proxy;
-use Hamcrest\Core\Set;
-use PHPMailer;
+use App\MyFacades\SkypeClass;
 use Illuminate\Console\Command;
-use App\MyFacades\SkypeClassFacade;
-use App\Helpers\VK;
-use App\Helpers\FB;
-use App\Models\AccountsData;
-use App\Helpers\SimpleHtmlDom;
-use GuzzleHttp\Client;
-use GuzzleHttp\Cookie\CookieJar;
-use GuzzleHttp\Cookie\SetCookie;
-use App\Models\GoodProxies;
 
 class Tester extends Command
 {
@@ -54,15 +40,9 @@ class Tester extends Command
 
     public function handle()
     {
-        $proxy = Proxy::getProxy(Proxy::GOOGLE);
-        echo $proxy->id;
-
-        sleep(90);
-
-        $proxy->google++;
-        $proxy->save();
-
-        echo $proxy->google;
+        $skype = new SkypeClass();
+        $skype->sendRandom("bear_balooo", "Helloy");
+        //$skype->sendFrom(['login'=>"+79851840917",'password'=>"Gh32E11sw3"],"bear_balooo","HELLO");
     }
 
 }
