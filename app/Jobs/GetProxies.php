@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\GoodProxies;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -34,9 +35,7 @@ class GetProxies implements ShouldQueue
     public function handle()
     {
         try {
-            if (empty($this->data)) {
-                exit();
-            }
+
 
             $this->client = new Client([
                 'headers' => [
@@ -53,24 +52,22 @@ class GetProxies implements ShouldQueue
 
             $pr_key = Settings::whereId(1)->first();
 
-            if (!empty($pr_key)) {
+            if (isset($pr_key)) {
 
                 $arr = array();
 
                 $mode = ($this->data['mode'] == "none" ? "" : '&' . $this->data['mode'].'=1');
                 $get_proxies_query = $this->client->request('GET',
-                    'http://api.best-proxies.ru/proxylist.txt?key=' . $pr_key->best_proxies .
+                    'http://api.best-proxies.ru/proxylist.txt?response=5000key=' . $pr_key->best_proxies .
                     '&limit=' . str_replace(" ", "", $this->data['limit']) .
-                    '&ports=' . str_replace(" ", "", $this->data['port']) .
                     '&type=' . str_replace(" ", "", $this->data['type']) .
-                    (strlen($this->data['country'])>1 ?  '&country='.str_replace(" ","", $this->data['country']) : "") .    
+                    (strlen($this->data['country'])>1 ?  '&country='.str_replace(" ","", $this->data['country']) : "") .
                     $mode
-                    .'&includeType'//,['proxy'=>'127.0.0.1:8888']
-                    ); // if need http://ip format '&includeType='
+                    .'&includeType=1'
+                    );
 
                 if ($get_proxies_query->getStatusCode() == 200) {
                     $proxies_list = $get_proxies_query->getBody()->getContents();
-
                     $proxies = explode("\r\n", $proxies_list);
                     foreach ($proxies as $item){
                         $arr[] = [
@@ -81,12 +78,13 @@ class GetProxies implements ShouldQueue
                             "mailru"  => ($this->data['mode'] == "mailru"),
                             "twitter"  => ($this->data['mode'] == "twitter"),
                             "country" => ($this->data['country'])
-                            
+
                         ];
                     }
 
                     if (count($arr) > 0 ){
                         ProxyTemp::insert($arr);
+                        GoodProxies::insert($arr);
                     }
 
                 }

@@ -50,7 +50,6 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-         Proxy::class,
          ParseGoogle::class,
          ParseSite::class,
          ParseVKGetGroups::class,
