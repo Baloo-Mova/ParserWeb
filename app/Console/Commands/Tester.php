@@ -6,6 +6,7 @@ use App\Helpers\PhoneNumber;
 use App\Jobs\GetProxies;
 use App\Jobs\TestProxies;
 use App\Models\Parser\Proxy;
+use App\MyFacades\SkypeClass;
 use Hamcrest\Core\Set;
 use PHPMailer;
 use Illuminate\Console\Command;
@@ -18,6 +19,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use App\Models\GoodProxies;
+
 
 class Tester extends Command
 {
@@ -54,15 +56,8 @@ class Tester extends Command
 
     public function handle()
     {
-        $proxy = Proxy::getProxy(Proxy::GOOGLE);
-        echo $proxy->id;
 
-        sleep(90);
 
-        $proxy->google++;
-        $proxy->save();
-
-        echo $proxy->google;
     }
 
 }

@@ -34,6 +34,7 @@ use App\Console\Commands\Reg\RegOK;
 use App\Console\Commands\Reg\RegGoogle;
 use App\Console\Commands\Reg\RegYandex;
 use App\Console\Commands\Reg\RegMailru;
+use App\Console\Commands\Reg\RegSkype;
 
 use App\Console\Commands\Parsers\ParseGoogleUa;
 //use App\Console\Commands\Parsers\ParseYandexUa;
@@ -85,7 +86,8 @@ class Kernel extends ConsoleKernel
         RegGoogle::class,
         RegYandex::class,
         RegMailru::class,
-        
+        RegSkype::class,
+
     ];
 
     /**
