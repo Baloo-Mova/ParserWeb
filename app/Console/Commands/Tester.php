@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Proxy;
 use App\MyFacades\SkypeClass;
 use Illuminate\Console\Command;
 
@@ -40,9 +41,7 @@ class Tester extends Command
 
     public function handle()
     {
-        $skype = new SkypeClass();
-        $skype->sendRandom("bear_balooo", "Helloy");
-        //$skype->sendFrom(['login'=>"+79851840917",'password'=>"Gh32E11sw3"],"bear_balooo","HELLO");
+
     }
 
 }

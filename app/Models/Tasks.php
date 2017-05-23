@@ -45,6 +45,7 @@ use App\Models\TasksType;
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Tasks whereYandexRuReserved($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Tasks whereYandexUaReserved($value)
  * @mixin \Eloquent
+ * @method static \Illuminate\Database\Query\Builder|\App\Models\Tasks whereOkReserved($value)
  */
 class Tasks extends Model
 {

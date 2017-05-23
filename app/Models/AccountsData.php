@@ -62,6 +62,8 @@ use App\Models\AccountsDataTypes;
  * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData whereValid($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData whereVkCookie($value)
  * @mixin \Eloquent
+ * @property int $count_request
+ * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData whereCountRequest($value)
  */
 class AccountsData extends Model
 {
