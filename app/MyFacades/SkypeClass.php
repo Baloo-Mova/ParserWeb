@@ -428,10 +428,10 @@ sleep(random_int(1,3));
                 $this->cur_proxy = ProxyItem::getProxy(ProxyItem::Skype, $from->proxy_id);
                 // dd($this->cur_proxy);
                 if (!isset($this->cur_proxy)) {
-                    if ($from->proxy_id != 0) {
-                        $from->proxy_id = 0;
-                        $from->save();
-                    }
+                   // if ($from->proxy_id != 0) {
+                    //    $from->proxy_id = 0;
+                    //    $from->save();
+                    //}
                     sleep(random_int(1, 4));
 
                     continue;
@@ -441,7 +441,9 @@ sleep(random_int(1,3));
                 $this->setCurrentProxy();
 
                 $req = $this->web("https://www.google.com.ua/", "GET", [], true, true);
-                if($req==false){$this->cur_proxy->release(); $this->cur_proxy->skype=-1;$this->cur_proxy->save(); $from->proxy_id=0;
+                if($req==false){
+                    $this->cur_proxy->release(); $this->cur_proxy->skype=-1;$this->cur_proxy->save();
+                //$from->proxy_id=0;
                     $from->reserved = 0;
                     $from->skypeToken=null;
                     $from->registrationToken=null;
@@ -470,7 +472,7 @@ sleep(random_int(1,3));
                     $from->count_request+=1;
                     $from->save();
                     $this->cur_proxy->inc();
-                    $this->cur_proxy->release();
+                   $this->cur_proxy->release();
                    // dd($this->cur_proxy);
                     if ($is_friend) {
 
@@ -482,7 +484,7 @@ sleep(random_int(1,3));
                                 $this->cur_proxy->save();
                                 $this->proxy_string="";
                                 $this->proxy_arr=null;
-                                $from->proxy_id=0;
+                                //$from->proxy_id=0;
                                 $from->reserved = 0;
 
                                 $from->skypeToken=null;
@@ -512,7 +514,7 @@ sleep(random_int(1,3));
                             $this->cur_proxy->save();
                             $this->proxy_string="";
                             $this->proxy_arr=null;
-                            $from->proxy_id=0;
+                            //$from->proxy_id=0;
                             $from->reserved = 0;
                             $from->skypeToken=null;
                             $from->registrationToken=null;
@@ -530,12 +532,13 @@ sleep(random_int(1,3));
                         return true;
                     }
                 }
-            } catch (\Exception $ex) {
+            }catch (\Exception $ex) {
                 dd($ex);
 
             }
 
         }
+        //return false;
     }
 
 
