@@ -4,7 +4,7 @@ namespace App\Console\Commands\Parsers;
 
 use App\Helpers\VK;
 use App\Models\Parser\ErrorLog;
-use App\Models\Parser\Proxy as ProxyItem;
+
 
 use App\Models\Tasks;
 use App\Models\TasksType;
@@ -70,7 +70,7 @@ class ParseVKGetGroups extends Command
             try {
                 $web           = new VK();
                                
-                $proxy         = ProxyItem::orderBy('id', 'desc')->first();
+
                 $i             = 0;
                 
                 if($web->getGroups($this->content['task']->task_query,$this->content['task']->id)){

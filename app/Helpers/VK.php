@@ -12,7 +12,7 @@ use App\Models\AccountsData;
 use App\Models\Parser\VKLinks;
 use App\Helpers\SimpleHtmlDom;
 use App\Models\SearchQueries;
-use App\Models\Parser\Proxy as ProxyItem;
+use App\Models\Proxy as ProxyItem;
 use App\Models\ProxyTemp;
 use App\Models\UserNames;
 use App\Helpers\PhoneNumber;
@@ -397,13 +397,14 @@ class VK {
                     sleep(random_int(5, 10));
                     continue;
                 }
-
+                $sender->reserved=1;
+                $sender->save();
                 if ($sender->proxy_id == 0) {
 
-                    $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
-                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where([['proxy.vk', '<', 1000],['proxy.vk', '>',-1 ], ])
-                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
-
+//                    $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
+//                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where([['proxy.vk', '<', 1000],['proxy.vk', '>',-1 ], ])
+//                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
+                    $this->cur_proxy=    ProxyItem::getProxy(ProxyItem::Skype, $sender->proxy_id);
                     if (!isset($this->cur_proxy)) {
                         sleep(random_int(5, 10));
                         continue;
@@ -451,6 +452,7 @@ class VK {
                         'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
                         'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
                     ],
+                    ///'debug' => true,
                     'verify' => false,
                     'cookies' => $array->count() > 0 ? $array : true,
                     'allow_redirects' => true,

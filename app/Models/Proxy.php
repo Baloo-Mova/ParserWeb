@@ -123,6 +123,7 @@ class Proxy extends Model
         if($proxy_id==0){
         DB::transaction(function () use ($type, &$proxy) {
             $proxy = static::where([
+                [$type, '>',-1],
                 [$type, '<', 1000],
                 [$type . '_reserved', '=', 0],
                 ['valid', '=', 1],
@@ -136,8 +137,9 @@ class Proxy extends Model
         }else{
             DB::transaction(function () use ($type,$proxy_id, &$proxy) {
                 $proxy = static::where([
+                    [$type,'>',-1],
                     [$type, '<', 1000],
-                    [$type . '_reserved', '=', 0],
+                    [$type . '_reserved', '<', 4],
                     ['valid', '=', 1],
                     ['id','=',$proxy_id],
                 ])->first();
@@ -155,17 +157,20 @@ class Proxy extends Model
     public function reserve()
     {
         if (isset($this->reservedFor)) {
-            $this->update([
-                $this->reservedFor . '_reserved' => 1
-            ]);
+//            $this->update([
+//                $this->reservedFor . '_reserved' => 1
+//            ]);
+            $this->increment($this->reservedFor . '_reserved');
+            $this->save();
         }
     }
 
     public function release()
     {
         if (isset($this->reservedFor)) {
+            $this->decrement($this->reservedFor . '_reserved');
             $this->update([
-                $this->reservedFor . '_reserved' => 0,
+               // $this->reservedFor . '_reserved' => 0,
                 $this->reservedFor               => $this->{$this->reservedFor}
             ]);
         }
@@ -174,9 +179,11 @@ class Proxy extends Model
     public function inc()
     {
         $this->{$this->reservedFor}++;
+      //  $this->save();
     }
 
     public function canProcess(){
         return !($this->{$this->reservedFor} >= 1000);
     }
+
 }
