@@ -80,7 +80,7 @@ class EmailSender extends Command {
                     if ( !isset($emails)) {
                         return;
                     }
-                   // $emails->email_reserved = 1;
+                    $emails->email_reserved = 1;
                     $emails->save();
                     $this->content['emails'] = $emails;
                 });
