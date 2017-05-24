@@ -80,6 +80,7 @@ class Proxy extends Model
     const Viber     = 'viber';
     const Twitter   = 'twitter';
     const Instagram = 'instagram';
+    const Email     = 'email';
     public  $table       = 'proxy';
     public  $timestamps  = true;
     public  $fillable    = [
@@ -106,6 +107,8 @@ class Proxy extends Model
         'twitter_reserved',
         'instagram',
         'instagram_reserved',
+        'email',
+        'email_reserved',
         'valid',
     ];
     private $reservedFor = "";
