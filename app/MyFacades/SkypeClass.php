@@ -472,7 +472,7 @@ sleep(random_int(1,3));
                     $from->count_request+=1;
                     $from->save();
                     $this->cur_proxy->inc();
-                   $this->cur_proxy->release();
+                   //$this->cur_proxy->release();
                    // dd($this->cur_proxy);
                     if ($is_friend) {
 
