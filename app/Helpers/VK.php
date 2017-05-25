@@ -599,6 +599,8 @@ class VK {
                     sleep(random_int(1, 5));
                     $counter+=20;
                 }
+                $sender->reserved-=1;
+                $sender->save();
             } catch (\Exception $ex) {
                 $this->cur_proxy->release();
                 $sender->reserved-=1;
@@ -616,9 +618,8 @@ class VK {
                 continue;
             }
             $this->cur_proxy->release();
-            $sender->reserved-=1;
-            $sender->save();
-            dd();
+
+            //dd();
             return true;
         }
     }
