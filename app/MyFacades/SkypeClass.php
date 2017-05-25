@@ -288,7 +288,9 @@ class SkypeClass
 
         //if(strpos($result,"Operation failed")>0) echo $result;
         curl_close($curl);
-
+        if(isset($this->cur_proxy)){
+        $this->cur_proxy->inc();
+        }
            // dd("\n".$result);
         return $result;
     }
@@ -471,7 +473,7 @@ sleep(random_int(1,3));
                     $is_friend = $this->isMyFriend($to);                     //$this->isFriend($to, $message);
                     $from->count_request+=1;
                     $from->save();
-                    $this->cur_proxy->inc();
+                    //$this->cur_proxy->inc();
                    //$this->cur_proxy->release();
                    // dd($this->cur_proxy);
                     if ($is_friend) {

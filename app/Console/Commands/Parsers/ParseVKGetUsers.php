@@ -4,7 +4,7 @@ namespace App\Console\Commands\Parsers;
 
 use App\Helpers\VK;
 use App\Models\Parser\ErrorLog;
-use App\Models\Parser\Proxy as ProxyItem;
+
 
 use App\Models\Tasks;
 use App\Models\TasksType;
@@ -71,7 +71,7 @@ class ParseVKGetUsers extends Command
             try {
                 $web           = new VK();
                                
-                $proxy         = ProxyItem::orderBy('id', 'desc')->first();
+
                 $i             = 0;
                 
                 if($web->getUsersOfGroup($this->content['vklink'])){

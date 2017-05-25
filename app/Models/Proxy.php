@@ -181,7 +181,9 @@ class Proxy extends Model
 
     public function inc()
     {
-        $this->{$this->reservedFor}++;
+        //$this->{$this->reservedFor}++;
+        $this->increment($this->reservedFor);
+        $this->save();
       //  $this->save();
     }
 
