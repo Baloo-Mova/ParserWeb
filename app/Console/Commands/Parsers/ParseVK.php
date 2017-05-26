@@ -46,7 +46,7 @@ class ParseVK extends Command {
        // sleep(random_int(1,3));
         while (true) {
             $this->content['vklink'] = null;
-            DB::transaction(function () {
+                DB::transaction(function () {
                 $vklink = VKLinks::
                 join('tasks', 'tasks.id', '=', 'vk_links.task_id')->
                 where(['vk_links.parsed' => 0, 'vk_links.reserved' => 0, 'tasks.active_type' => 1,])
@@ -74,19 +74,32 @@ class ParseVK extends Command {
 
             if ($this->content['vklink']->type == 0) {
                $web->parseGroup($this->content['vklink']);
-                $this->content['vklink']->reserved= 0;
+               // $this->content['vklink']->reserved= 0;
                 $this->content['vklink']->parsed= 1;
                 $this->content['vklink']->save();
-                    if ($this->content['vklink']->getusers_status== 1){
-                        $this->content['vklink']->delete();
-                    }
+
                    
                
-            } 
-            else if ($this->content['vklink']->type == 1) {
+            }
+            DB::transaction(function () {
+                $vklink = VKLinks::
+                where(['id'=>$this->content['vklink']->id,'parsed' => 1,'getusers_status'=>1])
+                    ->lockForUpdate()->first();
+
+                if ( !isset($vklink)) {
+                    return;
+                }
+                $vklink->delete();
+
+
+            });
+
+            if ($this->content['vklink']->type == 1) {
                 $web->parseUser($this->content['vklink']) ;
                 $this->content['vklink']->delete();
             }
+
+
            sleep(random_int(1, 5));
 
            
@@ -95,6 +108,18 @@ class ParseVK extends Command {
             $log->task_id = $this->content['vklink']->task_id;
             $log->message = $ex->getMessage() . " line:" . __LINE__;
             $log->save();
+            DB::transaction(function () {
+                $vklink = VKLinks::
+                where(['id'=>$this->content['vklink']->id])
+                    ->lockForUpdate()->first();
+
+                if ( !isset($vklink)) {
+                    return;
+                }
+                $vklink->delete();
+
+
+            });
         }
         }
     }

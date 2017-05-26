@@ -81,6 +81,18 @@ class ParseVKGetUsers extends Command
                  sleep(random_int(1,5));
                     
                 }
+                DB::transaction(function () {
+                    $vklink = VKLinks::
+                    where(['id'=>$this->content['vklink']->id,'parsed' => 1,'getusers_status'=>1])
+                        ->lockForUpdate()->first();
+
+                    if ( !isset($vklink)) {
+                        return;
+                    }
+                    $vklink->delete();
+
+
+                });
                 
                 
             } catch (\Exception $ex) {
@@ -88,6 +100,18 @@ class ParseVKGetUsers extends Command
                 $log->task_id = $this->content['vklink']->task_id;
                 $log->message = $ex->getMessage(). " line:".__LINE__ ;
                 $log->save();
+                DB::transaction(function () {
+                    $vklink = VKLinks::
+                    where(['id'=>$this->content['vklink']->id,'parsed' => 1,'getusers_status'=>1])
+                        ->lockForUpdate()->first();
+
+                    if ( !isset($vklink)) {
+                        return;
+                    }
+                    $vklink->delete();
+
+
+                });
             }
         }
     }

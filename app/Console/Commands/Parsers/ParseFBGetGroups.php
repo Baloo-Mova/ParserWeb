@@ -4,7 +4,7 @@ namespace App\Console\Commands\Parsers;
 
 use App\Helpers\FB;
 use App\Models\Parser\ErrorLog;
-use App\Models\Parser\Proxy as ProxyItem;
+
 
 use App\Models\Tasks;
 use App\Models\TasksType;

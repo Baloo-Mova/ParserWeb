@@ -14,7 +14,7 @@ use App\Models\TasksType;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
-use App\Models\Parser\Proxy as ProxyItem;
+use App\Models\Proxy as ProxyItem;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
@@ -27,6 +27,7 @@ class ParseOk extends Command
     public $tkn     = "";
     public $cur_proxy;
     public $proxy_arr;
+    public $proxy_string;
     public $data    = [];
     /**
      * The name and signature of the console command.
@@ -69,11 +70,11 @@ class ParseOk extends Command
                         ['active_type', '=', 1]
                     ])->lockForUpdate()->first();
 
-                    if (isset($task)) {
-                        $task->ok_reserved = 1;
-                        $task->save();
+                    if (!isset($task)) {
+                        return;
                     }
-
+                    $task->ok_reserved = 1;
+                    $task->save();
                     $this->data['task'] = $task;
                 });
 
@@ -92,46 +93,30 @@ class ParseOk extends Command
                         ['type_id', '=', 2],
                         ['is_sender', '=', 0],
                         ['valid', '=', 1],
-                        [
-                            'count_request',
-                            '<',
-                            1000
-                        ]
+                        ['count_request','<',config('config.total_requets_limit')],
+                        ['reserved','<',3]
+
                     ])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
 
+
                     if ( ! isset($from)) {
-                        Artisan::call('reg:ok');
+                        //Artisan::call('reg:ok');
                         sleep(random_int(5, 10));
                         continue;
                     }
-
-                    if (empty($from->proxy_id)) {
-                        $this->cur_proxy = ProxyItem::where([
-                            ['ok', '<', 1000],
-                            ['ok', '>', -1]
-                        ])->first();
-                        if ( ! isset($this->cur_proxy)) {
-                            sleep(random_int(5, 10));
-                            continue;
-                        }
-                        $from->proxy_id    = $this->cur_proxy->id;
-                        $from->ok_user_gwt = null;
-                        $from->ok_user_tkn = null;
-                        $from->ok_cookie   = null;
+                    $from->reserved+=1;
+                    $from->save();
+                    $this->cur_proxy=    ProxyItem::getProxy(ProxyItem::OK, $from->proxy_id);
+                    if ( ! isset($this->cur_proxy)) {
+                        $from->reserved-=1;
                         $from->save();
-                    } else {
-                        $this->cur_proxy = ProxyItem::where(['id' => $from->proxy_id])->where('ok', '<', 1000)->first();
-                        if ( ! isset($this->cur_proxy)) {
-                            sleep(random_int(5, 10));
-                            $from->proxy_id    = 0;
-                            $from->ok_user_gwt = null;
-                            $from->ok_user_tkn = null;
-                            $from->ok_cookie   = null;
-                            $from->save();
-                            continue;
-                        }
+                        sleep(random_int(5, 10));
+
+                        continue;
                     }
+
                     $this->proxy_arr = parse_url($this->cur_proxy->proxy);
+                    $this->proxy_string = $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'];
                     $this->client    = new Client([
                         'headers'         => [
                             'User-Agent'      => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
@@ -143,18 +128,26 @@ class ParseOk extends Command
                         'cookies'         => true,
                         'allow_redirects' => true,
                         'timeout'         => 20,
-                        'proxy'           => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
+                        'proxy'           => $this->proxy_string,
                     ]);
 
                     if ($this->login($from->login, $from->password)) {
                         $from->ok_user_gwt = $this->gwt;
                         $from->ok_user_tkn = $this->tkn;
                         $from->ok_cookie   = json_encode($this->client->getConfig('cookies')->toArray());
+                        $from->count_request+=1;
                         $from->save();
                         break;
                     } else {
+                        $from->count_request+=1;
                         $from->valid = -1;
+                        $from->ok_user_gwt=null;
+                        $from->ok_user_tkn=null;
+                        $from->ok_cookie=null;
+                        $from->reserved -=1;
+
                         $from->save();
+                        $this->cur_proxy->release();
                         continue;
                     }
                 }
@@ -172,8 +165,10 @@ class ParseOk extends Command
                             "st.grmode"     => "Groups"
                         ]
                     ]);
-
-                var_dump($groups_data);
+                $from->count_request+=1;
+                $from->save();
+                $this->cur_proxy->inc();
+                //var_dump($groups_data);
 
                 if ( ! empty($groups_data->getHeaderLine('TKN'))) {
                     $this->tkn = $groups_data->getHeaderLine('TKN');
@@ -197,6 +192,7 @@ class ParseOk extends Command
                             ]
                         ]);
 
+
                     if ( ! empty($groups_data->getHeaderLine('TKN'))) {
                         $this->tkn = $groups_data->getHeaderLine('TKN');
                     }
@@ -207,21 +203,27 @@ class ParseOk extends Command
                     $task->ok_offset = $page_numb++;
                     $task->save();
 
-                    sleep(rand(5, 201));
+                    sleep(random_int(2, 7));
                     $from->increment('count_request');
                     $from->save();
+                    $this->cur_proxy->inc();
                     $from = AccountsData::find($from->id);
-                    if ($from->count_request > 1000) {
+                    if ($from->count_request > config('config.total_requets_limit')) {
                         $task              = $this->data['task'];
                         $task->ok_reserved = 0;
+
                         $task->save();
+
                         break;
                     }
                 } while (strlen($html_doc) > 200);
+                $from->reserved-=1;
 
                 $from->ok_user_tkn = $this->tkn;
                 $from->save();
+                $this->cur_proxy->release();
             } catch (\Exception $ex) {
+
                 $err          = new ErrorLog();
                 $err->message = $ex->getTraceAsString();
                 $err->task_id = 0;
@@ -231,7 +233,16 @@ class ParseOk extends Command
                     $task->ok_reserved = 0;
                     $task->save();
                 }
-                sleep(random_int(1, 5));
+                $from->reserved-=1;
+                $from->save();
+                $this->cur_proxy->release();
+                if (strpos($ex->getMessage(), "cURL") !== false) {
+
+                    $this->cur_proxy->ok=-1;
+                    $this->cur_proxy->save();
+
+                }
+
             }
         }
     }
@@ -256,7 +267,7 @@ class ParseOk extends Command
             //'proxy' => $this->cur_proxy->proxy,
             'proxy'       => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
         ]);
-
+$this->cur_proxy->inc();
         $html_doc = $data->getBody()->getContents();
         if (strpos($html_doc, 'Профиль заблокирован') > 0 || strpos($html_doc,
                 'восстановления доступа')
