@@ -217,6 +217,49 @@
 
 @endsection
 
+@section('css')
+    <style>
+
+        input[type="file"] {
+            display: none;
+        }
+        .custom-file-upload {
+            border: 1px solid #ccc;
+            display: inline-block;
+            padding: 6px 12px;
+            cursor: pointer;
+            color: #fff;
+            background-color: #337ab7;
+            border-color: #2e6da4;
+            white-space: nowrap;
+            padding: 6px 12px;
+            font-size: 14px;
+            line-height: 1.42857143;
+            font-weight: 300;
+            text-align: center;
+            height: 34px;
+        }
+
+        .custom-file-upload:hover{
+            background-color: #286090;
+        }
+
+        .file_format_info{
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            display: none;
+        }
+        .file_format_info h5{
+            margin-top: 0px;
+        }
+
+        .file_actions_wrap{
+            display: inline-block;
+        }
+    </style>
+@endsection
+
 @section('js')
     <script>
         $(document).ready(function () {

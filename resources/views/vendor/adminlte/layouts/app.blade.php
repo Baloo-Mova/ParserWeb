@@ -56,6 +56,7 @@ desired effect
 </div><!-- ./wrapper -->
 </div>
 
+@yield('css')
 @yield('js')
 
 @section('scripts')
