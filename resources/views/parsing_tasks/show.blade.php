@@ -36,10 +36,10 @@
                     <div class="box-footer">
                         @if($data->active_type == 0 || $data->active_type == 2)
                             <a href="{{ route('parsing_tasks.start', ['id' => $data->id]) }}"
-                               class="btn btn-success btn-flat">Запустить</a>
+                               class="btn btn-success btn-flat">Запустить парсинг</a>
                         @elseif($data->active_type == 1 || $data->google_offset == -1)
                             <a href="{{ route('parsing_tasks.stop', ['id' => $data->id]) }}"
-                               class="btn btn-danger btn-flat">Остановить</a>
+                               class="btn btn-danger btn-flat">Остановить парсинг</a>
                         @endif
 
                         @if($data->need_send == 0)
@@ -80,16 +80,19 @@
                                     <hr>
                                     <div  style="margin-top: -11px;">
                                         <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}"
-                                           class="btn btn-primary btn-flat" style="margin-top: 11px;">Экспортировать в CSV</a>
+                                           class="btn btn-primary btn-flat" style="margin-top: -38px;">Экспортировать в CSV</a>
 
                                         <form action="{{ route('parsing_tasks.getFromCsv') }}" enctype="multipart/form-data" method="post" id="targetForm" style="display: inline-block;">
                                             {{ csrf_field() }}
                                             <input type="hidden" name="task_id" value="{{ $data->id }}">
                                             <div class="form">
-                                                <label class="uploadFile">Импортировать из CSV<span>
-                                                <input type="file" id="myfile" name="myfile" /></span>
+                                                <label class="uploadFile">
+                                                    Импортировать из CSV
+                                                    <span>
+                                                        <input type="file" id="myfile" name="myfile" />
+                                                    </span>
                                                 </label>
-                                                <input type="text" id="path" />
+                                                <span class="impcsv"></span>
                                                 <span class="clearfix"></span>
                                             </div>
                                         </form>
@@ -416,9 +419,9 @@
                 paginateConstruct(parseInt(page, 10));
             });
 
-            if($("#path").val() == ""){
-                $("#path").val("");
-            }
+            $(".uploadFile").on("click", function(){
+                $('.impcsv').text("Импортировать из CSV");
+            });
 
             $('#myfile').change(function() {
                 $('#targetForm').submit();
