@@ -100,3 +100,18 @@ input[type="file"] {
 .custom-file-upload:hover{
     background-color: #286090;
 }
+
+.file_format_info{
+    display: inline-block;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    display: none;
+}
+.file_format_info h5{
+    margin-top: 0px;
+}
+
+.file_actions_wrap{
+    display: inline-block;
+}

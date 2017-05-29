@@ -78,7 +78,7 @@
                                     <span>В очереди: <span class="badge bg-info task_result_span_queue">-</span></span>&nbsp;
                                     <span>Разослано: <span class="badge bg-warning task_result_span_sended">-</span></span>&nbsp;
                                     <hr>
-                                    <div  style="margin-top: -11px;">
+                                    <div style="margin-top: -10px;">
                                         <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}"
                                            class="btn btn-primary btn-flat" style="margin-top: -3px;">Экспортировать в CSV</a>
 
@@ -91,6 +91,11 @@
                                             </label>
                                             <input id="file-upload" type="file" name="myfile"/>
                                         </form>
+                                    </div>
+                                    <div class="file_format_info">
+                                        <h5><strong>Формат файла:</strong></h5>
+                                        link;mails;phones;skypes;city;name <br>
+                                        "=""link_val""";"=""mails_val""";"=""phones_val""";"=""skypes_val""";"=""city_val""";"=""name_val"""
                                     </div>
 
                                     <hr>
@@ -418,6 +423,13 @@
                 $('#targetForm').submit();
             });
 
+            $(".custom-file-upload").on("mouseenter", function(){
+               $(".file_format_info").css("display", "block");
+            });
+
+            $(".custom-file-upload").on("mouseleave", function(){
+                $(".file_format_info").css("display", "none");
+            });
 
         });
 
