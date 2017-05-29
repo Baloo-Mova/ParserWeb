@@ -78,10 +78,23 @@
                                     <span>В очереди: <span class="badge bg-info task_result_span_queue">-</span></span>&nbsp;
                                     <span>Разослано: <span class="badge bg-warning task_result_span_sended">-</span></span>&nbsp;
                                     <hr>
+                                    <div  style="margin-top: -11px;">
                                         <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}"
-                                           class="btn btn-primary btn-flat" >Экспортировать в CSV</a>
-                                        <!--<a href="{{ route('parsing_tasks.getFromCsv', ['id' => $data->id]) }}"
-                                           class="btn btn-primary btn-flat" >Импортировать из CSV</a>-->
+                                           class="btn btn-primary btn-flat" style="margin-top: 11px;">Экспортировать в CSV</a>
+
+                                        <form action="{{ route('parsing_tasks.getFromCsv') }}" enctype="multipart/form-data" method="post" id="targetForm" style="display: inline-block;">
+                                            {{ csrf_field() }}
+                                            <input type="hidden" name="task_id" value="{{ $data->id }}">
+                                            <div class="form">
+                                                <label class="uploadFile">Импортировать из CSV<span>
+                                                <input type="file" id="myfile" name="myfile" /></span>
+                                                </label>
+                                                <input type="text" id="path" />
+                                                <span class="clearfix"></span>
+                                            </div>
+                                        </form>
+                                    </div>
+
                                     <hr>
                                 </div>
                                 <div class="table-responsive">
@@ -403,7 +416,16 @@
                 paginateConstruct(parseInt(page, 10));
             });
 
+            if($("#path").val() == ""){
+                $("#path").val("");
+            }
+
+            $('#myfile').change(function() {
+                $('#targetForm').submit();
+            });
+
 
         });
+
     </script>
 @stop

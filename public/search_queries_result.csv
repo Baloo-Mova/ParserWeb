@@ -1,2 +1,5 @@
-1,link|sfsdf,mails|gh,phones|,phones_reserved_wh|0,phones_reserved_viber|0,skypes|,vk_id|,vk_city|,vk_name|,vk_sended|0,vk_reserved|0,task_id|2,email_reserved|0,email_sended|0,sk_recevied|0,sk_sended|0,ok_user_id|,ok_sended|0,ok_reserved|0,tw_user_id|,tw_sended|0,tw_reserved|0,fb_id|,fb_name|,fb_sended|0,fb_reserved|0,ins_user_id|
-2,link|sjfsdf,mails|ghj,phones|,phones_reserved_wh|0,phones_reserved_viber|0,skypes|,vk_id|,vk_city|,vk_name|,vk_sended|0,vk_reserved|0,task_id|2,email_reserved|0,email_sended|0,sk_recevied|0,sk_sended|0,ok_user_id|,ok_sended|0,ok_reserved|0,tw_user_id|,tw_sended|0,tw_reserved|0,fb_id|,fb_name|,fb_sended|0,fb_reserved|0,ins_user_id|
+id;link;mails;phones;phones_reserved_wh;phones_reserved_viber;skypes;vk_id;vk_city;vk_name;vk_sended;vk_reserved;task_id;email_reserved;email_sended;sk_recevied;sk_sended;ok_user_id;ok_sended;ok_reserved;tw_user_id;tw_sended;tw_reserved;fb_id;fb_name;fb_sended;fb_reserved;ins_user_id
+14;sjfsdf;ghj;;0;0;;;;;0;0;2;0;0;0;0;;0;0;;0;0;;;0;0;
+13;sfsdf;gh;;0;0;;;;;0;0;2;0;0;0;0;;0;0;;0;0;;;0;0;
+12;sfsdf;gh;;0;0;;;;;0;0;2;0;0;0;0;;0;0;;0;0;;;0;0;
+11;sjfsdf;ghj;;0;0;;;;;0;0;2;0;0;0;0;;0;0;;0;0;;;0;0;
