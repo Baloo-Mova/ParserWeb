@@ -7,7 +7,7 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use GuzzleHttp\Exception\RequestException;
 use App\Models\Parser\ErrorLog;
-use App\Models\Parser\Proxy;
+use App\Models\Proxy as ProxyItem;
 use App\Models\Tasks;
 use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
@@ -59,7 +59,7 @@ class RegOK extends Command
             $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, "\r\n", ' ');
 
             while (true) {
-                $proxy = Proxy::where([['ok', '>', -1], ['ok', '<', 1000]])->first();
+                $proxy = ProxyItem::getProxy(ProxyItem::OK);
                 if ( ! isset($proxy)) {
                     sleep(10);
                     continue;

@@ -4,7 +4,7 @@ namespace App\Console\Commands\Parsers;
 
 use App\Helpers\VK;
 use App\Models\Parser\ErrorLog;
-use App\Models\Parser\Proxy as ProxyItem;
+
 
 use App\Models\Tasks;
 use App\Models\TasksType;
@@ -71,7 +71,7 @@ class ParseVKGetUsers extends Command
             try {
                 $web           = new VK();
                                
-                $proxy         = ProxyItem::orderBy('id', 'desc')->first();
+
                 $i             = 0;
                 
                 if($web->getUsersOfGroup($this->content['vklink'])){
@@ -81,6 +81,18 @@ class ParseVKGetUsers extends Command
                  sleep(random_int(1,5));
                     
                 }
+                DB::transaction(function () {
+                    $vklink = VKLinks::
+                    where(['id'=>$this->content['vklink']->id,'parsed' => 1,'getusers_status'=>1])
+                        ->lockForUpdate()->first();
+
+                    if ( !isset($vklink)) {
+                        return;
+                    }
+                    $vklink->delete();
+
+
+                });
                 
                 
             } catch (\Exception $ex) {
@@ -88,6 +100,18 @@ class ParseVKGetUsers extends Command
                 $log->task_id = $this->content['vklink']->task_id;
                 $log->message = $ex->getMessage(). " line:".__LINE__ ;
                 $log->save();
+                DB::transaction(function () {
+                    $vklink = VKLinks::
+                    where(['id'=>$this->content['vklink']->id,'parsed' => 1,'getusers_status'=>1])
+                        ->lockForUpdate()->first();
+
+                    if ( !isset($vklink)) {
+                        return;
+                    }
+                    $vklink->delete();
+
+
+                });
             }
         }
     }

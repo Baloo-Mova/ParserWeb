@@ -12,7 +12,7 @@ use App\Models\AccountsData;
 use App\Models\Parser\VKLinks;
 use App\Helpers\SimpleHtmlDom;
 use App\Models\SearchQueries;
-use App\Models\Parser\Proxy as ProxyItem;
+use App\Models\Proxy as ProxyItem;
 use App\Models\ProxyTemp;
 use App\Models\UserNames;
 use App\Helpers\PhoneNumber;
@@ -83,6 +83,8 @@ class VK {
         // print_r($lg_h . "\n");
         // print_r($vk_login . "\n");
         //dd(urlencode($login));
+        $this->cur_proxy->inc();
+
         $request = $this->client->request("POST", "https://login.vk.com/?act=login", [
                 'form_params' => [
                     'act' => 'login',
@@ -114,7 +116,7 @@ class VK {
             //'cookie'=> $cookie
         ]);
 
-
+        $this->cur_proxy->inc();
         $data = $request->getBody()->getContents();
         //dd(substr($phone,1,strlen($phone)-3));
         if (preg_match('/act=security\_check/s', $data)) {
@@ -140,7 +142,7 @@ class VK {
                 ]
             //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
             );
-
+            $this->cur_proxy->inc();
             $data = $request->getBody()->getContents();
             //dd($data);
             //print_r($data);
@@ -153,6 +155,7 @@ class VK {
             // 'proxy' => '127.0.0.1:8888',
             //'cookie'=> $cookie
         ]);
+        $this->cur_proxy->inc();
         sleep(2);
         $data = $request->getBody()->getContents();
 
@@ -176,7 +179,7 @@ class VK {
         //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
         );
 
-
+        $this->cur_proxy->inc();
 
 
 
@@ -199,33 +202,26 @@ class VK {
     public function sendRandomMessage($to_userId, $messages) {
         while (true) {
             try {
-                $sender = AccountsData::where(['type_id' => 1, 'valid' => 1, 'is_sender' => 1])->where('count_request','<',config('config.total_requets_limit'))->orderByRaw('RAND()')->first();
+                $sender = AccountsData::where(['type_id' => 1, 'valid' => 1, 'is_sender' => 1])->where([['count_request','<',config('config.total_requets_limit')],['reserved','<',3]])->orderByRaw('RAND()')->first();
                 if (!isset($sender)) {
                     sleep(10);
                     continue;
                 }
 
 
-                if ($sender->proxy_id == 0) {
+                $sender->reserved+=1;
+                $sender->save();
 
-                    $this->cur_proxy = ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
 
-                    if (!isset($this->cur_proxy)) {
-                        sleep(random_int(5, 10));
-                        continue;
-                    }
-                    $sender->proxy_id = $this->cur_proxy->id;
-                    $sender->vk_cookie = null;
+//                    $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
+//                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where([['proxy.vk', '<', 1000],['proxy.vk', '>',-1 ], ])
+//                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
+                $this->cur_proxy=    ProxyItem::getProxy(ProxyItem::VK, $sender->proxy_id);
+                if (!isset($this->cur_proxy)) {
+                    $sender->reserved-=1;
                     $sender->save();
-                } else {
-                    $this->cur_proxy = ProxyTemp::where(['id' => $sender->proxy_id])->first();
-                    if (!isset($this->cur_proxy)) {
-                        sleep(random_int(5, 10));
-                        $sender->proxy_id = 0;
-                        $sender->vk_cookie = null;
-                        $sender->save();
-                        continue;
-                    }
+                    sleep(random_int(5, 10));
+                    continue;
                 }
 
                 $cookies = json_decode($sender->vk_cookie);
@@ -247,6 +243,8 @@ class VK {
 //
                 //$cookiejar = new CookieJar($cookie);
 //$this->cur_proxy->proxy='127.0.0.1:8888';
+                $this->proxy_arr = parse_url($this->cur_proxy->proxy);
+                $this->proxy_string = $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'];
                 $this->client = new Client([
                     'headers' => [
                         'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
@@ -258,7 +256,7 @@ class VK {
                     'cookies' => $array->count() > 0 ? $array : true,
                     'allow_redirects' => true,
                     'timeout' => 15,
-                    'proxy' => $this->cur_proxy->proxy,
+                    'proxy' => $this->proxy_string
                    // 'proxy' => "socks5://hV6eLT:FKHbPQ@185.39.151.76:8000",
 
                     // 'proxy' => '127.0.0.1:8888',
@@ -275,6 +273,9 @@ class VK {
                         $sender->save();
                        // $sender->delete();
                         //  echo "account not valid\n";
+                        $sender->reserved-=1;
+                        $sender->save();
+                        $this->cur_proxy->release();
                         continue;
                     }
                 }
@@ -283,19 +284,28 @@ class VK {
                         // 'proxy' => '127.0.0.1:8888',
                     ]
                 );
+                $this->cur_proxy->inc();
+                $sender->count_request+=1;
+                $sender->save();
                 sleep(2);
                 $data = $request->getBody()->getContents();
 
                 if (strpos($data, "quick_login_button")!==false) {
                 $sender->vk_cookie = null;
+                $sender->reserved-=1;
                 $sender->save();
 
+
+                    $this->cur_proxy->release();
                     continue;
                 };
 
 
                 if (strpos($data, "flat_button profile_btn_cut_left") == false) {
                     echo "\nprivate profile or page isn't define";
+                    $sender->reserved-=1;
+                    $sender->save();
+                    $this->cur_proxy->release();
                     return false;
                 }
                 // $chas = substr($data, strpos($data, "toData: "), 400);
@@ -324,10 +334,16 @@ class VK {
                     ]
                 //"act=login&role=al_frame&expire=&captcha_sid=&captcha_key=&_origin=https%3A%2F%2Fvk.com&lg_h=".$lg_h."&ip_h=".$ip_h."&email=".$login."&pass=".$password,
                 );
+                $this->cur_proxy->inc();
+                $sender->count_request+=1;
+                $sender->save();
                 $data = $request->getBody()->getContents();
                 //dd($data);
                 if (strpos($data, 'error') > 0) {
                     echo("\nsecurity error");
+                    $sender->reserved-=1;
+                    $sender->save();
+                    $this->cur_proxy->release();
                     return false;
                 }
 
@@ -337,10 +353,15 @@ class VK {
                 $sender->save();
                 return true;
             } catch (\Exception $ex) {
+
                 echo "\n!!!!" . $ex->getMessage();
+                $sender->reserved-=1;
+                $sender->save();
+                $this->cur_proxy->release();
                 if (strpos($ex->getMessage(), "cURL") !== false) {
 
-                    $this->cur_proxy->delete();
+                    $this->cur_proxy->vk=-1;
+                    $this->cur_proxy->save();
                     continue;
                 }
             }
@@ -391,42 +412,40 @@ class VK {
             try {
                 //while (true) {
 
-                $sender = AccountsData::where(['type_id' => 1, 'valid' => 1, 'is_sender' => 0])->where('count_request','<',config('config.total_requets_limit'))->orderByRaw('RAND()')->first();
+                $sender = AccountsData::where(['type_id' => 1, 'valid' => 1, 'is_sender' => 0])->where([['count_request','<',config('config.total_requets_limit')],['reserved','<',3]])->orderByRaw('RAND()')->first();
                 // echo($sender->login . "\n Find groups " . $find . "\n");
+
+
                 if (!isset($sender)) {
                     sleep(random_int(5, 10));
                     continue;
                 }
+                $sender->reserved+=1;
+                $sender->save();
 
-                if ($sender->proxy_id == 0) {
 
-                    $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
-                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where([['proxy.vk', '<', 1000],['proxy.vk', '>',-1 ], ])
-                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
-
+//                    $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
+//                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where([['proxy.vk', '<', 1000],['proxy.vk', '>',-1 ], ])
+//                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
+                    $this->cur_proxy=    ProxyItem::getProxy(ProxyItem::VK, $sender->proxy_id);
                     if (!isset($this->cur_proxy)) {
-                        sleep(random_int(5, 10));
-                        continue;
-                    }
-                    $sender->proxy_id = $this->cur_proxy->id;
-                    $sender->vk_cookie = null;
-                    $sender->save();
-                } else {
-                    $this->cur_proxy = ProxyItem::where(['id' => $sender->proxy_id, 'valid' => 1])->where([['vk', '<', 1000],['vk', '>',-1 ], ])->first();
-
-                    if (!isset($this->cur_proxy)) {
-                        sleep(random_int(5, 10));
-                        $sender->proxy_id = 0;
-                        $sender->vk_cookie = null;
+                        $sender->reserved-=1;
                         $sender->save();
+                        sleep(random_int(5, 10));
                         continue;
                     }
-                }
+                    //$sender->proxy_id = $this->cur_proxy->id;
+                   // $sender->vk_cookie = null;
+                // $sender->save();
+
+
+
 
                 $cookies = json_decode($sender->vk_cookie);
                 $array = new CookieJar();
 
                 if (isset($cookies)) {
+
                     foreach ($cookies as $cookie) {
                         $set = new SetCookie();
                         $set->setDomain($cookie->Domain);
@@ -442,7 +461,7 @@ class VK {
 
 //
                 //$cookiejar = new CookieJar($cookie);
-
+               // echo("\n ".$array->count());
 
                 $this->client = new Client([
                     'headers' => [
@@ -451,6 +470,7 @@ class VK {
                         'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
                         'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
                     ],
+                    ///'debug' => true,
                     'verify' => false,
                     'cookies' => $array->count() > 0 ? $array : true,
                     'allow_redirects' => true,
@@ -465,10 +485,13 @@ class VK {
                         //dd($sender->vk_cookie);
                     } else {
                         $sender->valid = 0;
+                        $sender->reserved-=1;
                         $sender->save();
                         //$sender->delete();
 
                         //  echo "account not valid\n";
+                        $this->cur_proxy->release();
+
                         continue;
                     }
                 }
@@ -479,8 +502,8 @@ class VK {
                         // 'proxy' => '127.0.0.1:8888',
                     ]
                 );
-                $this->cur_proxy->vk+=1;
-                $this->cur_proxy->save();
+                $this->cur_proxy->inc();
+                //$this->cur_proxy->save();
 
                 $sender->count_request+=1;
                 $sender->save();
@@ -489,6 +512,13 @@ class VK {
 
                 if (strpos($data, "login_button")) {
                     sleep(1);
+                    $sender->reserved-=1;
+                    $sender->save();
+                    $this->cur_proxy->release();
+                    //$sender->delete();
+
+                    //  echo "account not valid\n";
+
                     continue;
                 }
                 sleep(random_int(1, 3));
@@ -569,7 +599,12 @@ class VK {
                     sleep(random_int(1, 5));
                     $counter+=20;
                 }
+                $sender->reserved-=1;
+                $sender->save();
             } catch (\Exception $ex) {
+                $this->cur_proxy->release();
+                $sender->reserved-=1;
+                $sender->save();
                 dd($ex->getMessage());
                 if (strpos($ex->getMessage(), 'cURL') !== false) {
                     $sender->proxy_id = 0;
@@ -582,6 +617,9 @@ class VK {
                 sleep(random_int(1, 5));
                 continue;
             }
+            $this->cur_proxy->release();
+
+            //dd();
             return true;
         }
     }
@@ -590,35 +628,26 @@ class VK {
         while (true) {
             try {
                 // while (true) {
-                $sender = AccountsData::where(['type_id' => 1, 'valid' => 1, 'is_sender' => 0])->where('count_request','<',config('config.total_requets_limit'))->orderByRaw('RAND()')->first();
+                $sender = AccountsData::where(['type_id' => 1, 'valid' => 1, 'is_sender' => 0])->where([['count_request','<',config('config.total_requets_limit')],['reserved','<',3]])->orderByRaw('RAND()')->first();
                 // echo($sender->login . "\n Parse group " . $vklink->link . "\n");
                 if (!isset($sender)) {
                     sleep(random_int(5, 10));
                     continue;
                 }
 
-                if ($sender->proxy_id == 0) {
+                $sender->reserved+=1;
+                $sender->save();
 
-                    $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
-                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where([['proxy.vk', '<', 1000],['proxy.vk', '>',-1 ], ])
-                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
 
-                    if (!isset($this->cur_proxy)) {
-                        sleep(random_int(5, 10));
-                        continue;
-                    }
-                    $sender->proxy_id = $this->cur_proxy->id;
-                    $sender->vk_cookie = null;
+//                    $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
+//                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where([['proxy.vk', '<', 1000],['proxy.vk', '>',-1 ], ])
+//                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
+                $this->cur_proxy=    ProxyItem::getProxy(ProxyItem::VK, $sender->proxy_id);
+                if (!isset($this->cur_proxy)) {
+                    $sender->reserved-=1;
                     $sender->save();
-                } else {
-                    $this->cur_proxy = ProxyItem::where(['id' => $sender->proxy_id, 'valid' => 1])->where([['proxy.vk', '<', 1000],['proxy.vk', '>',-1 ], ])->first();
-                    if (!isset($this->cur_proxy)) {
-                        sleep(random_int(5, 10));
-                        $sender->proxy_id = 0;
-                        $sender->vk_cookie = null;
-                        $sender->save();
-                        continue;
-                    }
+                    sleep(random_int(5, 10));
+                    continue;
                 }
 
                 $cookies = json_decode($sender->vk_cookie);
@@ -663,9 +692,11 @@ class VK {
                         //dd($sender->vk_cookie);
                     } else {
                         $sender->valid = 0;
+                        $sender->reserved-=1;
                         $sender->save();
                        // $sender->delete();
                         //  echo "account not valid\n";
+                        $this->cur_proxy->release();
                         continue;
                     }
                 }
@@ -675,16 +706,19 @@ class VK {
                         // 'proxy' => '127.0.0.1:8888',
                     ]
                 );
-
-                $data = $request->getBody()->getContents();
-
-                $this->cur_proxy->vk+=1;
-                $this->cur_proxy->save();
+                $this->cur_proxy->inc();
                 $sender->count_request+=1;
                 $sender->save();
+                $data = $request->getBody()->getContents();
+
+
+
 
                 if (strpos($data, "login_button")) {
                     sleep(random_int(1, 5));
+                    $sender->reserved-=1;
+                    $sender->save();
+                    $this->cur_proxy->release();
                     continue;
                 }
                 sleep(random_int(1, 5));
@@ -696,6 +730,9 @@ class VK {
                         // 'proxy' => '127.0.0.1:8888',
                     ]
                 );
+                $this->cur_proxy->inc();
+                $sender->count_request+=1;
+                $sender->save();
                 sleep(random_int(1, 5));
                 $data = $request->getBody()->getContents();
                 $title = substr($data, strpos($data, "<title>"), (strpos($data, "</title>") - strpos($data, "<title>")));
@@ -728,10 +765,14 @@ class VK {
                         $search_query->save();
                     }
                 }
-
-
+                $sender->reserved-=1;
+                $sender->save();
+                $this->cur_proxy->release();
                 return true;
             } catch (\Exception $ex) {
+                $sender->reserved-=1;
+                $sender->save();
+                $this->cur_proxy->release();
                 if (strpos($ex->getMessage(), 'cURL') !== false) {
 
                     $this->cur_proxy->vk = -1;
@@ -745,20 +786,21 @@ class VK {
         //$group->vkuser_id = "6138125";
         while (true) {
             try {
+                $this->cur_proxy=    ProxyItem::getProxy(ProxyItem::VK);
+                //dd($this->cur_proxy);
                 if (!isset($this->cur_proxy)) {
-                    $this->cur_proxy = ProxyItem::where(['valid' => 1])->where([['vk', '<', 1000],['vk', '>',-1 ], ])->first();
-
+                    sleep(random_int(5, 10));
                     continue;
                 }
                 $this->proxy_arr = parse_url($this->cur_proxy->proxy);
                 $this->setProxyClient();
+                $this->cur_proxy->inc();
                 //$query = file_get_contents("https://api.vk.com/method/groups.getMembers?v=5.60&group_id=" . $group->vkuser_id);
                 $request = $this->client->request("GET", "https://api.vk.com/method/groups.getMembers?v=5.60&group_id=" . $group->vkuser_id);
                 $query = $request->getBody()->getContents();
                 $userstmp = json_decode($query, true);
                 sleep(1);
-                $this->cur_proxy->vk+=1;
-                $this->cur_proxy->save();
+                $this->cur_proxy->inc();
 
                 $count = intval($userstmp["response"]["count"]);
                 $users = $userstmp["response"]["items"];
@@ -781,6 +823,7 @@ class VK {
                         $vkuser->save();
                     } catch (\Exception $e) {
                         // dd($e->showMessage());
+
                     }
                 }
 
@@ -796,6 +839,7 @@ class VK {
                         //$users = array_unique($users);
                         $users = $userstmp["response"]["items"];
                         $users = array_unique($users);
+                        $this->cur_proxy->inc();
                         sleep(1);
                         foreach ($users as $value) {
 
@@ -820,9 +864,10 @@ class VK {
                     }
                 }
 
-
+                $this->cur_proxy->release();
                 return true;
             } catch (\Exception $ex) {
+                $this->cur_proxy->release();
                 if (strpos($ex->getMessage(), 'cURL') !== false) {
 
                     $this->cur_proxy->vk = -1;
@@ -836,18 +881,20 @@ class VK {
 
         while (true) {
             try {
+                $this->cur_proxy=    ProxyItem::getProxy(ProxyItem::VK);
+                //dd($this->cur_proxy);
                 if (!isset($this->cur_proxy)) {
-                    $this->cur_proxy = ProxyItem::where(['valid' => 1])->where([['vk', '<', 1000],['vk', '>',-1 ], ])->first();
-                    sleep(random_int(3, 5));
+                    sleep(random_int(5, 10));
                     continue;
                 }
+
                 $this->proxy_arr = parse_url($this->cur_proxy->proxy);
                 $this->setProxyClient();
 
                 $request = $this->client->request("GET", "https://api.vk.com/method/users.get?v=5.60&&fields=can_write_private_message,connections,contacts,city,deactivated&user_ids=" . $user->vkuser_id);
                 $query = $request->getBody()->getContents();
-                $this->cur_proxy->vk+=1;
-                $this->cur_proxy->save();
+                $this->cur_proxy->inc();
+
 
                 // $query = file_get_contents("https://api.vk.com/method/users.get?v=5.60&&fields=can_write_private_message,connections,contacts,city,deactivated&user_ids=" . $user->vkuser_id);
                 $usertmp = json_decode($query, true);
@@ -895,13 +942,16 @@ class VK {
                     }
                     // echo("parse user complete - id ".$vkuser->vkuser_id."\n");
                     // $user->delete();
+                    $this->cur_proxy->release();
                     return true;
                 } else {
                     //$user->delete();
                     // echo("parse user complete - id ".$vkuser->vkuser_id."\n");
+                    $this->cur_proxy->release();
                     return false;
                 }
             } catch (\Exception $ex) {
+                $this->cur_proxy->release();
                 if (strpos($ex->getMessage(), 'cURL') !== false) {
 
                     $this->cur_proxy->vk = -1;

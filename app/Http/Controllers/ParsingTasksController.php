@@ -18,6 +18,7 @@ use App\Models\SearchQueries;
 use App\Models\TemplateDeliveryTw;
 use App\Models\EmailTemplates;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Supervisor\Api;
 
 class ParsingTasksController extends Controller {
@@ -308,16 +309,26 @@ class ParsingTasksController extends Controller {
     public function getCsv($id) {
 
         $table = SearchQueries::where('task_id', '=', $id)->get()->toArray();
+        $cols = [];
+        $res = [];
+        $i = 0;
 
         if (count($table) > 0) {
             chmod("search_queries_result.csv", 0755);
             $file = fopen('search_queries_result.csv', 'w');
-            foreach ($table as $row) {
 
-                foreach ($row as $key => $item) {
-                    $row[$key] = $item == null ? null : iconv("UTF-8", "Windows-1251", $item);
+            foreach ($table[0] as $key => $row) {
+                $cols[] = $key;
+            }
+
+            fputcsv($file, $cols, ";");
+            foreach ($table as $row) {
+                $res = [];
+                foreach ($row as $item) {
+                    $res[] = $item === null ? null : iconv("UTF-8", "Windows-1251", $item);
                 }
-                fputcsv($file, $row);
+                $i++;
+                fputcsv($file, $res, ";");
             }
             fclose($file);
 
@@ -325,6 +336,43 @@ class ParsingTasksController extends Controller {
         } else {
             return redirect()->back();
         }
+    }
+
+    public function getFromCsv(Request $request) {
+        if ($request->hasFile('myfile')) {
+            $fe = explode(".",$request->myfile->getClientOriginalName());
+            if($fe[1] != "csv"){
+                return redirect()->back();
+            }
+        }else{return redirect()->back();
+        }
+
+        if (( $file = fopen($request->myfile->getRealPath(), 'r')) == FALSE) {
+            return redirect()->back();
+        }
+
+        $row = 1;
+        $res = [];
+
+        $cols = [];
+
+        foreach (fgetcsv($file, 1000, ";") as $item){
+            $cols[] = $item;
+        }
+
+        while (($data = fgetcsv($file, 1000, ";")) !== FALSE) {
+
+            $num = count($data);
+
+            for ($c=1; $c < $num; $c++) {
+                $res[$row][$cols[$c]] = ($data[$c] == '') ? NULL : $data[$c];
+            }
+            $res[$row]["task_id"] = $request->get('task_id');
+            $row++;
+        }
+
+        DB::table('search_queries')->insert($res);
+        return redirect()->back();
     }
 
     public function testingDeliveryMails() {

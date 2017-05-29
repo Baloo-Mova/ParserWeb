@@ -34,11 +34,21 @@
                         </table>
                     </div>
                     <div class="box-footer">
-                        <a href="{{ route('parsing_tasks.start', ['id' => $data->id]) }}" class="btn btn-success btn-flat" {{ $data->active_type == 1 || $data->google_offset == -1 ? "disabled" : "" }}>Запустить</a>
-                        <a href="{{ route('parsing_tasks.stop', ['id' => $data->id]) }}" class="btn btn-danger btn-flat" {{ $data->active_type == 0 || $data->active_type == 2 ? "disabled" : "" }}>Остановить</a>
-                        <a href="{{ route('parsing_tasks.reserved', ['id' => $data->id]) }}" class="btn btn-danger btn-flat" {{ $data->reserved == 0 ? "disabled" : "" }}>Вернуть задачу</a>
+                        @if($data->active_type == 0 || $data->active_type == 2)
+                            <a href="{{ route('parsing_tasks.start', ['id' => $data->id]) }}"
+                               class="btn btn-success btn-flat">Запустить</a>
+                        @elseif($data->active_type == 1 || $data->google_offset == -1)
+                            <a href="{{ route('parsing_tasks.stop', ['id' => $data->id]) }}"
+                               class="btn btn-danger btn-flat">Остановить</a>
+                        @endif
 
-
+                        @if($data->need_send == 0)
+                            <a href="{{ route('parsing_tasks.startDelivery', ['id' => $data->id]) }}"
+                               class="btn btn-success btn-flat">Запустить рассылку</a>
+                        @elseif(empty($mails->subject) || empty($skype->text) || $data->need_send == 1)
+                            <a href="{{ route('parsing_tasks.stopDelivery', ['id' => $data->id]) }}"
+                               class="btn btn-danger btn-flat">Остановить рассылку</a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -68,7 +78,23 @@
                                     <span>В очереди: <span class="badge bg-info task_result_span_queue">-</span></span>&nbsp;
                                     <span>Разослано: <span class="badge bg-warning task_result_span_sended">-</span></span>&nbsp;
                                     <hr>
-                                    <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}" class="btn btn-primary btn-flat" >Экспортировать в CSV</a>
+                                    <div  style="margin-top: -11px;">
+                                        <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}"
+                                           class="btn btn-primary btn-flat" style="margin-top: 11px;">Экспортировать в CSV</a>
+
+                                        <form action="{{ route('parsing_tasks.getFromCsv') }}" enctype="multipart/form-data" method="post" id="targetForm" style="display: inline-block;">
+                                            {{ csrf_field() }}
+                                            <input type="hidden" name="task_id" value="{{ $data->id }}">
+                                            <div class="form">
+                                                <label class="uploadFile">Импортировать из CSV<span>
+                                                <input type="file" id="myfile" name="myfile" /></span>
+                                                </label>
+                                                <input type="text" id="path" />
+                                                <span class="clearfix"></span>
+                                            </div>
+                                        </form>
+                                    </div>
+
                                     <hr>
                                 </div>
                                 <div class="table-responsive">
@@ -86,28 +112,12 @@
                                         </tr>
                                         </thead>
                                         <tbody class="task_result_tbody">
-                                        {{--@forelse($search_queries as $key => $value )--}}
-                                        {{--<tr>--}}
-                                        {{--<td data-id="{{ $value->id }}" data-text="{{ count($search_queries) - $key }}" data-task-id="{{ $value->task_id }}">{{ count($search_queries) - $key }}</td>--}}
-                                        {{--<td>{{ $value->link }}</td>--}}
-                                        {{--<td>{{ $value->mails }}</td>--}}
-                                        {{--<td>{{ $value->phones }}</td>--}}
-                                        {{--<td>{{ $value->skypes }}</td>--}}
-                                        {{--</tr>--}}
-                                        {{--@empty--}}
-                                        {{--<tr class="no_results_class">--}}
-                                        {{--<td colspan="5" class="text-center">--}}
-                                        {{--Нет результатов!--}}
-                                        {{--</td>--}}
-                                        {{--</tr>--}}
-                                        {{--@endforelse--}}
                                         <tr class="no_results_class">
                                             <td colspan="8" class="text-center"> Ожидание результатов ...</td>
                                         </tr>
                                         </tbody>
                                     </table>
                                 </div>
-                                {{--{{ $search_queries->links() }}--}}
                                 <nav aria-label="Page navigation">
                                     <ul class="pagination">
 
@@ -116,9 +126,6 @@
                             </div>
 
                             <div id="data" class="tab-pane well fade">
-                                <a href="{{ route('parsing_tasks.startDelivery', ['id' => $data->id]) }}" class="btn btn-success btn-flat" {{empty($mails->subject) || empty($skype->text) || $data->need_send == 1 ? "disabled" : "" }}>Запустить рассылку</a>
-                                <a href="{{ route('parsing_tasks.stopDelivery', ['id' => $data->id]) }}" class="btn btn-danger btn-flat" {{$data->need_send == 0 ? "disabled" : "" }}>Остановить рассылку</a>
-                                <hr>
                                 <form action="{{ route('parsing_tasks.changeDeliveryInfo') }}" method="post">
                                     <table class="table table-bordered">
                                         <thead>
@@ -409,7 +416,16 @@
                 paginateConstruct(parseInt(page, 10));
             });
 
+            if($("#path").val() == ""){
+                $("#path").val("");
+            }
+
+            $('#myfile').change(function() {
+                $('#targetForm').submit();
+            });
+
 
         });
+
     </script>
 @stop

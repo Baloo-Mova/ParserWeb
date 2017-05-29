@@ -93,8 +93,6 @@ class SearchQueries extends Model
         'fb_sended',
         'fb_reserved',
         'fb_name',
-        
-        
     ];
 
 

@@ -178,7 +178,7 @@ class SkypeClass
             $this->skype_id = $skype_id[2];
 
 
-            $login = $this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/endpoints", "POST", "{}", true);
+            $login = $this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/endpoints", "GET", [], true);
 //dd($login);
             preg_match("`registrationToken=(.+);`isU", $login, $registrationToken);
 
@@ -219,6 +219,7 @@ class SkypeClass
         $url, $mode = "GET", $post = [], $showHeaders = false, $follow = true, $customCookies = "", $customHeaders = []
     )
     {
+
         if (!function_exists("curl_init")) {
             exit(trigger_error("Skype : cURL is required", E_USER_WARNING));
         }
@@ -249,7 +250,15 @@ class SkypeClass
             curl_setopt($curl, CURLOPT_POSTFIELDS, $post);
             $headers[] = "Content-Length: ".strlen($post);
         }
+        if (gettype($post)=="string"){
+        if(strpos($post,"{")!==false){
+            echo "\n".":::::::::::::::::::JSON";
+            $headers[] = "Content-Type: application/json";
+           // $headers[] = "Content-Length: ". strlen($post);
+        }
+        }
         curl_setopt($curl, CURLOPT_URL, $url);
+
         if (!empty($headers)) {
             curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
         }
@@ -279,8 +288,10 @@ class SkypeClass
 
         //if(strpos($result,"Operation failed")>0) echo $result;
         curl_close($curl);
-
-      //  echo($result);
+        if(isset($this->cur_proxy)){
+        $this->cur_proxy->inc();
+        }
+           // dd("\n".$result);
         return $result;
     }
 
@@ -355,22 +366,7 @@ class SkypeClass
 
     /* New methods */
 
-    public function sendFrom($from, $to, $message)
-    {
 
-        $this->index($from["login"], $from["password"], $from["skype_id"]);
-
-        $is_friend = $this->isFriend($to, $message);
-
-        if ($is_friend == 50000) {
-            unset($auth);
-            $this->sendFrom($from, $to, $message);
-        }
-
-        if ($is_friend == 20000) {
-            $this->sendMessage(["login" => $from["login"], "password" => $from["password"]], $to, $message);
-        }
-    }
 
     public function isFriend($to, $message)
     {
@@ -398,10 +394,18 @@ class SkypeClass
             "messagetype" => "RichText",
             "contenttype" => "text",
             "clientmessageid" => $messageID,
-            "Has-Mentions" => false
+            "Has-Mentions" => 'false'
         ];
 sleep(random_int(1,3));
+
+
+
+
+        //$data = $request->getBody()->getContents();
+
+       // dd($data);
         $req = json_decode($this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/conversations/" . $mode . ":" . $to . "/messages", "POST", json_encode($post)), true);
+
         //dd($req);
         return isset($req["OriginalArrivalTime"]) ? $messageID : false;
     }
@@ -416,19 +420,20 @@ sleep(random_int(1,3));
 
         while (true) {
             try {
-                $from = SkypeLogins::where(['valid' => '1'])->orderByRaw('RAND()')->first();
+                $from = SkypeLogins::where(['valid' => '1','reserved'=>'0'])->where('count_request','<',config('config.total_requets_limit'))->orderByRaw('RAND()')->first();
                 if (!isset($from)) {
                     sleep(random_int(1, 4));
                     continue;
                 }
-
+                $from->reserved=1;
+                $from->save();
                 $this->cur_proxy = ProxyItem::getProxy(ProxyItem::Skype, $from->proxy_id);
                 // dd($this->cur_proxy);
                 if (!isset($this->cur_proxy)) {
-                    if ($from->proxy_id != 0) {
-                        $from->proxy_id = 0;
-                        $from->save();
-                    }
+                   // if ($from->proxy_id != 0) {
+                    //    $from->proxy_id = 0;
+                    //    $from->save();
+                    //}
                     sleep(random_int(1, 4));
 
                     continue;
@@ -437,12 +442,26 @@ sleep(random_int(1,3));
 
                 $this->setCurrentProxy();
 
+                $req = $this->web("https://www.google.com.ua/", "GET", [], true, true);
+                if($req==false){
+                    $this->cur_proxy->release(); $this->cur_proxy->skype=-1;$this->cur_proxy->save();
+                //$from->proxy_id=0;
+                    $from->reserved = 0;
+                    $from->skypeToken=null;
+                    $from->registrationToken=null;
+                    $from->expiry=null;
+                    $from->save();
+                continue;
+                }
+               // dd($req);
                 if (isset($from)) {
 
                     $this->index($from->login, $from->password, $from->skype_id);
 
                     if ($this->valid == false) {
                         sleep(10);
+                        $from->reserved = 0;
+                        $from->save();
                         continue;
                     }
                     if($this->valid){
@@ -452,35 +471,76 @@ sleep(random_int(1,3));
                    // dd( $this->proxy_string);
 
                     $is_friend = $this->isMyFriend($to);                     //$this->isFriend($to, $message);
-
+                    $from->count_request+=1;
+                    $from->save();
+                    //$this->cur_proxy->inc();
+                   //$this->cur_proxy->release();
+                   // dd($this->cur_proxy);
                     if ($is_friend) {
 
-                        if (!$this->sendMessage(["login" => $from->login, "password" => $from->password, "skype_id" => $from->skype_id], $to, $message)) {
-                            dd($is_friend);
+                        if (!$this->sendMessage(["login" => $from->login, "password" => $from->password, "skype_id" => $from->skype_id, "sktoken"=>$from->skypeToken,"regtoken"=>$from->registrationToken], $to, $message)) {
+                           // dd($is_friend);
                             sleep(2);
-                            $this->setCurrentProxy();
-                            // echo("\nnot sended");
+                            echo("\n".$this->cur_proxy->proxy."  not sended");
+                                $this->cur_proxy->skype=-1;
+                                $this->cur_proxy->save();
+                                $this->proxy_string="";
+                                $this->proxy_arr=null;
+                                //$from->proxy_id=0;
+                                $from->reserved = 0;
+
+                                $from->skypeToken=null;
+                                $from->registrationToken=null;
+                                $from->expiry=null;
+                                $from->save();
+
+                            $this->cur_proxy->release();
+
+                           // $this->setCurrentProxy();
+
+                            // echo("\n".$this->cur_proxy->proxy."not sended");
                             continue;
                         }
+
+                       // $this->cur_proxy->release();
+                        $from->reserved = 0;
+                        $from->save();
+                        //dd($this->cur_proxy);
                         return true;
                     } else {
 
                         if (!$this->addContact($to, $message)) {
                             sleep(2);
-                            $this->setCurrentProxy();
+                            echo("\n".$this->cur_proxy->proxy."  not add contact");
+                            $this->cur_proxy->skype=-1;
+                            $this->cur_proxy->save();
+                            $this->proxy_string="";
+                            $this->proxy_arr=null;
+                            //$from->proxy_id=0;
+                            $from->reserved = 0;
+                            $from->skypeToken=null;
+                            $from->registrationToken=null;
+                            $from->expiry=null;
+                            $from->save();
+                           // $this->setCurrentProxy();
                             // echo("\nnot sended");
+                            $this->cur_proxy->release();
                             continue;
                         }
-
+                        echo("\n".$this->cur_proxy->proxy."   add contact");
+                        $from->reserved = 0;
+                        $from->save();
+                        $this->cur_proxy->release();
                         return true;
                     }
                 }
-            } catch (\Exception $ex) {
+            }catch (\Exception $ex) {
                 dd($ex);
 
             }
 
         }
+        //return false;
     }
 
 

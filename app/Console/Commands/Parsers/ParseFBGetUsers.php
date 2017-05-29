@@ -4,7 +4,7 @@ namespace App\Console\Commands\Parsers;
 
 use App\Helpers\FB;
 use App\Models\Parser\ErrorLog;
-use App\Models\Parser\Proxy as ProxyItem;
+
 
 use App\Models\Tasks;
 use App\Models\TasksType;
@@ -84,7 +84,18 @@ class ParseFBGetUsers extends Command
                 else {
                      $this->content['link']->delete();
                 }
-                if($this->content['link']->parsed==1 && $this->content['link']->getusers_status==1) $this->content['link']->delete();
+                DB::transaction(function () {
+                    $link = FBLinks::
+                    where(['id'=>$this->content['link']->id,'parsed' => 1,'getusers_status'=>1])
+                        ->lockForUpdate()->first();
+
+                    if ( !isset($link)) {
+                        return;
+                    }
+                    $link->delete();
+
+
+                });
                 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();

@@ -9,7 +9,7 @@ use App\Models\TemplateDeliveryOK;
 use App\Models\AccountsData;
 use App\Models\Parser\ErrorLog;
 use App\Models\GoodProxies;
-use App\Models\ProxyTemp;
+use App\Models\Proxy as ProxyItem;
 use GuzzleHttp;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
@@ -22,6 +22,8 @@ class OkSender extends Command {
     public $gwt = "";
     public $tkn = "";
     public $cur_proxy;
+    public $proxy_arr;
+    public $proxy_string;
     public $content;
     /**
      * The name and signature of the console command.
@@ -97,39 +99,30 @@ class OkSender extends Command {
 
 
                 while (true) {
-                    $from = AccountsData::where(['type_id' => '2','is_sender'=>1])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
+                    $from = AccountsData::where([
+                        ['type_id', '=', 2],
+                        ['is_sender', '=', 1],
+                        ['valid', '=', 1],
+                        ['count_request','<',config('config.total_requets_limit')],
+                        ['reserved','<',3]
+
+                    ])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
 
                     if (!isset($from)) {
                         sleep(10);
                         continue;
                     }
-
-                    if ($from->proxy_id == 0) {
-
-                        $this->cur_proxy = ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->first();
-                       // dd($this->cur_proxy);
-                        if (!isset($this->cur_proxy)) {
-                           sleep(random_int(5, 10));
-                            continue;
-                        }
-
-                        $from->proxy_id = $this->cur_proxy->id;
-                        $from->ok_user_gwt = null;
-                        $from->ok_user_tkn = null;
-                        $from->ok_cookie = null;
+                    $from->reserved+=1;
+                    $from->save();
+                    $this->cur_proxy=    ProxyItem::getProxy(ProxyItem::OK, $from->proxy_id);
+                    if ( ! isset($this->cur_proxy)) {
+                        $from->reserved-=1;
                         $from->save();
-                    } else {
-                        $this->cur_proxy = ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->first();
-                        if (!isset($this->cur_proxy)) {
-                            sleep(random_int(5, 10));
-                            $from->proxy_id = 0;
-                            $from->ok_user_gwt = null;
-                            $from->ok_user_tkn = null;
-                            $from->ok_cookie = null;
-                            $from->save();
-                            continue;
-                        }
+                        sleep(random_int(5, 10));
+
+                        continue;
                     }
+
 
 
 
@@ -147,6 +140,8 @@ class OkSender extends Command {
                             $array->setCookie($set);
                         }
                     }
+                    $this->proxy_arr = parse_url($this->cur_proxy->proxy);
+                    $this->proxy_string = $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'];
 
                     $this->client = new Client([
                         'headers' => [
@@ -159,6 +154,7 @@ class OkSender extends Command {
                         'cookies' => $array->count() > 0 ? $array : true,
                         'allow_redirects' => true,
                         'timeout' => 20,
+                        'proxy' => $this->proxy_string,
                     ]);
 
                     if ($array->count() < 1) {
@@ -166,12 +162,19 @@ class OkSender extends Command {
                             $from->ok_user_gwt = $this->gwt;
                             $from->ok_user_tkn = $this->tkn;
                             $from->ok_cookie = json_encode($this->client->getConfig('cookies')->toArray());
+                            $from->count_request+=1;
                             $from->save();
                             break;
                         } else {
-                            // $from->delete();
-                            $from->valid = 0;
+                            $from->count_request+=1;
+                            $from->valid = -1;
+                            $from->ok_user_gwt=null;
+                            $from->ok_user_tkn=null;
+                            $from->ok_cookie=null;
+                            $from->reserved -=1;
+
                             $from->save();
+                            $this->cur_proxy->release();
                         }
                     } else {
                         $this->gwt = $from->ok_user_gwt;
@@ -193,8 +196,12 @@ class OkSender extends Command {
                         "st.ptfu" => "true",
                         "gwt.requested" => $this->gwt
                     ],
-                    'proxy' => $this->cur_proxy->proxy,
+
                 ]);
+                $this->cur_proxy->inc();
+                $from->increment('count_request');
+                $from->save();
+
                 echo("\ntrySend" . $this->cur_proxy);
                 if (!empty($data->getHeaderLine('TKN'))) {
                     $this->tkn = $data->getHeaderLine('TKN');
@@ -206,20 +213,32 @@ class OkSender extends Command {
                         $from->ok_user_gwt = $this->gwt;
                         $from->ok_user_tkn = $this->tkn;
                         $from->ok_cookie = json_encode($this->client->getConfig('cookies')->toArray());
+
+                        $from->increment('count_request');
                         $from->save();
+
                         break;
                     } else {
-                        $from->delete();
+                        $this->cur_proxy->release();
+                        $from->reserved-=1;
+                        $from->save();
                     }
                     continue;
                 }
                 if (strpos($contents, "error")) {
                     $from->valid = 0;
                     $from->save;
+                    $this->cur_proxy->release();
+                    $from->reserved-=1;
+                    $from->save();
                     continue;
                 }
                 $this->content['query']->ok_sended = 1;
                 $this->content['query']->save();
+                $this->cur_proxy->release();
+                $from->reserved-=1;
+                $from->count_sended_messages+=1;
+                $from->save();
 //dd("stop");
                 sleep(rand(1, 5));
             } catch (\Exception $ex) {
@@ -256,9 +275,9 @@ class OkSender extends Command {
                 "st.iscode" => "false"
             ],
             // 'proxy' => '127.0.0.1:8888'
-            'proxy' => $this->cur_proxy->proxy,
+            'proxy' => $this->proxy_string,
         ]);
-
+        $this->cur_proxy->inc();
         // echo ("\n".$this->cur_proxy->proxy);
         $html_doc = $data->getBody()->getContents();
         // dd($html_doc);

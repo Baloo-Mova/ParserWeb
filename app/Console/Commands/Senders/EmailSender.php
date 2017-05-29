@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
+use App\Models\Proxy as ProxyItem;
 
 class EmailSender extends Command {
     public $content;
@@ -31,6 +32,8 @@ class EmailSender extends Command {
      */
     protected $description = 'Email sender process';
     public $client = null;
+    public $cur_proxy = null;
+    public $proxy_arr, $proxy_string;
 
     /**
      * Create a new command instance.
@@ -110,9 +113,9 @@ class EmailSender extends Command {
                     $temp[] = $id->id_sender;
                 }
 
-                $from = AccountsData::where(['type_id' => 3], ['count_sended_messages', '<', config("config.max_count_for_sended_messages")])->whereNotIn('id', $temp)->first();
+                $from = AccountsData::where(['type_id' => 3,'valid'=> 1,'reserved'=>0], ['count_sended_messages', '<', config("config.max_count_for_sended_messages")])->where('count_request','<',config('config.total_requets_limit'))->whereNotIn('id', $temp)->first();
                 //echo("------".$from."-------");
-                // dd($from);
+
                 if (!isset($from)) {
                     $log = new ErrorLog();
                     $log->message = "Невозможно отравить email сообщение без отправителей";
@@ -124,6 +127,9 @@ class EmailSender extends Command {
                     sleep(10);
                     continue;
                 }
+                $from->reserved=1;
+                $from->count_request+=1;
+                $from->save();
                 $to = explode(',', $this->content['emails']->mails);
 
                 if ($this->sendMessage([
@@ -137,6 +143,8 @@ class EmailSender extends Command {
                 ) {
 
                     $this->content['emails']->email_sended = count($to);
+                    $this->content['emails']->save();
+
                     //  dd("hhhhhhh");
                 } else {
 
@@ -147,10 +155,14 @@ class EmailSender extends Command {
                     $this->content['emails']->email_reserved = 0;
                     $this->content['emails']->email_sended = 0;
                     $this->content['emails']->save();
+                    $from->reserved=0;
+                    $from->save();
                     continue;
                 }
                 $this->content['emails']->email_sended=1;
                 $this->content['emails']->save();
+                $from->reserved=0;
+                $from->save();
                 sleep(30);
             } catch (\Exception $ex) {
                 $log = new ErrorLog();
@@ -158,21 +170,23 @@ class EmailSender extends Command {
                 $log->task_id = 1;
 
                 $log->save();
+                $from->reserved=0;
+                $from->save();
                // dd($ex->getMessage());
                 if (strpos($ex->getMessage(), "Operation timed out") !==false ) {
-                    $proxy = ProxyTemp::where(['mail' => 1])->orWhere(['mail' => 2])->first();
+                   // $proxy = ProxyTemp::where(['mail' => 1])->orWhere(['mail' => 2])->first();
                    // dd($ex->getMessage());
-                    try {
+                   // try {
 
-                        $proxy->delete();
-                    } catch (\Exception $ex) {
+                     //   $proxy->delete();
+                   // } catch (\Exception $ex) {
                         
-                    }
+                   // }
                     continue;
                 }
             }
         }
-        return false;
+       // return false;
     }
 
     public function sendMessage($arguments) {
@@ -215,14 +229,29 @@ class EmailSender extends Command {
 
             $mails_to = trim(implode(',', $arguments['to']));
 
-            $proxy = ProxyTemp::where(['mail' => 1])->orWhere(['mail' => 2])->first();
+            $proxy =  $this->cur_proxy = ProxyItem::getProxy(ProxyItem::Email, $arguments["from"]->proxy_id);
+            //dd($this->cur_proxy);
 
-            if (!isset($proxy)) {
+            if (!isset($this->cur_proxy)) {
+                // if ($from->proxy_id != 0) {
+                //    $from->proxy_id = 0;
+                //    $from->save();
+                //}
+                sleep(random_int(1, 4));
 
-                $proxy = '';
-            } else {
-                $proxytext = str_replace("\r", "/", $proxy->proxy);
+                continue;
             }
+//$this->cur_proxy->release();
+            $this->proxy_arr = parse_url($this->cur_proxy->proxy);
+
+            $this->proxy_arr += ["user" => $this->cur_proxy->login];
+            $this->proxy_arr += ["password" => $this->cur_proxy->password];
+            //dd($this->proxy_arr);
+            //dd($proxy_arr);
+            $this->proxy_string = $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'];
+//dd($this->proxy_arr);
+            //echo("\n".$this->proxy_string);
+            $this->cur_proxy->inc();
 
             $request = $this->client->request("POST", "http://localhost:25555/sendmail", [
                // 'proxy' => '127.0.0.1:8888',
@@ -236,17 +265,18 @@ class EmailSender extends Command {
                     'html' => $arguments['text'],
                     'attach' => $att_list,
                     'id' => $arguments["id"],
-                    'proxy' => $proxytext
+                    'proxy' => $this->proxy_string,//$this->proxy_arr,
                 ]
                     ]
             );
 
             $response = mb_strtolower($request->getBody()->getContents());
 
-
+//dd($response);
             if ($response == "success") {
                 $arguments["from"]->count_sended_messages += 1;
                 $arguments['from']->save();
+                $this->cur_proxy->release();
                 return true;
             } else {
                 $log = new ErrorLog();
@@ -260,6 +290,7 @@ class EmailSender extends Command {
                     //echo "SEND SPAM";
                 }
                 //dd($response);
+                $this->cur_proxy->release();
                 if (strlen(stristr($response, "connection")) > 0 || strpos($response, 'connect etimedout')!==false) {
                     $number_con_time_out++;
                     echo "\n" . $number_con_time_out . ":" . $response . $proxy->proxy;
