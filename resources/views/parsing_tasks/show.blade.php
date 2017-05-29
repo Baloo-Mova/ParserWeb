@@ -34,11 +34,21 @@
                         </table>
                     </div>
                     <div class="box-footer">
-                        <a href="{{ route('parsing_tasks.start', ['id' => $data->id]) }}" class="btn btn-success btn-flat" {{ $data->active_type == 1 || $data->google_offset == -1 ? "disabled" : "" }}>Запустить</a>
-                        <a href="{{ route('parsing_tasks.stop', ['id' => $data->id]) }}" class="btn btn-danger btn-flat" {{ $data->active_type == 0 || $data->active_type == 2 ? "disabled" : "" }}>Остановить</a>
-                        <a href="{{ route('parsing_tasks.reserved', ['id' => $data->id]) }}" class="btn btn-danger btn-flat" {{ $data->reserved == 0 ? "disabled" : "" }}>Вернуть задачу</a>
+                        @if($data->active_type == 0 || $data->active_type == 2)
+                            <a href="{{ route('parsing_tasks.start', ['id' => $data->id]) }}"
+                               class="btn btn-success btn-flat">Запустить парсинг</a>
+                        @elseif($data->active_type == 1 || $data->google_offset == -1)
+                            <a href="{{ route('parsing_tasks.stop', ['id' => $data->id]) }}"
+                               class="btn btn-danger btn-flat">Остановить парсинг</a>
+                        @endif
 
-
+                        @if($data->need_send == 0)
+                            <a href="{{ route('parsing_tasks.startDelivery', ['id' => $data->id]) }}"
+                               class="btn btn-success btn-flat">Запустить рассылку</a>
+                        @elseif(empty($mails->subject) || empty($skype->text) || $data->need_send == 1)
+                            <a href="{{ route('parsing_tasks.stopDelivery', ['id' => $data->id]) }}"
+                               class="btn btn-danger btn-flat">Остановить рассылку</a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -68,7 +78,26 @@
                                     <span>В очереди: <span class="badge bg-info task_result_span_queue">-</span></span>&nbsp;
                                     <span>Разослано: <span class="badge bg-warning task_result_span_sended">-</span></span>&nbsp;
                                     <hr>
-                                    <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}" class="btn btn-primary btn-flat" >Экспортировать в CSV</a>
+                                    <div style="margin-top: -10px;">
+                                        <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}"
+                                           class="btn btn-primary btn-flat" style="margin-top: -3px;">Экспортировать в CSV</a>
+
+
+                                        <form action="{{ route('parsing_tasks.getFromCsv') }}" enctype="multipart/form-data" method="post" id="targetForm" style="display: inline-block;">
+                                            {{ csrf_field() }}
+                                            <input type="hidden" name="task_id" value="{{ $data->id }}">
+                                            <label for="file-upload" class="custom-file-upload">
+                                                Импортировать из CSV
+                                            </label>
+                                            <input id="file-upload" type="file" name="myfile"/>
+                                        </form>
+                                    </div>
+                                    <div class="file_format_info">
+                                        <h5><strong>Формат файла:</strong></h5>
+                                        link;mails;phones;skypes;city;name <br>
+                                        "=""link_val""";"=""mails_val""";"=""phones_val""";"=""skypes_val""";"=""city_val""";"=""name_val"""
+                                    </div>
+
                                     <hr>
                                 </div>
                                 <div class="table-responsive">
@@ -86,28 +115,12 @@
                                         </tr>
                                         </thead>
                                         <tbody class="task_result_tbody">
-                                        {{--@forelse($search_queries as $key => $value )--}}
-                                        {{--<tr>--}}
-                                        {{--<td data-id="{{ $value->id }}" data-text="{{ count($search_queries) - $key }}" data-task-id="{{ $value->task_id }}">{{ count($search_queries) - $key }}</td>--}}
-                                        {{--<td>{{ $value->link }}</td>--}}
-                                        {{--<td>{{ $value->mails }}</td>--}}
-                                        {{--<td>{{ $value->phones }}</td>--}}
-                                        {{--<td>{{ $value->skypes }}</td>--}}
-                                        {{--</tr>--}}
-                                        {{--@empty--}}
-                                        {{--<tr class="no_results_class">--}}
-                                        {{--<td colspan="5" class="text-center">--}}
-                                        {{--Нет результатов!--}}
-                                        {{--</td>--}}
-                                        {{--</tr>--}}
-                                        {{--@endforelse--}}
                                         <tr class="no_results_class">
                                             <td colspan="8" class="text-center"> Ожидание результатов ...</td>
                                         </tr>
                                         </tbody>
                                     </table>
                                 </div>
-                                {{--{{ $search_queries->links() }}--}}
                                 <nav aria-label="Page navigation">
                                     <ul class="pagination">
 
@@ -116,9 +129,6 @@
                             </div>
 
                             <div id="data" class="tab-pane well fade">
-                                <a href="{{ route('parsing_tasks.startDelivery', ['id' => $data->id]) }}" class="btn btn-success btn-flat" {{empty($mails->subject) || empty($skype->text) || $data->need_send == 1 ? "disabled" : "" }}>Запустить рассылку</a>
-                                <a href="{{ route('parsing_tasks.stopDelivery', ['id' => $data->id]) }}" class="btn btn-danger btn-flat" {{$data->need_send == 0 ? "disabled" : "" }}>Остановить рассылку</a>
-                                <hr>
                                 <form action="{{ route('parsing_tasks.changeDeliveryInfo') }}" method="post">
                                     <table class="table table-bordered">
                                         <thead>
@@ -144,29 +154,28 @@
                                         </tr>
                                         </thead>
                                         <tbody>
-                                            {{ csrf_field() }}
                                            
                                             <td><textarea name="skype_text" class="form-control" cols="30" rows="3">{{ empty($skype) ? "-" : $skype->text }}</textarea></td>
                                             <td><textarea name="vk_text" class="form-control" cols="30" rows="3">{{ empty($vk) ? "-" : $vk->text }}</textarea></td>
-                                            <input type="hidden" name="delivery_id" value="{{ $data->id }}">
+
                                         </tbody>
                                     </table>
                                     <table class="table table-bordered">
                                         <thead>
                                         <tr>
                                             <th>OK text</th>
-                                            <th>Twitter text</th>
+                                            <th>FB text</th>
+                                            <!--<th>Twitter text</th>-->
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        {{ csrf_field() }}
 
                                         <td><textarea name="ok_text" class="form-control" cols="30" rows="3">{{ empty($ok) ? "-" : $ok->text }}</textarea></td>
-                                        <td><textarea name="tw_text" class="form-control" cols="30" rows="3" maxlength="100">{{ empty($tw) ? "-" : $tw->text }}</textarea></td>
-                                        <input type="hidden" name="delivery_id" value="{{ $data->id }}">
-                                        </tbody>
+                                        <!--<td><textarea name="tw_text" class="form-control" cols="30" rows="3" maxlength="100">{{ empty($tw) ? "-" : $tw->text }}</textarea></td>-->
+                                        <td><textarea name="fb_text" class="form-control" cols="30" rows="3">{{ empty($fb) ? "-" : $fb->text }}</textarea></td>
+                                      </tbody>
                                     </table>
-                                    <table class="table table-bordered">
+                                    <!--<table class="table table-bordered">
                                         <thead>
                                         <tr>
                                             <th>FB text</th>
@@ -174,13 +183,12 @@
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        {{ csrf_field() }}
 
                                         <td><textarea name="fb_text" class="form-control" cols="30" rows="3">{{ empty($fb) ? "-" : $fb->text }}</textarea></td>
                                         
                                         <input type="hidden" name="delivery_id" value="{{ $data->id }}">
                                         </tbody>
-                                    </table>
+                                    </table>-->
                                     <table class="table table-bordered">
                                         <thead>
                                         <tr>
@@ -189,11 +197,9 @@
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        {{ csrf_field() }}
 
                                         <td><textarea name="viber_text" class="form-control" cols="30" rows="3">{{ empty($viber) ? "-" : $viber->text }}</textarea></td>
                                         <td><textarea name="whats_text" class="form-control" cols="30" rows="3" maxlength="100">{{ empty($whats) ? "-" : $whats->text }}</textarea></td>
-                                        <input type="hidden" name="delivery_id" value="{{ $data->id }}">
                                         </tbody>
                                     </table>
                                     <input type="submit" class="btn btn-primary btn-flat" value="Изменить">
@@ -409,7 +415,19 @@
                 paginateConstruct(parseInt(page, 10));
             });
 
+            $('#file-upload').change(function() {
+                $('#targetForm').submit();
+            });
+
+            $(".custom-file-upload").on("mouseenter", function(){
+               $(".file_format_info").css("display", "block");
+            });
+
+            $(".custom-file-upload").on("mouseleave", function(){
+                $(".file_format_info").css("display", "none");
+            });
 
         });
+
     </script>
 @stop
