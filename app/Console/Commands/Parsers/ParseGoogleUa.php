@@ -4,15 +4,15 @@ namespace App\Console\Commands\Parsers;
 
 use App\Helpers\Web;
 use App\Models\Parser\ErrorLog;
-use App\Models\Parser\Proxy as ProxyItem;
 use App\Models\Parser\SiteLinks;
 use App\Models\Tasks;
 use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\IgnoreDomains;
-use App\Models\ProxyTemp;
 use Illuminate\Support\Facades\DB;
+use App\Models\Proxy;
+use League\Flysystem\Exception;
 
 class ParseGoogleUa extends Command
 {
@@ -48,38 +48,41 @@ class ParseGoogleUa extends Command
      */
     public function handle()
     {
+
         while (true) {
-            $this->content['task'] = null;
-            DB::transaction(function () {
-                $task = Tasks::where([
-                    'task_type_id'       => TasksType::WORD,
-                    'google_ua_reserved' => 0,
-                    'active_type'        => 1
-                ])->lockForUpdate()->first();
+            try {
+                $proxy                 = null;
+                $this->content['task'] = null;
+                DB::transaction(function () {
+                    $task = Tasks::where([
+                        'task_type_id'       => TasksType::WORD,
+                        'google_ua_reserved' => 0,
+                        'active_type'        => 1
+                    ])->lockForUpdate()->first();
 
-                if ( ! isset($task)) {
-                    return;
+                    if ( ! isset($task)) {
+                        return;
+                    }
+
+                    $task->google_ua_reserved = 1;
+                    $task->save();
+                    $this->content['task'] = $task;
+                });
+
+                if ( ! isset($this->content['task'])) {
+                    sleep(10);
+                    continue;
                 }
-
-                $task->google_ua_reserved = 1;
-                $task->save();
-                $this->content['task'] = $task;
-            });
-
-            if ( ! isset($this->content['task'])) {
-                $this->content['task']->google_ua_reserved = 0;
-                $this->content['task']->save();
-                sleep(10);
-                continue;
+            } catch (Exception $exception) {
+                dd($exception->getLine());
             }
-
             $ignore = IgnoreDomains::all();
             try {
                 $web           = new Web();
                 $crawler       = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
                 $sitesCountNow = 0;
                 $sitesCountWas = 0;
-                $proxy         = ProxyItem::getProxy(ProxyItem::GOOGLE);
+                $proxy         = Proxy::getProxy(Proxy::Google);
                 if ( ! isset($proxy)) {
                     sleep(random_int(5, 10));
                     continue;
@@ -91,17 +94,16 @@ class ParseGoogleUa extends Command
                     while (strlen($data) < 200) {
 
                         $data = $web->get("https://www.google.com.ua/search?q=" . urlencode($this->content['task']->task_query) . "&start=" . $i * 10,
-                            $proxy
-                        );
-                        $proxy->increment('google');
-                        $proxy->save();
-                        $proxy = ProxyItem::find($proxy->id);
-                        if ($proxy->google > 50) {
-                            $proxy = ProxyItem::getProxy(ProxyItem::GOOGLE);
+                            $proxy);
+                        $proxy->inc();
+                        if ( ! $proxy->canProcess()) {
+                            $proxy->release();
+                            $proxy = Proxy::getProxy(Proxy::Google);
                         }
                         if ($data == "NEED_NEW_PROXY") {
                             while (true) {
-                                $proxy = ProxyItem::getProxy(ProxyItem::GOOGLE);
+                                $proxy->release();
+                                $proxy = Proxy::getProxy(Proxy::Google);
                                 if (isset($proxy)) {
                                     break;
                                 }
@@ -163,6 +165,10 @@ class ParseGoogleUa extends Command
                 $log->task_id = $this->content['task']->id;
                 $log->message = $ex->getMessage() . " line:" . __LINE__;
                 $log->save();
+            } finally {
+                if (isset($proxy)) {
+                    $proxy->release();
+                }
             }
         }
     }

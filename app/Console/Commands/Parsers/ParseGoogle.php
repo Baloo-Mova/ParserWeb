@@ -4,14 +4,13 @@ namespace App\Console\Commands\Parsers;
 
 use App\Helpers\Web;
 use App\Models\Parser\ErrorLog;
-use App\Models\Parser\Proxy as ProxyItem;
+use App\Models\Proxy;
 use App\Models\Parser\SiteLinks;
 use App\Models\Tasks;
 use App\Models\IgnoreDomains;
 use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
-use App\Models\ProxyTemp;
 use Illuminate\Support\Facades\DB;
 
 class ParseGoogle extends Command
@@ -49,6 +48,7 @@ class ParseGoogle extends Command
     public function handle()
     {
         while (true) {
+            $proxy                 = null;
             $this->content['task'] = null;
             DB::transaction(function () {
                 $task = Tasks::where([
@@ -78,30 +78,28 @@ class ParseGoogle extends Command
                 $crawler       = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
                 $sitesCountNow = 0;
                 $sitesCountWas = 0;
-                $proxy         = ProxyItem::getProxy(ProxyItem::GOOGLE);
-
+                $proxy         = Proxy::getProxy(Proxy::Google);
                 if ( ! isset($proxy)) {
                     $this->content['task']->google_ru = 0;
                     $this->content['task']->save();
                     sleep(random_int(5, 10));
                     continue;
                 }
-
                 $i = $this->content['task']->google_ru_offset;
                 do {
                     $data = "";
                     while (strlen($data) < 200) {
                         $data = $web->get("https://www.google.ru/search?q=" . urlencode($this->content['task']->task_query) . "&start=" . $i * 10,
                             $proxy);
-                        $proxy->increment('google');
-                        $proxy->save();
-                        $proxy = ProxyItem::find($proxy->id);
-                        if ($proxy->google > 50) {
-                            $proxy = ProxyItem::getProxy(ProxyItem::GOOGLE);
+                        $proxy->inc();
+                        if ( ! $proxy->canProcess()) {
+                            $proxy->release();
+                            $proxy = Proxy::getProxy(Proxy::Google);
                         }
                         if ($data == "NEED_NEW_PROXY") {
                             while (true) {
-                                $proxy = ProxyItem::getProxy(ProxyItem::GOOGLE);
+                                $proxy->release();
+                                $proxy = Proxy::getProxy(Proxy::Google);
                                 if (isset($proxy)) {
                                     break;
                                 }
@@ -117,8 +115,8 @@ class ParseGoogle extends Command
                         $link = $item->find('a', 0);
                         if (isset($link) && ! empty($link->href)) {
                             if ($this->validate($link->href, $ignore)) {
-                                $data = parse_url($link->href,PHP_URL_HOST);
-                                $tmp = SiteLinks::where([
+                                $data = parse_url($link->href, PHP_URL_HOST);
+                                $tmp  = SiteLinks::where([
                                     ['task_id', '=', $this->content['task']->id],
                                     ['link', 'like', '%' . $data . '%']
                                 ])->first();
@@ -142,7 +140,6 @@ class ParseGoogle extends Command
                         $log->save();
                     }
                     $i++;
-
                     $listLinks = [];
                     $task      = Tasks::where('id', '=', $this->content['task']->id)->first();
                     if (isset($task)) {
@@ -162,6 +159,10 @@ class ParseGoogle extends Command
                 $log->task_id = $this->content['task']->id;
                 $log->message = $ex->getMessage() . " line:" . __LINE__;
                 $log->save();
+            } finally {
+                if (isset($proxy)) {
+                    $proxy->release();
+                }
             }
         }
     }
