@@ -107,6 +107,8 @@ class ParseSite extends Command
                     sleep(10);
                     continue;
                 }
+
+                echo $link->link . PHP_EOL;
                 $search_queries = SearchQueries::where(['task_id' => $link->task_id, 'link' => $link->link])->first();
                 if (isset($search_queries)) {
                     $link->delete();
@@ -132,16 +134,13 @@ class ParseSite extends Command
                     if (strpos($ex->getMessage(), "conv():")) {
                         $crawler = new SimpleHtmlDom(null, true, true, 'windows-1251', true, '\r\n', ' ');
                         $data    = $web->get($link->link);
-
                         $crawler->clear();
                         $crawler->load($data);
-
                         $data = $crawler->find('body', 0);
                     }
                 }
 
                 if ( ! empty($data)) {
-
                     $baseData = parse_url($link->link);
                     $emails   = $this->extractEmails($data);
                     $phones   = $this->extractPhones($data);
@@ -180,24 +179,25 @@ class ParseSite extends Command
                             $emails = $this->extractEmails($data, $emails);
                             $skypes = $this->extractSkype($data, $skypes);
                             $phones = $this->extractPhones($data);
+                            if (count($emails) > 0 || count($phones) > 0 || count($skypes) > 0) {
+                                $res          = new SearchQueries();
+                                $res->mails   = implode(',', $emails);
+                                $res->phones  = implode(',', $phones);
+                                $res->skypes  = implode(',', $skypes);
+                                $res->link    = $default_link;
+                                $res->task_id = $task_id;
+                                $res->save();
+                                break;
+                            }
                         } catch (\Exception $ex) {
                         }
-                    }
-
-                    if (count($emails) > 0 || count($phones) > 0 || count($skypes) > 0) {
-                        $res          = new SearchQueries();
-                        $res->mails   = implode(',', $emails);
-                        $res->phones  = implode(',', $phones);
-                        $res->skypes  = implode(',', $skypes);
-                        $res->link    = $default_link;
-                        $res->task_id = $task_id;
-                        $res->save();
+                        echo $l . PHP_EOL;
                     }
                     $link->delete();
                 }
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->message = $ex->getMessage() . " line:" . __LINE__;
+                $log->message = $ex->getMessage() . " line:" . $ex->getLine();
                 $log->task_id = 0;
                 $log->save();
             }
@@ -369,71 +369,51 @@ class ParseSite extends Command
 
     public function extractlinks($data, $def_link, $before = [])
     {
+        try {
+            $html = $data->innertext;
 
-        $html = $data->innertext;
+            $protocol = $def_link["scheme"] . "://";
+            $domain   = $def_link["host"];
 
-        $domain = "";
-        //\Illuminate\Support\Facades\Storage::put("html.txt", $html);
+            if (preg_match_all("/<a[^>]*href\s*=\s*'([^']*)'|" . '<a[^>]*href\s*=\s*"([^"]*)"' . "/is", $html, $M)) {
 
-        $protocol = $def_link["scheme"] . "://";
-        $domain   = $def_link["host"];
-
-        // dd($domain);
-
-        if (preg_match_all("/<a[^>]*href\s*=\s*'([^']*)'|" . '<a[^>]*href\s*=\s*"([^"]*)"' . "/is", $html, $M)) {
-
-            $M = array_unique($M[2]);
-            //dd($M);
-            foreach ($M as $m) {
-                //dd($M);
-                // echo($m."\n");
-//if doesn't start with http and is not empty
-                if ( ! $this->validate($m)) {
-                    continue;
-                }
-                if (strpos($m, "http") === false && trim($m) !== "") {
-                    //checking if absolute path
-
-                    if ($m == "/") {
-                        $m = $protocol . $domain . "/";
-                        //dd($m."dfdfdsdsd");
-                        //  echo($m . "\n");
-                    } else {
-
-                        if ($m[0] == '/') {
-
-                            $m = substr($m, 1);
-                        } else if ($m[0] == '.') {
-
-                            while ($m[0] != '/') {
+                $M = array_unique($M[2]);
+                foreach ($M as $m) {
+                    if ( ! $this->validate($m)) {
+                        continue;
+                    }
+                    if (strpos($m, "http") === false && trim($m) !== "") {
+                        if ($m == "/") {
+                            $m = $protocol . $domain . "/";
+                        } else {
+                            if ($m[0] == '/') {
+                                $m = substr($m, 1);
+                            } else if ($m[0] == '.') {
+                                while ($m[0] != '/') {
+                                    $m = substr($m, 1);
+                                }
                                 $m = substr($m, 1);
                             }
-                            $m = substr($m, 1);
-                            // echo("\n---".$m."\n");
+
+                            $m = $protocol . $domain . "/" . $m;
                         }
-
-                        $m = $protocol . $domain . "/" . $m;
                     }
-                }
 
-                if ( ! in_array($m, $before) && trim($m) !== "") {
-                    //if valid url
-                    //if ($this->validate($m)) {
-                    //checking if it is url from our domain
-                    if (strpos($m, "http://" . $domain) === 0 || strpos($m, "https://" . $domain) === 0) {
-                        //adding url to sitemap array
-                        // $this->sitemap_urls[] = $url;
-                        //adding url to new link array
-
-                        $before[] = $m;
+                    if ( ! in_array($m, $before) && trim($m) !== "") {
+                        if (strpos($m, "http://" . $domain) === 0 || strpos($m, "https://" . $domain) === 0) {
+                            $before[] = $m;
+                        }
                     }
-                    // }
                 }
             }
+            array_multisort(array_map('strlen', $before), $before);
+        } catch (\Exception $ex) {
+            $log          = new ErrorLog();
+            $log->message = $ex->getMessage() . " line:" . $ex->getLine();
+            $log->task_id = 0;
+            $log->save();
         }
-        array_multisort(array_map('strlen', $before), $before);
 
-        //dd($before);
         return $before;
     }
 
