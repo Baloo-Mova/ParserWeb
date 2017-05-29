@@ -171,11 +171,13 @@ class Proxy extends Model
     public function release()
     {
         if (isset($this->reservedFor)) {
-            $this->decrement($this->reservedFor . '_reserved');
-            $this->update([
-               // $this->reservedFor . '_reserved' => 0,
-                $this->reservedFor               => $this->{$this->reservedFor}
-            ]);
+            if($this->{$this->reservedFor . '_reserved'}>0) {
+                $this->decrement($this->reservedFor . '_reserved');
+                $this->update([
+                    // $this->reservedFor . '_reserved' => 0,
+                    $this->reservedFor => $this->{$this->reservedFor}
+                ]);
+            }
         }
     }
 
@@ -190,5 +192,26 @@ class Proxy extends Model
     public function canProcess(){
         return !($this->{$this->reservedFor} >= 1000);
     }
+    public static function findProxy($type)
+    {
+        $proxy = null;
 
+
+
+            DB::transaction(function () use ($type, &$proxy) {
+                $proxy = static::where([
+                    [$type, '>',-1],
+
+                    ['valid', '=', 1],
+                ])->inRandomOrder()->first();
+
+                if (isset($proxy)) {
+                    $proxy->reservedFor = $type;
+                   //$proxy->reserve();
+                }
+            });
+
+
+        return $proxy;
+    }
 }
