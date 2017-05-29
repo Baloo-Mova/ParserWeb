@@ -18,6 +18,7 @@ use App\Models\SearchQueries;
 use App\Models\TemplateDeliveryTw;
 use App\Models\EmailTemplates;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Supervisor\Api;
 
 class ParsingTasksController extends Controller {
@@ -308,14 +309,19 @@ class ParsingTasksController extends Controller {
     public function getCsv($id) {
 
         $table = SearchQueries::where('task_id', '=', $id)->get()->toArray();
+        $cols = [];
 
         if (count($table) > 0) {
             chmod("search_queries_result.csv", 0755);
             $file = fopen('search_queries_result.csv', 'w');
-            foreach ($table as $row) {
 
+            foreach ($table as $row) {
                 foreach ($row as $key => $item) {
-                    $row[$key] = $item == null ? null : iconv("UTF-8", "Windows-1251", $item);
+                    if($key == "id"){
+                        continue;
+                    }else{
+                        $row[$key] = $item === null ? $key."|".null : $key."|".iconv("UTF-8", "Windows-1251", $item);
+                    }
                 }
                 fputcsv($file, $row);
             }
@@ -325,6 +331,29 @@ class ParsingTasksController extends Controller {
         } else {
             return redirect()->back();
         }
+    }
+
+    public function getFromCsv($id) {
+        if (( $file = fopen('search_queries_result.csv', 'r')) == FALSE) {
+            exit();
+        }
+        $row = 1;
+        $res = [];
+        while (($data = fgetcsv($file, 1000, ",")) !== FALSE) {
+
+            $num = count($data);
+
+            for ($c=0; $c < $num; $c++) {
+                $tpm = explode("|",$data[$c]);
+                $res[$row][$tpm[0]] = ($tpm[1] == '') ? NULL : $tpm[1];
+            }
+            $row++;
+        }
+
+        //DB::table('search_queries')->insert($res);
+
+        var_dump($res);
+        dd();
     }
 
     public function testingDeliveryMails() {
