@@ -165,6 +165,7 @@
                                         <thead>
                                         <tr>
                                             <th>OK text</th>
+                                            <th>FB text</th>
                                             <!--<th>Twitter text</th>-->
                                         </tr>
                                         </thead>
@@ -173,10 +174,12 @@
 
                                         <td><textarea name="ok_text" class="form-control" cols="30" rows="3">{{ empty($ok) ? "-" : $ok->text }}</textarea></td>
                                         <!--<td><textarea name="tw_text" class="form-control" cols="30" rows="3" maxlength="100">{{ empty($tw) ? "-" : $tw->text }}</textarea></td>-->
+                                        <td><textarea name="fb_text" class="form-control" cols="30" rows="3">{{ empty($fb) ? "-" : $fb->text }}</textarea></td>
+
                                         <input type="hidden" name="delivery_id" value="{{ $data->id }}">
                                         </tbody>
                                     </table>
-                                    <table class="table table-bordered">
+                                    <!--<table class="table table-bordered">
                                         <thead>
                                         <tr>
                                             <th>FB text</th>
@@ -190,7 +193,7 @@
                                         
                                         <input type="hidden" name="delivery_id" value="{{ $data->id }}">
                                         </tbody>
-                                    </table>
+                                    </table>-->
                                     <table class="table table-bordered">
                                         <thead>
                                         <tr>
