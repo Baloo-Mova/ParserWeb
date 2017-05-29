@@ -102,7 +102,6 @@ input[type="file"] {
 }
 
 .file_format_info{
-    display: inline-block;
     background-color: #fff;
     border: 1px solid #ccc;
     padding: 10px;
