@@ -80,21 +80,16 @@
                                     <hr>
                                     <div  style="margin-top: -11px;">
                                         <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}"
-                                           class="btn btn-primary btn-flat" style="margin-top: -38px;">Экспортировать в CSV</a>
+                                           class="btn btn-primary btn-flat" style="margin-top: -3px;">Экспортировать в CSV</a>
+
 
                                         <form action="{{ route('parsing_tasks.getFromCsv') }}" enctype="multipart/form-data" method="post" id="targetForm" style="display: inline-block;">
                                             {{ csrf_field() }}
                                             <input type="hidden" name="task_id" value="{{ $data->id }}">
-                                            <div class="form">
-                                                <label class="uploadFile">
-                                                    Импортировать из CSV
-                                                    <span>
-                                                        <input type="file" id="myfile" name="myfile" />
-                                                    </span>
-                                                </label>
-                                                <span class="impcsv"></span>
-                                                <span class="clearfix"></span>
-                                            </div>
+                                            <label for="file-upload" class="custom-file-upload">
+                                                Импортировать из CSV
+                                            </label>
+                                            <input id="file-upload" type="file" name="myfile"/>
                                         </form>
                                     </div>
 
@@ -419,11 +414,7 @@
                 paginateConstruct(parseInt(page, 10));
             });
 
-            $(".uploadFile").on("click", function(){
-                $('.impcsv').text("Импортировать из CSV");
-            });
-
-            $('#myfile').change(function() {
+            $('#file-upload').change(function() {
                 $('#targetForm').submit();
             });
 
