@@ -165,14 +165,14 @@
                                         <thead>
                                         <tr>
                                             <th>OK text</th>
-                                            <th>Twitter text</th>
+                                            <!--<th>Twitter text</th>-->
                                         </tr>
                                         </thead>
                                         <tbody>
                                         {{ csrf_field() }}
 
                                         <td><textarea name="ok_text" class="form-control" cols="30" rows="3">{{ empty($ok) ? "-" : $ok->text }}</textarea></td>
-                                        <td><textarea name="tw_text" class="form-control" cols="30" rows="3" maxlength="100">{{ empty($tw) ? "-" : $tw->text }}</textarea></td>
+                                        <!--<td><textarea name="tw_text" class="form-control" cols="30" rows="3" maxlength="100">{{ empty($tw) ? "-" : $tw->text }}</textarea></td>-->
                                         <input type="hidden" name="delivery_id" value="{{ $data->id }}">
                                         </tbody>
                                     </table>

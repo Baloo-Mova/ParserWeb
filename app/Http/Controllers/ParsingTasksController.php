@@ -218,7 +218,8 @@ class ParsingTasksController extends Controller {
         $mail_subj = $request->get("mail_subject");
         $mail_text = $request->get("mail_text");
         $ok_text = $request->get("ok_text");
-        $tw_text = $request->get("tw_text");
+        $vk_text = $request->get("vk_text");
+        //$tw_text = $request->get("tw_text");
         $fb_text = $request->get("fb_text");
         $viber_text = $request->get("viber_text");
         $whats_text = $request->get("whats_text");
@@ -244,7 +245,17 @@ class ParsingTasksController extends Controller {
             $ok->save();
         }
 
-        if (isset($tw_text)) {
+        if (isset($vk_text)) {
+            $vk = TemplateDeliveryVK::where("task_id", "=", $request->get("delivery_id"))->first();
+            if (empty($vk)) {
+                $vk = new TemplateDeliveryVK;
+                $vk->task_id = $request->get("delivery_id");
+            }
+            $vk->text = $vk_text;
+            $vk->save();
+        }
+
+        /*if (isset($tw_text)) {
             $tw = TemplateDeliveryTw::where("task_id", "=", $request->get("delivery_id"))->first();
             if (empty($tw)) {
                 $tw = new TemplateDeliveryTw();
@@ -252,7 +263,7 @@ class ParsingTasksController extends Controller {
             }
             $tw->text = $tw_text;
             $tw->save();
-        }
+        }*/
         if (isset($fb_text)) {
             $fb = TemplateDeliveryFB::where("task_id", "=", $request->get("delivery_id"))->first();
             if (empty($fb)) {
