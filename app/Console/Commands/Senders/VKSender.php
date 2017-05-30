@@ -46,7 +46,6 @@ class VKSender extends Command
      */
     public function handle()
     {
-        //sleep(random_int(1,3));
         while (true) {
             try {
                 $this->content['vkquery'] = null;
@@ -71,14 +70,7 @@ class VKSender extends Command
                      
                     continue;
                 }
-
-                //$sk_query->vk_reserved = 1;
-                //$sk_query->save();
-
-                
                 $message = TemplateDeliveryVK::where('task_id', '=',   $this->content['vkquery']->task_id)->first();
-                // dd($message);
-                
                 if ( ! isset($message)) {
                     sleep(10);
                     $this->content['vkquery']->vk_reserved = 0;
@@ -87,26 +79,21 @@ class VKSender extends Command
                 }
 
                  $web = new VK();
-                if($web->sendRandomMessage($this->content['vkquery']->vk_id, $message->text)==true){
+                if($web->sendRandomMessage($this->content['vkquery']->vk_id, $message->text)){
                     $this->content['vkquery']->vk_sended = 1;
                     $this->content['vkquery']->vk_reserved = 0;
-
                     $this->content['vkquery']->save();
                 }
                 else{
                     $this->content['vkquery']->vk_reserved = 2;
                     $this->content['vkquery']->save();
-                    
                 }
-                sleep(random_int(1, 5));
-                
-
-               
+                sleep(random_int(2,5));
 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->message = $ex->getTraceAsString();
-                $log->task_id = 0;
+                $log->message = $ex->getTraceAsString()." VK_SEND ". $ex->getLine();
+                $log->task_id = 8888;
                 $log->save();
             }
         }

@@ -35,7 +35,7 @@ class APIController extends Controller
             +  FBLinks::where('task_id', '=', $taskId)->count();
         $countSended = SearchQueries::where([
             'task_id'=> $taskId
-        ])->select(DB::raw('SUM(email_sended) + SUM(sk_sended)+SUM(vk_sended)+SUM(ok_sended)+SUM(tw_sended)+SUM(fb_sended) as total'))->first()->total;
+        ])->select(DB::raw('SUM(email_sended) + SUM(sk_sended)+SUM(vk_sended)+SUM(ok_sended)+SUM(tw_sended)+SUM(fb_sended) + SUM(phones_reserved_wh = 1) + SUM(phones_reserved_viber = 1)  as total'))->first()->total;
 
         return json_encode([
             'success'=>true,
