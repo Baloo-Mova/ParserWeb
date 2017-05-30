@@ -174,6 +174,7 @@ class VK
 
                 $sender->count_sended_messages += 1;
                 $sender->count_request += 4;
+                $sender->reserved = 0;
                 $sender->save();
 
                 return true;
