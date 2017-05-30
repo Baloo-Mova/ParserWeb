@@ -7,6 +7,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\DB;
 use SebastianBergmann\CodeCoverage\Report\PHP;
 use App\Models\AccountsData;
 use App\Models\Parser\VKLinks;
@@ -23,7 +24,8 @@ class VK
     public  $cur_proxy;
     public  $proxy_arr;
     public  $proxy_string;
-    public  $is_sender = 0;
+    public  $is_sender   = 0;
+    public  $accountData = null;
     private $client;
 
     public function __construct()
@@ -33,25 +35,43 @@ class VK
     public function sendRandomMessage($to_userId, $messages)
     {
         while (true) {
-            $sender          = null;
-            $this->cur_proxy = null;
-            $this->client    = null;
+            $sender            = null;
+            $this->cur_proxy   = null;
+            $this->accountData = null;
+            $this->client      = null;
             try {
-                $sender = AccountsData::where([
-                    ['type_id', '=', 1],
-                    ['valid', '=', 1],
-                    ['is_sender', '=', 1],
-                    ['reserved', '=', 0],
-                    ['count_request', '<', 1000]
-                ])->inRandomOrder()->first();
+                DB::transaction(function () {
+                    try {
+                        $sender = AccountsData::where([
+                            ['type_id', '=', 1],
+                            ['valid', '=', 1],
+                            ['is_sender', '=', 1],
+                            ['reserved', '=', 0],
+                            ['count_request', '<', 1000]
+                        ])->inRandomOrder()->first();
+
+                        if ( ! isset($sender)) {
+                            return;
+                        }
+
+                        $sender->reserved = 1;
+                        $sender->save();
+
+                        $this->accountData = $sender;
+                    } catch (\Exception $ex) {
+                        $error          = new ErrorLog();
+                        $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                        $error->task_id = 8888;
+                        $error->save();
+                    }
+                });
+
+                $sender = $this->accountData;
 
                 if ( ! isset($sender)) {
-                    sleep(3);
+                    sleep(1);
                     continue;
                 }
-
-                $sender->reserved = 1;
-                $sender->save();
 
                 $this->cur_proxy = ProxyItem::find($sender->proxy_id);
                 if ( ! isset($this->cur_proxy)) {
