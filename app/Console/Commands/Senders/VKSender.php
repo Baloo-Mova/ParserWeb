@@ -89,7 +89,7 @@ class VKSender extends Command
                     $this->content['vkquery']->vk_reserved = 2;
                     $this->content['vkquery']->save();
                 }
-                sleep(random_int(2, 5));
+                sleep(random_int(10, 20));
 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();

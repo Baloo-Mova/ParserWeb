@@ -66,8 +66,6 @@ class SkypeSender extends Command
                     continue;
                 }
 
-               // $this->content['query']->sk_recevied = 1;
-               // $this->content['query']->save();
 
                 $skypes  = array_filter(explode(",", trim($this->content['query']->skypes)));
                 $message = TemplateDeliverySkypes::where('task_id', '=', $this->content['query']->task_id)->first();
@@ -78,6 +76,9 @@ class SkypeSender extends Command
                 }
 
                 foreach ($skypes as $skype) {
+                    if(empty($skype)){
+                        continue;
+                    }
                     SkypeClassFacade::sendRandom($skype, $message->text);
                     sleep(random_int(1, 5));
                 }
@@ -87,7 +88,7 @@ class SkypeSender extends Command
 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->message = $ex->getMessage() . " line:" . __LINE__;
+                $log->message = "SKYPE " . $ex->getMessage() . " " . $ex->getLine();
                 $log->task_id = 0;
                 $log->save();
             }
