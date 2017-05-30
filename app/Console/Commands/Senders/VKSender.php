@@ -11,6 +11,7 @@ use App\Models\Tasks;
 use App\Helpers\VK;
 use App\Models\Parser\ErrorLog;
 use Illuminate\Support\Facades\DB;
+
 class VKSender extends Command
 {
     public $content;
@@ -52,25 +53,25 @@ class VKSender extends Command
                 DB::transaction(function () {
                     $sk_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
                         ['search_queries.vk_id', '<>', ''],
-                        'search_queries.vk_sended' => 0,
+                        'search_queries.vk_sended'   => 0,
                         'search_queries.vk_reserved' => 0,
-                        'tasks.need_send' => 1,
-                        'tasks.active_type' => 1,
+                        'tasks.need_send'            => 1,
+                        'tasks.active_type'          => 1,
 
                     ])->select('search_queries.*')->lockForUpdate()->first();
-                    if ( !isset($sk_query)) {
+                    if ( ! isset($sk_query)) {
                         return;
                     }
                     $sk_query->vk_reserved = 1;
                     $sk_query->save();
                     $this->content['vkquery'] = $sk_query;
                 });
-                if ( !isset(  $this->content['vkquery'])) {
+                if ( ! isset($this->content['vkquery'])) {
                     sleep(10);
-                     
                     continue;
                 }
-                $message = TemplateDeliveryVK::where('task_id', '=',   $this->content['vkquery']->task_id)->first();
+
+                $message = TemplateDeliveryVK::where('task_id', '=', $this->content['vkquery']->task_id)->first();
                 if ( ! isset($message)) {
                     sleep(10);
                     $this->content['vkquery']->vk_reserved = 0;
@@ -78,21 +79,21 @@ class VKSender extends Command
                     continue;
                 }
 
-                 $web = new VK();
-                if($web->sendRandomMessage($this->content['vkquery']->vk_id, $message->text)){
-                    $this->content['vkquery']->vk_sended = 1;
+
+                $web = new VK();
+                if ($web->sendRandomMessage($this->content['vkquery']->vk_id, $message->text)) {
+                    $this->content['vkquery']->vk_sended   = 1;
                     $this->content['vkquery']->vk_reserved = 0;
                     $this->content['vkquery']->save();
-                }
-                else{
+                } else {
                     $this->content['vkquery']->vk_reserved = 2;
                     $this->content['vkquery']->save();
                 }
-                sleep(random_int(2,5));
+                sleep(random_int(2, 5));
 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->message = $ex->getTraceAsString()." VK_SEND ". $ex->getLine();
+                $log->message = $ex->getTraceAsString() . " VK_SEND " . $ex->getLine();
                 $log->task_id = 8888;
                 $log->save();
             }
