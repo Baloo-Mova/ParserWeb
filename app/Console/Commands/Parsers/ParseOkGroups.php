@@ -167,8 +167,8 @@ class ParseOkGroups extends Command
                         'cookies' => isset($from->ok_cookie) ? $array : true,
                         'allow_redirects' => true,
                         'timeout' => 20,
-                        //'proxy'           => $this->proxy_string,
-                        'proxy' => '7zxShe:FhB871@127.0.0.1:8888'
+                        'proxy'           => $this->proxy_string,
+                       // 'proxy' => '7zxShe:FhB871@127.0.0.1:8888'
                     ]);
 
                     $data = $this->client->request('GET', 'http://ok.ru')->getBody()->getContents();
