@@ -218,7 +218,8 @@ class ParsingTasksController extends Controller {
         $mail_subj = $request->get("mail_subject");
         $mail_text = $request->get("mail_text");
         $ok_text = $request->get("ok_text");
-        $tw_text = $request->get("tw_text");
+        $vk_text = $request->get("vk_text");
+        //$tw_text = $request->get("tw_text");
         $fb_text = $request->get("fb_text");
         $viber_text = $request->get("viber_text");
         $whats_text = $request->get("whats_text");
@@ -244,7 +245,17 @@ class ParsingTasksController extends Controller {
             $ok->save();
         }
 
-        if (isset($tw_text)) {
+        if (isset($vk_text)) {
+            $vk = TemplateDeliveryVK::where("task_id", "=", $request->get("delivery_id"))->first();
+            if (empty($vk)) {
+                $vk = new TemplateDeliveryVK;
+                $vk->task_id = $request->get("delivery_id");
+            }
+            $vk->text = $vk_text;
+            $vk->save();
+        }
+
+        /*if (isset($tw_text)) {
             $tw = TemplateDeliveryTw::where("task_id", "=", $request->get("delivery_id"))->first();
             if (empty($tw)) {
                 $tw = new TemplateDeliveryTw();
@@ -252,7 +263,7 @@ class ParsingTasksController extends Controller {
             }
             $tw->text = $tw_text;
             $tw->save();
-        }
+        }*/
         if (isset($fb_text)) {
             $fb = TemplateDeliveryFB::where("task_id", "=", $request->get("delivery_id"))->first();
             if (empty($fb)) {
@@ -308,31 +319,42 @@ class ParsingTasksController extends Controller {
 
     public function getCsv($id) {
 
-        $table = SearchQueries::where('task_id', '=', $id)->get()->toArray();
+        $table = SearchQueries::where('task_id', '=', $id)
+            ->get(["link", "mails", "phones", "skypes", "vk_city", "vk_name"])->toArray();
         $cols = [];
         $res = [];
         $i = 0;
 
         if (count($table) > 0) {
-            chmod("search_queries_result.csv", 0755);
-            $file = fopen('search_queries_result.csv', 'w');
+            $file = fopen("parse_result_".$id.".csv", 'w');
 
             foreach ($table[0] as $key => $row) {
-                $cols[] = $key;
+                switch ($key){
+                    case "vk_name":
+                        $cols[] = "name";
+                        break;
+                    case "vk_city":
+                        $cols[] = "city";
+                        break;
+                    default:
+                        $cols[] = $key;
+                        break;
+                }
+
             }
 
             fputcsv($file, $cols, ";");
             foreach ($table as $row) {
                 $res = [];
                 foreach ($row as $item) {
-                    $res[] = $item === null ? null : iconv("UTF-8", "Windows-1251", $item);
+                    $res[] = $item === null ? null : "=\"" .iconv("UTF-8", "Windows-1251", $item). "\"";
                 }
                 $i++;
-                fputcsv($file, $res, ";");
+                fputcsv($file, $res, ';');
             }
             fclose($file);
 
-            return response()->download('search_queries_result.csv');
+            return response()->download('parse_result_'.$id.'.csv');
         } else {
             return redirect()->back();
         }
@@ -357,15 +379,25 @@ class ParsingTasksController extends Controller {
         $cols = [];
 
         foreach (fgetcsv($file, 1000, ";") as $item){
-            $cols[] = $item;
+            switch ($item){
+                case "name":
+                    $cols[] = "vk_name";
+                    break;
+                case "city":
+                    $cols[] = "vk_city";
+                    break;
+                default:
+                    $cols[] = $item;
+                    break;
+            }
         }
 
         while (($data = fgetcsv($file, 1000, ";")) !== FALSE) {
 
             $num = count($data);
 
-            for ($c=1; $c < $num; $c++) {
-                $res[$row][$cols[$c]] = ($data[$c] == '') ? NULL : $data[$c];
+            for ($c=0; $c < $num; $c++) {
+                $res[$row][$cols[$c]] = ($data[$c] == '') ? NULL : str_replace(["\"", "="], "", $data[$c]);
             }
             $res[$row]["task_id"] = $request->get('task_id');
             $row++;

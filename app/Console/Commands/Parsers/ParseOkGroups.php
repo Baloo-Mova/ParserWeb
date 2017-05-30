@@ -14,7 +14,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use App\Models\GoodProxies;
-use App\Models\ProxyTemp;
+
 use App\Models\Proxy as ProxyItem;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -167,6 +167,7 @@ class ParseOkGroups extends Command
                         'allow_redirects' => true,
                         'timeout'         => 20,
                         'proxy'           => $this->proxy_string,
+                        //'proxy' => '7zxShe:FhB871@127.0.0.1:8888'
                     ]);
 
                     $data = $this->client->request('GET', 'http://ok.ru')->getBody()->getContents();
@@ -207,11 +208,13 @@ class ParseOkGroups extends Command
                         }
                     }else{
                        $needFindAccount = false;
+                       $this->tkn = $from->ok_user_gwt;
+                       $this->gwt = $from->ok_user_tkn;
                     }
                 }
 
                 if ($this->userOrGroup != "user") { // Это группа, парсим данные, достаем всех пользователей
-
+                    echo("\nGroup");
                     $gr_url      = $query_data->group_url;
                     $page_numb   = $query_data->offset;
                     $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url);
@@ -222,6 +225,10 @@ class ParseOkGroups extends Command
                     $this->crawler->clear();
                     $this->crawler->load($html_doc);
 
+                    preg_match('/\;st\.groupId\=(\d*)\"\,staticResourceUrl/i',$html_doc,$groupId);
+
+                    $groupId=$groupId[1];
+                    //dd($groupId);
                     //Ищем все мыла на странице, сохраняем в $mails[]
 
                     $mails_group = $this->extractEmails($html_doc);
@@ -277,6 +284,9 @@ class ParseOkGroups extends Command
                             $groupname           = substr($gr_url, 1);
                             $group_members_query = 'https://ok.ru' . $gr_url . '/members?cmd=GroupMembersResultsBlock&gwt.requested=' . $this->gwt . '&st.cmd=altGroupMembers&st.groupId=' . $gr_id . '&st.referenceName=' . $groupname . '&st.vpl.mini=false&';
                         }
+                       // $group_members_query =  "https://ok.ru/dk?cmd=GroupMembersResultsBlock&st.gid=".$groupId;
+                        $page_numb+=1;
+
 
                         $groups_data = $this->client->request('POST', $group_members_query, [
                             'headers'     => [
@@ -284,37 +294,59 @@ class ParseOkGroups extends Command
                                 'TKN'     => $this->tkn
                             ],
                             "form_params" => [
+                                ""=>'',
                                 "fetch"       => "false",
-                                "st.page"     => $page_numb++,
+                                "st.page"     => $page_numb,
+                                //"gwt.requested" =>$from->ok_user_gwt,
                                 "st.loaderid" => "GroupMembersResultsBlockLoader"
 
                             ]
                         ]);
 
 
-                        if ( ! empty($groups_data->getHeaderLine('TKN'))) {
+                        if ( !empty($groups_data->getHeaderLine('TKN'))) {
                             $this->tkn = $groups_data->getHeaderLine('TKN');
                         }
 
                         $gr_doc = $groups_data->getBody()->getContents();
-                        $this->parsePage($gr_doc, $query_data->task_id);
+                         //file_put_contents('test.html', $gr_doc);
+                        try {
+                            $this->parsePage($gr_doc, $query_data->task_id);
+                        }catch(\Exception $ex){
+                          //  dd($ex->getMessage());
 
+                        }
                         $query_data->offset = $page_numb;
                         $query_data->save();
                         $from->count_request+=1;
                         $from->save();
                         $this->cur_proxy->inc();
-
-                        $this->cur_proxy = ProxyItem::find($this->cur_proxy->id);
+                        //$this->cur_proxy->release();
+                        $this->cur_proxy = ProxyItem::findProxy(ProxyItem::OK);
                         if ($this->cur_proxy->ok > 1000) {
-                            $this->cur_proxy =  ProxyItem::getProxy(ProxyItem::OK, $from->proxy_id);
+                            $this->cur_proxy->release();
+                            break;
                         }
                         sleep(random_int(3, 7));
+
                     } while (strlen($gr_doc) > 200);
 
                     $from->increment('count_request');
-                    $from->save();
-                    $from = AccountsData::find($from->id);
+                    $from->ok_user_tkn = $this->tkn;
+
+                    if(strlen($gr_doc)==0){
+                        $from->ok_user_tkn = null;
+                        $from->ok_user_gwt = null;
+                        $from->ok_cookie = null;
+                        $from->reserved-=1;
+
+                        $from->save();
+                        $task  = $this->data['task'];
+                        $task->ok_reserved = 0;
+                        $this->cur_proxy->release();
+                        continue;
+                    }
+                    //dd("dd");
                     if ($from->count_request > 1000) {
                         $task              = $this->data['task'];
                         $task->ok_reserved = 0;
@@ -324,8 +356,7 @@ class ParseOkGroups extends Command
                         $this->cur_proxy->release();
                         break;
                     }
-                    echo("\nhttps://ok.ru\" .$gr_url,");
-                    dd("stop");
+
                     SearchQueries::insert([
                         'link'=>"https://ok.ru" .$gr_url,
                          'mails'=> count($mails) != 0 ? implode(",", $mails) : null,
@@ -345,7 +376,8 @@ class ParseOkGroups extends Command
                     $query_data->delete();    // Получили всех пользователей, удаляем группу
 
                 } else {                // Это человек, парсим данные
-
+                    echo("\nUsers");
+                    $error = 1;
                     foreach ($query_data as $item) {
                         $groups_data = $this->client->request('GET', 'http://ok.ru' . $item->group_url);
                         $html_doc = $groups_data->getBody()->getContents();
@@ -396,7 +428,7 @@ class ParseOkGroups extends Command
                             'mails'=> count($mails) != 0 ? implode(",", $mails) : null,
                             'phones'=> null,
                             'skypes'=> count($skypes) != 0 ? implode(",", $skypes) : null,
-                            'task_id'=> $query_data->task_id,
+                            'task_id'=> $item->task_id,
                             'fb_name'=> null,
                             'vk_name'=>  isset($fio) && strlen($fio) > 0 && strlen($fio) < 500 ? $this->clearstr($fio) : "",
                             'vk_city'        => isset($user_info) && strlen($user_info) > 0 && strlen($user_info) < 500 ? $user_info : null,
@@ -405,13 +437,27 @@ class ParseOkGroups extends Command
 
 
                         ]);
-
                         $item->delete();
+                        $query_data->shift();
 
+
+
+
+                        $query_data->forget($item->id);
+                       // unset($query_data[$item]);
+                      // dd($query_data);
                         $this->cur_proxy->inc();
-                        $this->cur_proxy = ProxyItem::find($this->cur_proxy->id);
+                        $this->cur_proxy = ProxyItem::findProxy(ProxyItem::OK);
+
                         if ($this->cur_proxy->ok > 1000) {
-                            $this->cur_proxy = roxyItem::getProxy(ProxyItem::VK, $from->proxy_id);
+                            $this->cur_proxy->release();
+                            $task              = $this->data['task'];
+                            $task->ok_reserved = 0;
+                            $task->save();
+                            $from->reserved-=1;
+                            $from->save();
+                            $this->cur_proxy->release();
+                            break;
                         }
 
                         $from->increment('count_request');
@@ -429,8 +475,13 @@ class ParseOkGroups extends Command
 
                         sleep(rand(2, 8));
                     }
+                    foreach($query_data as $item){
+                        $item->reserved=0;
+                        $item->save();
+                    }
+
                 }
-dd("stop");
+
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
                 $log->task_id = 0;
@@ -557,6 +608,7 @@ echo("\n".substr($query_data2->href, 0, strripos($query_data2->href, "?st.")));
             $ok_group->task_id   = $task_id;
             $ok_group->type      = 2;
             $ok_group->reserved  = 0;
+
             $ok_group->save();
         }
     }

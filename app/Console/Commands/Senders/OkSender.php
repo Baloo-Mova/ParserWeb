@@ -155,6 +155,7 @@ class OkSender extends Command {
                         'allow_redirects' => true,
                         'timeout' => 20,
                         'proxy' => $this->proxy_string,
+                        //'proxy' => '7zxShe:FhB871@127.0.0.1:8888'
                     ]);
 
                     if ($array->count() < 1) {
@@ -226,8 +227,16 @@ class OkSender extends Command {
                     continue;
                 }
                 if (strpos($contents, "error")) {
+                    if(strpos($contents,"BLOCKER")!==false){
+                        $this->content['query']->ok_sended=1;
+                        $this->content['query']->ok_reserved=1;
+                        $this->content['query']->save();
+                    }
+                    else{
                     $from->valid = 0;
                     $from->save;
+
+                    }
                     $this->cur_proxy->release();
                     $from->reserved-=1;
                     $from->save();
@@ -247,7 +256,7 @@ class OkSender extends Command {
                 $log->message = $ex->getTraceAsString();
                 $log->task_id = $task_id;
                 $log->save();
-                $this->cur_proxy->reportBad();
+                //$this->cur_proxy->reportBad();
                  $from->proxy_id = 0;
                             $from->ok_user_gwt = null;
                             $from->ok_user_tkn = null;

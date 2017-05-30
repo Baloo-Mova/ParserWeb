@@ -70,13 +70,18 @@
     </div>
 
 @endsection
+@section('css')
+    <style>
+        .navbar-custom-menu .nav{
+            background-color: #3c8dbc;
+        }
+        .navbar-custom-menu .nav:hover{
+            background-color: #367FA9;
+        }
+    </style>
+@stop
 @section('js')
     <script>
-
-
-
-
-
         $(function(){
 
             $('#email_templates').change(function(){
