@@ -94,7 +94,7 @@ class ParseOk extends Command
                         ['is_sender', '=', 0],
                         ['valid', '=', 1],
                         ['count_request','<',config('config.total_requets_limit')],
-                        ['reserved','<',3]
+                        ['reserved','=',0]
 
                     ])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
 
@@ -104,11 +104,11 @@ class ParseOk extends Command
                         sleep(random_int(5, 10));
                         continue;
                     }
-                    $from->reserved+=1;
+                    $from->reserved=1;
                     $from->save();
                     $this->cur_proxy=    ProxyItem::getProxy(ProxyItem::OK, $from->proxy_id);
                     if ( ! isset($this->cur_proxy)) {
-                        $from->reserved-=1;
+                        $from->reserved=0;
                         $from->save();
                         sleep(random_int(5, 10));
 
@@ -144,7 +144,7 @@ class ParseOk extends Command
                         $from->ok_user_gwt=null;
                         $from->ok_user_tkn=null;
                         $from->ok_cookie=null;
-                        $from->reserved -=1;
+                        $from->reserved =0;
 
                         $from->save();
                         $this->cur_proxy->release();
@@ -217,7 +217,7 @@ class ParseOk extends Command
                         break;
                     }
                 } while (strlen($html_doc) > 200);
-                $from->reserved-=1;
+                $from->reserved=0;
 
                 $from->ok_user_tkn = $this->tkn;
                 $from->save();
@@ -233,7 +233,7 @@ class ParseOk extends Command
                     $task->ok_reserved = 0;
                     $task->save();
                 }
-                $from->reserved-=1;
+                $from->reserved=0;
                 $from->save();
                 $this->cur_proxy->release();
                 if (strpos($ex->getMessage(), "cURL") !== false) {

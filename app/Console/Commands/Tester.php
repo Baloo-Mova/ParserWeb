@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use App\Helpers\PhoneNumber;
 use App\Jobs\GetProxies;
 use App\Jobs\TestProxies;
-use App\Models\Parser\Proxy;
+use App\Models\Proxy;
 use App\MyFacades\SkypeClass;
 use Hamcrest\Core\Set;
 use PHPMailer;
@@ -57,7 +57,9 @@ class Tester extends Command
     public function handle()
     {
 
-
+$proxy =Proxy::getProxy(Proxy::OK,31);
+sleep(7);
+$proxy->release();
     }
 
 }

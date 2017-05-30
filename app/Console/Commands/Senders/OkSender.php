@@ -104,7 +104,7 @@ class OkSender extends Command {
                         ['is_sender', '=', 1],
                         ['valid', '=', 1],
                         ['count_request','<',config('config.total_requets_limit')],
-                        ['reserved','<',3]
+                        ['reserved','=',0]
 
                     ])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
 
@@ -112,11 +112,11 @@ class OkSender extends Command {
                         sleep(10);
                         continue;
                     }
-                    $from->reserved+=1;
+                    $from->reserved=1;
                     $from->save();
                     $this->cur_proxy=    ProxyItem::getProxy(ProxyItem::OK, $from->proxy_id);
                     if ( ! isset($this->cur_proxy)) {
-                        $from->reserved-=1;
+                        $from->reserved=0;
                         $from->save();
                         sleep(random_int(5, 10));
 
@@ -172,7 +172,7 @@ class OkSender extends Command {
                             $from->ok_user_gwt=null;
                             $from->ok_user_tkn=null;
                             $from->ok_cookie=null;
-                            $from->reserved -=1;
+                            $from->reserved=0;
 
                             $from->save();
                             $this->cur_proxy->release();
@@ -221,7 +221,7 @@ class OkSender extends Command {
                         break;
                     } else {
                         $this->cur_proxy->release();
-                        $from->reserved-=1;
+                        $from->reserved=0;
                         $from->save();
                     }
                     continue;
@@ -238,14 +238,14 @@ class OkSender extends Command {
 
                     }
                     $this->cur_proxy->release();
-                    $from->reserved-=1;
+                    $from->reserved=0;
                     $from->save();
                     continue;
                 }
                 $this->content['query']->ok_sended = 1;
                 $this->content['query']->save();
                 $this->cur_proxy->release();
-                $from->reserved-=1;
+                $from->reserved=0;
                 $from->count_sended_messages+=1;
                 $from->save();
 //dd("stop");

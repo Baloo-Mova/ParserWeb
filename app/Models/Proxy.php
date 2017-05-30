@@ -142,7 +142,7 @@ class Proxy extends Model
                 $proxy = static::where([
                     [$type,'>',-1],
                     [$type, '<', 1000],
-                    [$type . '_reserved', '<', 4],
+                    //[$type . '_reserved', '<', 4],
                     ['valid', '=', 1],
                     ['id','=',$proxy_id],
                 ])->first();
@@ -174,7 +174,7 @@ class Proxy extends Model
             if($this->{$this->reservedFor . '_reserved'}>0) {
                 $this->decrement($this->reservedFor . '_reserved');
                 $this->update([
-                    // $this->reservedFor . '_reserved' => 0,
+                  //  $this->{$this->reservedFor . '_reserved'}-=1,
                     $this->reservedFor => $this->{$this->reservedFor}
                 ]);
             }
