@@ -431,7 +431,7 @@ class SkypeClass
                 }
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->message = "SKYPE " . $ex->getMessage() . " " . $ex->getLine();
+                $log->message = "SKYPE random" . $ex->getMessage() . " " . $ex->getLine();
                 $log->task_id = 0;
                 $log->save();
 

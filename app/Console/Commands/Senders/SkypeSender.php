@@ -8,6 +8,7 @@ use App\Models\TemplateDeliverySkypes;
 use App\Models\SearchQueries;
 use App\Models\Parser\ErrorLog;
 use Illuminate\Support\Facades\DB;
+
 class SkypeSender extends Command
 {
     public $content;
@@ -48,13 +49,13 @@ class SkypeSender extends Command
                 DB::transaction(function () {
                     $sk_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
                         ['search_queries.skypes', '<>', ''],
-                        'search_queries.sk_sended' => 0,
-                        'search_queries.sk_recevied' => 0,
-                        'tasks.need_send' => 1,
-                        'tasks.active_type' => 1,
+                        ['search_queries.sk_sended', '=', 0],
+                        ['search_queries.sk_recevied', '=', 0],
+                        ['tasks.need_send', '=', 1],
+                        ['tasks.active_type', '=', 1],
                     ])->select('search_queries.*')->lockForUpdate()->first();
 
-                    if ( !isset($sk_query)) {
+                    if ( ! isset($sk_query)) {
                         return;
                     }
                     $sk_query->sk_recevied = 1;
@@ -66,7 +67,6 @@ class SkypeSender extends Command
                     continue;
                 }
 
-
                 $skypes  = array_filter(explode(",", trim($this->content['query']->skypes)));
                 $message = TemplateDeliverySkypes::where('task_id', '=', $this->content['query']->task_id)->first();
 
@@ -76,7 +76,7 @@ class SkypeSender extends Command
                 }
 
                 foreach ($skypes as $skype) {
-                    if(empty($skype)){
+                    if (empty($skype)) {
                         continue;
                     }
                     SkypeClassFacade::sendRandom($skype, $message->text);
@@ -85,10 +85,9 @@ class SkypeSender extends Command
 
                 $this->content['query']->sk_sended = count($skypes);
                 $this->content['query']->save();
-
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->message = "SKYPE " . $ex->getMessage() . " " . $ex->getLine();
+                $log->message = "SKYPE sender" . $ex->getMessage() . " " . $ex->getLine();
                 $log->task_id = 0;
                 $log->save();
             }
