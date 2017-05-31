@@ -207,6 +207,7 @@ class OkSender extends Command {
                 if (!empty($data->getHeaderLine('TKN'))) {
                     $this->tkn = $data->getHeaderLine('TKN');
                 }
+                sleep(random_int(10, 15));
                 $contents = $data->getBody()->getContents();
                 if (empty($contents)) {
 
