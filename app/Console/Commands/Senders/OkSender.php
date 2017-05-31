@@ -303,8 +303,12 @@ class OkSender extends Command {
 
 
 
-            $this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
-            $this->tkn = substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
+            //$this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
+            preg_match('/gwtHash\:("(.*?)(?:"|$)|([^"]+))/i',$html_doc, $this->gwt);
+            $this->gwt = $this->gwt[2];
+            // $this->tkn =substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
+            preg_match("/OK\.tkn\.set\(('(.*?)(?:'|$)|([^']+))\)/i",$html_doc, $this->tkn);
+            $this->tkn = $this->tkn[2];
 
             return true;
         } else {  // Точно не залогинись

@@ -177,7 +177,7 @@ class ParseOk extends Command
                 if ($page_numb == 1) {
                     $this->parsePage($groups_data->getBody()->getContents(), $task->id);
                 }
-
+                $page_numb+=1;
                 do { // Вытаскиваем линки групп на всех остальных страницах
                     $groups_data = $this->client->request('POST',
                         'http://ok.ru/search?cmd=PortalSearchResults&gwt.requested=' . $this->gwt . '&st.cmd=searchResult&st.mode=Groups&st.query=' . $task->task_query . '&st.grmode=Groups&st.posted=set&',
@@ -200,7 +200,7 @@ class ParseOk extends Command
                     $html_doc = $groups_data->getBody()->getContents();
                     $this->parsePage($html_doc, $task->id);
 
-                    $task->ok_offset = $page_numb++;
+                    $task->ok_offset = $page_numb;
                     $task->save();
 
                     sleep(random_int(2, 7));
@@ -265,6 +265,7 @@ class ParseOk extends Command
                 "st.iscode"         => "false"
             ],
             //'proxy' => $this->cur_proxy->proxy,
+            //'proxy' => '7zxShe:FhB871@127.0.0.1:8888'
             'proxy'       => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
         ]);
 $this->cur_proxy->inc();
@@ -282,8 +283,12 @@ $this->cur_proxy->inc();
                 return false;
             }
 
-            $this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
-            $this->tkn = substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
+            //$this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
+            preg_match('/gwtHash\:("(.*?)(?:"|$)|([^"]+))/i',$html_doc, $this->gwt);
+            $this->gwt = $this->gwt[2];
+            // $this->tkn =substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
+            preg_match("/OK\.tkn\.set\(('(.*?)(?:'|$)|([^']+))\)/i",$html_doc, $this->tkn);
+            $this->tkn = $this->tkn[2];
 
             return true;
         } else {  // Точно не залогинись
