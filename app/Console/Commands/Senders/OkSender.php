@@ -99,21 +99,33 @@ class OkSender extends Command {
 
 
                 while (true) {
-                    $from = AccountsData::where([
-                        ['type_id', '=', 2],
-                        ['is_sender', '=', 1],
-                        ['valid', '=', 1],
-                        ['count_request','<',config('config.total_requets_limit')],
-                        ['reserved','=',0]
+                    $this->content['from'] = null;
+                    DB::transaction(function () {
+                        $from = AccountsData::where([
+                            ['type_id', '=', 2],
+                            ['is_sender', '=', 1],
+                            ['valid', '=', 1],
+                            ['count_request', '<', config('config.total_requets_limit')],
+                            ['reserved', '=', 0]
 
-                    ])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
+                        ])->orderBy('count_request', 'asc')->first(); // Получаем случайный логин и пас
+                        if (!isset($from)) {
+                            return;
 
+                        }
+                        $from->reserved=1;
+                        $from->save();
+                        $this->content['from'] = $from;
+                    });
+//dd($from);
+                    $from =  $this->content['from'];
+                   // dd($from);
                     if (!isset($from)) {
                         sleep(10);
                         continue;
                     }
-                    $from->reserved=1;
-                    $from->save();
+                   // $from->reserved=1;
+                    //$from->save();
                     $this->cur_proxy=    ProxyItem::getProxy(ProxyItem::OK, $from->proxy_id);
                     if ( ! isset($this->cur_proxy)) {
                         $from->reserved=0;
