@@ -234,19 +234,26 @@ class OkSender extends Command {
                         $this->content['query']->save();
                     }
                     else{
+                     //   $this->content['query']->ok_sended = 0;
+                      //  $this->content['query']->ok_reserved = 0;
+                       // $this->content['query']->save();
                     $from->valid = 0;
                     $from->save;
 
                     }
+                    $log = new ErrorLog();
+                    $log->message = $contents;
+                    $log->task_id = 99999;
+                    $log->save();
+                    $this->content['query']->ok_sended = 0;
+                    $this->content['query']->ok_reserved = 0;
+                    $this->content['query']->save();
                     $this->cur_proxy->release();
                     $from->reserved=0;
                     $from->save();
                     continue;
                 }
-                $log = new ErrorLog();
-                $log->message = $contents;
-                $log->task_id = 99999;
-                $log->save();
+
                 $this->content['query']->ok_sended = 1;
                 $this->content['query']->save();
                 $this->cur_proxy->release();
