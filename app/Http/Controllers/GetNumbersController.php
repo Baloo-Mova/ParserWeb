@@ -50,10 +50,11 @@ class GetNumbersController extends Controller {
         $wh_query->phones = str_replace(["+"], "", $wh_query->phones);
         $wh_query->phones_reserved_wh=1;
         $wh_query->save();
-        if($wh_query->phones_reserved_viber==1){
-         $device->status=1;
-         $device->save();
-        }
+       /*для переключателя акков в старой версии бота когда все операции проводились напрямую с андроид устройства*/
+       // if($wh_query->phones_reserved_viber==1){
+       //  $device->status=1;
+       //  $device->save();
+       // }
         $phone_numbers = explode(",", $wh_query->phones);
 //dd($phone_numbers);  
         $json = [];
@@ -156,11 +157,11 @@ class GetNumbersController extends Controller {
         $vb_query->phones = str_replace("+", "", $vb_query->phones);
         $vb_query->phones_reserved_viber=1;
         $vb_query->save();
-        if($vb_query->phones_reserved_wh==1){
-         $device->status=1;
-        $device->save();
-        
-        }
+        /*для переключателя акков в старой версии бота когда все операции проводились напрямую с андроид устройства*/
+        //if($vb_query->phones_reserved_wh==1){
+       //  $device->status=1;
+      //  $device->save();
+     // }
         $phone_numbers = explode(",", $vb_query->phones);
 //dd($phone_numbers);  
         $json = [];
