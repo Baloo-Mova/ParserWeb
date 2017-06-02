@@ -184,8 +184,8 @@ class VK {
 
                     return false;
                 }
-                $data = iconv('windows-1251','UTF-8',$data);
-                echo "\n".$data;
+                //$data = iconv('windows-1251','UTF-8',$data);
+                //echo "\n".$data;
                 
                 if (strpos($data, "Сообщение отправлено") !== false) {
                     $sender->count_sended_messages += 1;
