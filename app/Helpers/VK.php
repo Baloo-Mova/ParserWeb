@@ -187,21 +187,21 @@ class VK {
                 //$data = iconv('windows-1251','UTF-8',$data);
                 //echo "\n".$data;
                 
-                if (strpos($data, "Сообщение отправлено") !== false) {
+               // if (strpos($data, "Сообщение отправлено") !== false) {
                     $sender->count_sended_messages += 1;
                     $sender->count_request += 4;
                     $sender->reserved = 0;
                     $sender->save();
                    
                     return true;
-                }else {
-                    $sender->count_request += 4;
-                    $sender->reserved = 0;
-                    $sender->save();
-                  
-                    return false;
+               // }else {
+                  //  $sender->count_request += 4;
+                //    $sender->reserved = 0;
+                 //   $sender->save();
+                 // 
+                  //  return false;
                     
-                }
+               // }
                     
                 
             } catch (\Exception $ex) {
