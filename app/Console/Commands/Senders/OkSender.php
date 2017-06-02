@@ -246,19 +246,36 @@ class OkSender extends Command {
                         $this->content['query']->save();
                     }
                     else{
+                        if(strpos($contents,"Вы слишком часто отправляете сообщения")!==false){
+                            $from->valid=0;
+                            //$from->reserved=0;
+                           // $from->ok_user_gwt=null;
+                           // $from->ok_user_tkn=null;
+                           // $from->ok_cookie =null;
+                           // $from->save();
+                            $this->content['query']->ok_sended = 0;
+                            $this->content['query']->ok_reserved = 0;
+                            $this->content['query']->save();
+
+                        }
                         // $this->content['query']->ok_sended = 0;
                         //  $this->content['query']->ok_reserved = 1;
                         //$this->content['query']->save();
                    // $from->valid = 0;
                    // $from->save;
+                        else{
                         $log = new ErrorLog();
                         $log->message = "OKfrom:".$from->login.":to".$this->content['query']->ok_user_id."#".$contents;
                         $log->task_id = 99999;
                         $log->save();
+                       // $from->ok_user_gwt=null;
+                        //$from->ok_user_tkn=null;
+                        //$from->ok_cookie =null;
+                        //$from->save();
+                        }
                         $from->ok_user_gwt=null;
                         $from->ok_user_tkn=null;
                         $from->ok_cookie =null;
-                        $from->save();
                     }
 
 
