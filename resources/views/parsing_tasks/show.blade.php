@@ -129,79 +129,92 @@
                             </div>
 
                             <div id="data" class="tab-pane well fade">
-                                <form action="{{ route('parsing_tasks.changeDeliveryInfo') }}" method="post">
-                                    <table class="table table-bordered">
-                                        <thead>
-                                        <tr>
-                                            <th>Mail subject</th>
-                                            <th>Mail text</th>
-                                           
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                            {{ csrf_field() }}
-                                        <td><textarea type="text" class="form-control" name="mail_subject" cols="30" rows="3" >{{ empty($mails) ? "-" : $mails->subject }}</textarea></td>
-                                            <td><textarea name="mail_text" class="form-control" cols="30" rows="3">{{ empty($mails) ? "-" : $mails->text }}</textarea></td>
-                                            
-                                            <input type="hidden" name="delivery_id" value="{{ $data->id }}">
-                                        </tbody>
-                                    </table>
-                                     <table class="table table-bordered">
-                                        <thead>
-                                        <tr>
-                                            <th>Skype text</th>
-                                            <th>VK text</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                           
-                                            <td><textarea name="skype_text" class="form-control" cols="30" rows="3">{{ empty($skype) ? "-" : $skype->text }}</textarea></td>
-                                            <td><textarea name="vk_text" class="form-control" cols="30" rows="3">{{ empty($vk) ? "-" : $vk->text }}</textarea></td>
+                                <form action="{{ route('parsing_tasks.changeDeliveryInfo') }}" enctype="multipart/form-data" method="post">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="delivery_id" value="{{ $data->id }}">
+                                    <div class="row add_info_row">
+                                        <div class="col-xs-6 pr">
+                                            <div class="add_info_card_wrap {{ $mails_file == "" ? "add_info_card_wrap_normal" : "add_info_card_wrap_big" }}">
+                                                <h4>Mail subject</h4>
+                                                <input type="text" class="form-control" name="mail_subject" value="{{ empty($mails) ? "-" : $mails->subject }}">
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-6 pl">
+                                            <div class="add_info_card_wrap {{ $mails_file == "" ? "add_info_card_wrap_normal" : "add_info_card_wrap_big" }}">
+                                                <h4>Mail text</h4>
+                                                <textarea name="mail_text" class="form-control" cols="30" rows="4">{{ empty($mails) ? "-" : $mails->text }}</textarea>
+                                                <input type="hidden" name="mail_id" value="{{ empty($mails) ? "" : $mails->id }}">
+                                                @if($mails_file)
+                                                    <label for="mails_file" class="mails_file_label">Mail file</label>
+                                                    <br>
+                                                    <strong class="small">
+                                                        {{ storage_path('app/').$mails_file }}
+                                                    </strong>
+                                                    <br>
+                                                    <label for="mails_file" class="custom-file-upload">
+                                                        Изменить файл
+                                                    </label>
+                                                    <input id="mails_file" type="file" name="mails_file"/>
+                                                @else
+                                                    <div class="small mails_file_path">
+                                                    </div>
+                                                    <label for="mails_file" class="custom-file-upload cfu2">
+                                                        Добавить файл
+                                                    </label>
+                                                    <input id="mails_file" type="file" class="mails_file_input" name="mails_file"/>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                        </tbody>
-                                    </table>
-                                    <table class="table table-bordered">
-                                        <thead>
-                                        <tr>
-                                            <th>OK text</th>
-                                            <th>FB text</th>
-                                            <!--<th>Twitter text</th>-->
-                                        </tr>
-                                        </thead>
-                                        <tbody>
+                                    <div class="row add_info_row">
+                                        <div class="col-xs-6 pr">
+                                            <div class="add_info_card_wrap add_info_card_wrap_normal">
+                                                <h4>Skype text</h4>
+                                                <textarea name="skype_text" class="form-control" cols="30" rows="6">{{ empty($skype) ? "-" : $skype->text }}</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-6 pl">
+                                            <div class="add_info_card_wrap add_info_card_wrap_normal">
+                                                <h4>VK text</h4>
+                                                <textarea name="vk_text" class="form-control" cols="30" rows="6">{{ empty($vk) ? "-" : $vk->text }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                        <td><textarea name="ok_text" class="form-control" cols="30" rows="3">{{ empty($ok) ? "-" : $ok->text }}</textarea></td>
+                                    <div class="row add_info_row">
+                                        <div class="col-xs-6 pr">
+                                            <div class="add_info_card_wrap add_info_card_wrap_normal">
+                                                <h4>OK text</h4>
+                                                <textarea name="ok_text" class="form-control" cols="30" rows="6">{{ empty($ok) ? "-" : $ok->text }}</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-6 pl">
+                                            <div class="add_info_card_wrap add_info_card_wrap_normal">
+                                                <h4>FB text</h4>
+                                                <textarea name="fb_text" class="form-control" cols="30" rows="6">{{ empty($fb) ? "-" : $fb->text }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                        <!--<th>Twitter text</th>-->
                                         <!--<td><textarea name="tw_text" class="form-control" cols="30" rows="3" maxlength="100">{{ empty($tw) ? "-" : $tw->text }}</textarea></td>-->
-                                        <td><textarea name="fb_text" class="form-control" cols="30" rows="3">{{ empty($fb) ? "-" : $fb->text }}</textarea></td>
-                                      </tbody>
-                                    </table>
-                                    <!--<table class="table table-bordered">
-                                        <thead>
-                                        <tr>
-                                            <th>FB text</th>
-                                            
-                                        </tr>
-                                        </thead>
-                                        <tbody>
 
-                                        <td><textarea name="fb_text" class="form-control" cols="30" rows="3">{{ empty($fb) ? "-" : $fb->text }}</textarea></td>
-                                        
-                                        <input type="hidden" name="delivery_id" value="{{ $data->id }}">
-                                        </tbody>
-                                    </table>-->
-                                    <table class="table table-bordered">
-                                        <thead>
-                                        <tr>
-                                            <th>Viber text</th>
-                                            <th>Whatapp text</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
+                                    <div class="row add_info_row">
+                                        <div class="col-xs-6 pr">
+                                            <div class="add_info_card_wrap add_info_card_wrap_normal">
+                                                <h4>Viber text</h4>
+                                                <textarea name="viber_text" class="form-control" cols="30" rows="6">{{ empty($viber) ? "-" : $viber->text }}</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-6 pl">
+                                            <div class="add_info_card_wrap add_info_card_wrap_normal">
+                                                <h4>WhatsApp text</h4>
+                                                <textarea name="whats_text" class="form-control" cols="30" rows="6" maxlength="100">{{ empty($whats) ? "-" : $whats->text }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                        <td><textarea name="viber_text" class="form-control" cols="30" rows="3">{{ empty($viber) ? "-" : $viber->text }}</textarea></td>
-                                        <td><textarea name="whats_text" class="form-control" cols="30" rows="3" maxlength="100">{{ empty($whats) ? "-" : $whats->text }}</textarea></td>
-                                        </tbody>
-                                    </table>
                                     <input type="submit" class="btn btn-primary btn-flat" value="Изменить">
                                 </form>
                             </div>
@@ -256,6 +269,49 @@
 
         .file_actions_wrap{
             display: inline-block;
+        }
+        textarea {
+            resize: none;
+        }
+        .mails_file_input{
+            margin-top: 5px;
+        }
+        .mails_file_label{
+            margin-top: 10px;
+            margin-bottom: 0px;
+        }
+        .add_info_card_wrap_big{
+            height: 270px;
+        }
+        .add_info_card_wrap_normal{
+            height: 220px;
+        }
+        .add_info_card_wrap{
+            background-color: #fff;
+            padding: 10px;
+            -webkit-box-shadow: 2px 2px 10px 0px rgba(50, 50, 50, 0.4);
+            -moz-box-shadow:    2px 2px 10px 0px rgba(50, 50, 50, 0.4);
+            box-shadow:         2px 2px 10px 0px rgba(50, 50, 50, 0.4);
+        }
+        .add_info_card_wrap h4{
+            margin-top: 0px;
+        }
+        .add_info_row{
+            margin-bottom: 10px;
+        }
+        .pr{
+            padding-right: 5px !important;
+        }
+        .pl{
+            padding-left: 5px !important;
+        }
+        .cfu2{
+            margin-top: 5px;
+        }
+        .mails_file_path{
+            height: 17px;
+            margin-top: 5px;
+            font-weight: 700;
         }
     </style>
 @endsection
@@ -468,6 +524,11 @@
 
             $(".custom-file-upload").on("mouseleave", function(){
                 $(".file_format_info").css("display", "none");
+            });
+
+            $(".mails_file_input").on("change", function(){
+                var file_name = document.getElementById("mails_file").files[0].name;
+                $(".mails_file_path").text(file_name);
             });
 
         });

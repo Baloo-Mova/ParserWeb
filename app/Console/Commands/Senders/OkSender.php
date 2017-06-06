@@ -289,7 +289,7 @@ class OkSender extends Command {
                 $this->content['query']->save();
                 $this->cur_proxy->release();
                 $from->reserved=0;
-                $from->count_sended_messages+=1;
+                //$from->count_sended_messages+=1;
                 $from->save();
 //dd("stop");
                 sleep(rand(1, 5));

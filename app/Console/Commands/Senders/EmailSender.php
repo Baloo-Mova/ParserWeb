@@ -34,7 +34,7 @@ class EmailSender extends Command {
     public $client = null;
     public $cur_proxy = null;
     public $proxy_arr, $proxy_string;
-
+    public $accountData = null;
     /**
      * Create a new command instance.
      *
@@ -113,9 +113,36 @@ class EmailSender extends Command {
                     $temp[] = $id->id_sender;
                 }
 
-                $from = AccountsData::where(['type_id' => 3,'valid'=> 1,'reserved'=>0], ['count_sended_messages', '<', config("config.max_count_for_sended_messages")])->where('count_request','<',config('config.total_requets_limit'))->whereNotIn('id', $temp)->first();
+                //$from = AccountsData::where(['type_id' => 3,'valid'=> 1,'reserved'=>0] )->where('count_request','<',config('config.total_requets_limit'))->whereNotIn('id', $temp)->first();
                 //echo("------".$from."-------");
 
+                DB::transaction(function () {
+                    try {
+                        $sender = AccountsData::where([
+                            ['type_id', '=', 3],
+                            ['valid', '=', 1],
+                            //['is_sender', '=', 0],
+                            ['reserved', '=', 0],
+                            ['count_request','<',config('config.total_requets_limit')]
+                        ])->orderBy('count_request', 'asc')->first();
+
+                        if (!isset($sender)) {
+                            return;
+                        }
+
+                        $sender->reserved = 1;
+                        $sender->save();
+
+                        $this->accountData = $sender;
+                    } catch (\Exception $ex) {
+                        $error = new ErrorLog();
+                        $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                        $error->task_id = 77;
+                        $error->save();
+                    }
+                });
+
+                $from = $this->accountData;
                 if (!isset($from)) {
                     $log = new ErrorLog();
                     $log->message = "Невозможно отравить email сообщение без отправителей";
@@ -229,7 +256,7 @@ class EmailSender extends Command {
 
             $mails_to = trim(implode(',', $arguments['to']));
 
-            $proxy =  $this->cur_proxy = ProxyItem::getProxy(ProxyItem::Email, $arguments["from"]->proxy_id);
+             $this->cur_proxy = ProxyItem::getProxy(ProxyItem::Email, $arguments["from"]->proxy_id);
             //dd($this->cur_proxy);
 
             if (!isset($this->cur_proxy)) {
@@ -274,9 +301,9 @@ class EmailSender extends Command {
 
 //dd($response);
             if ($response == "success") {
-                $arguments["from"]->count_sended_messages += 1;
-                $arguments['from']->save();
-                $this->cur_proxy->release();
+               // $arguments["from"]->count_sended_messages += 1;
+               // $arguments['from']->save();
+                //$this->cur_proxy->release();
                 return true;
             } else {
                 $log = new ErrorLog();
@@ -284,13 +311,13 @@ class EmailSender extends Command {
                 $log->task_id = 0;
                 $log->save();
                 if (strpos($response, "spam") > 0 || strpos($response, "auth") > 0) {
-                    $arguments["from"]->valid = 0;
+                    $arguments["from"]->valid = -1;
                     $arguments['from']->save();
 
                     //echo "SEND SPAM";
                 }
                 //dd($response);
-                $this->cur_proxy->release();
+                //$this->cur_proxy->release();
                 if (strlen(stristr($response, "connection")) > 0 || strpos($response, 'connect etimedout')!==false) {
                     $number_con_time_out++;
                     echo "\n" . $number_con_time_out . ":" . $response . $proxy->proxy;

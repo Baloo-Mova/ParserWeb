@@ -79,7 +79,7 @@ class VKSender extends Command
                     continue;
                 }
 
-                sleep(random_int(7, 10));
+               // sleep(random_int(7, 10));
                 $web = new VK();             
               if ($web->sendRandomMessage($this->content['vkquery']->vk_id, $message->text)) {
                     $this->content['vkquery']->vk_sended   = 1;

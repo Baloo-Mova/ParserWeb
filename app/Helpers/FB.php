@@ -220,9 +220,9 @@ class FB
                 ]);
                 $data    = $request->getBody()->getContents();
                 //dd($data);
-                $sender->reserved -= 1;
+                $sender->reserved = 0;
 
-                $sender->count_sended_messages += 1;
+               // $sender->count_sended_messages += 1;
                 $sender->save();
                 $this->proxy->release();
 
