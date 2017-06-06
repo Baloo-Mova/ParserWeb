@@ -9,7 +9,7 @@
         <div class="row">
             <div class="box box-primary">
                 <div class="box-body">
-                    <a href="{!! route("skypes_accounts.create") !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>
+                    <!--<a href="{!! route("skypes_accounts.create") !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>-->
                     <a href="{{ route('skypes_accounts.destroy.sk') }}"
                        onclick="return confirm('Вы точно хотите удалить все записи типа Skype?')"
                        class="btn btn-danger btn-flat pull-right add__button delete__button"
