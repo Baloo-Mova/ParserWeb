@@ -131,7 +131,7 @@
                         </a>
                     </li>
                     <li class="">
-                        <a href="{{ route('android_bots.index') }}" class="{{ Request::path() == 'accounts-data/fb' ? 'link_active' : ''}}">
+                        <a href="{{ route('android_bots.index') }}" class="{{ Request::path() == 'android-bots' ? 'link_active' : ''}}">
                             <i class='fa fa-android'></i>
                             <span>Android Боты</span>
                         </a>

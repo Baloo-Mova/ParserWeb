@@ -27,7 +27,6 @@ class AndroidBotsController extends Controller
 
         $android_bot = new AndroidBots;
         $android_bot->fill($request->all());
-        //$skype->valid = 1;
         $android_bot->save();
         
 

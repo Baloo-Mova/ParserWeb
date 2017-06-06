@@ -83,7 +83,6 @@ class SkypeClass
                 "canary"       => "",
                 "ctx"          => "",
                 "ps"           => (int)2,
-                "psRNGCSLK"    => "",
             ];
 
             $loginForm = $this->web($loginURL, "POST", $post, true, true, $cookies);
@@ -152,7 +151,7 @@ class SkypeClass
             $this->skype_id = $skype_id[2];
 
             $login = $this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/endpoints", "GET", [], true);
-//dd($login);
+
             preg_match("`registrationToken=(.+);`isU", $login, $registrationToken);
 
             $this->registrationToken = $registrationToken[1];
@@ -198,7 +197,6 @@ class SkypeClass
         $customCookies = "",
         $customHeaders = []
     ) {
-
         if ( ! function_exists("curl_init")) {
             exit(trigger_error("Skype : cURL is required", E_USER_WARNING));
         }
@@ -231,13 +229,11 @@ class SkypeClass
         }
         if (gettype($post) == "string") {
             if (strpos($post, "{") !== false) {
-                echo "\n" . ":::::::::::::::::::JSON";
                 $headers[] = "Content-Type: application/json";
-                // $headers[] = "Content-Length: ". strlen($post);
+                $headers[] = "Accept: application/json";
             }
         }
         curl_setopt($curl, CURLOPT_URL, $url);
-
         if ( ! empty($headers)) {
             curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
         }
@@ -254,7 +250,7 @@ class SkypeClass
             "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36");
         curl_setopt($curl, CURLOPT_HEADER, $showHeaders);
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, $follow);
-        //curl_setopt($curl, CURLOPT_PROXY, '127.0.0.1:8888'); //(isset($this->cur_proxy) ? $this->proxy_string : '127.0.0.1:8888') //http://79.133.105.71:8080  - this proxy not work
+//        curl_setopt($curl, CURLOPT_PROXY, '127.0.0.1:8888'); //(isset($this->cur_proxy) ? $this->proxy_string : '127.0.0.1:8888') //http://79.133.105.71:8080  - this proxy not work
         curl_setopt($curl, CURLOPT_PROXYPORT, $this->proxy_arr["port"]);
         curl_setopt($curl, CURLOPT_PROXYTYPE, $this->proxy_arr["scheme"]);
         curl_setopt($curl, CURLOPT_PROXY, $this->proxy_arr["host"]);
@@ -263,20 +259,20 @@ class SkypeClass
         curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
         curl_setopt($curl, CURLOPT_TIMEOUT, 20); //timeout in seconds
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLINFO_HEADER_OUT, true);
+        $result      = curl_exec($curl);
+        $information = curl_getinfo($curl);
         if ($mode == "POST") {
-            echo("\n" . $curl);
+            var_dump($information);
         }
-
-        $result = curl_exec($curl);
-
-        //if(strpos($result,"Operation failed")>0) echo $result;
         curl_close($curl);
-        if (isset($this->cur_proxy)) {
-            $this->cur_proxy->inc();
-        }
 
-        // dd("\n".$result);
         return $result;
+    }
+public $client;
+    public function web2($url, $data, $a="", $r="", $x="")
+    {
+
     }
 
     public function logout()
@@ -502,9 +498,12 @@ class SkypeClass
             "clientmessageid" => $messageID,
             "Has-Mentions"    => 'false'
         ];
+ echo 1;
+        //$req = $this->web2("https://client-s.gateway.messenger.live.com/v1/users/ME/conversations/" . $mode . ":" . $to . "/messages", $post);
+        $req = $this->web2("https://google.com.ua");
+//        $req = json_decode($this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/conversations/" . $mode . ":" . $to . "/messages",
+//            "POST", json_encode($post)), true);
 
-        $req = json_decode($this->web("https://client-s.gateway.messenger.live.com/v1/users/ME/conversations/" . $mode . ":" . $to . "/messages",
-            "POST", json_encode($post)), true);
 
         return isset($req["OriginalArrivalTime"]) ? $messageID : false;
     }
@@ -530,6 +529,7 @@ class SkypeClass
         if ($req["Message"] == "Operation failed.") {
             return ("Operation failed");
         }
+        var_dump($req);
 
         return strlen($req["Message"]) == 0 ? true : false;
     }

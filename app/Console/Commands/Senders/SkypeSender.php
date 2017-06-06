@@ -47,6 +47,7 @@ class SkypeSender extends Command
             try {
                 $this->content['query'] = null;
                 DB::transaction(function () {
+
                     $sk_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
                         ['search_queries.skypes', '<>', ''],
                         ['search_queries.sk_sended', '=', 0],
@@ -93,5 +94,6 @@ class SkypeSender extends Command
             }
         }
     }
+
 
 }
