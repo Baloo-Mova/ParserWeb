@@ -11,7 +11,7 @@ use App\Models\Tasks;
 use App\Helpers\VK;
 use App\Models\Parser\ErrorLog;
 use Illuminate\Support\Facades\DB;
-
+use App\Helpers\Macros;
 class VKSender extends Command
 {
     public $content;
@@ -78,18 +78,30 @@ class VKSender extends Command
                     $this->content['vkquery']->save();
                     continue;
                 }
+                if(substr_count ($message,"{")==substr_count ($message,"}")||
+                    (substr_count ($message,"{")==0 && substr_count ($message,"}")==0)) {
+                    $str_mes = Macros::convertMacro($message->text);
 
-               // sleep(random_int(7, 10));
-                $web = new VK();             
-              if ($web->sendRandomMessage($this->content['vkquery']->vk_id, $message->text)) {
-                    $this->content['vkquery']->vk_sended   = 1;
-                    $this->content['vkquery']->vk_reserved = 0;
+                    sleep(random_int(7, 10));
+                    $web = new VK();
+                    if ($web->sendRandomMessage($this->content['vkquery']->vk_id, $str_mes)) {
+                        $this->content['vkquery']->vk_sended = 1;
+                        $this->content['vkquery']->vk_reserved = 0;
+                        $this->content['vkquery']->save();
+                    } else {
+                        $this->content['vkquery']->vk_reserved = 2;
+                        $this->content['vkquery']->save();
+                    }
+                    sleep(random_int(10, 20));
+                }else{
+                    $log          = new ErrorLog();
+                    $log->message = "VK_SEND: MESSAGE NOT CORRECT - update and try again";
+                    $log->task_id = $this->content['vkquery']->task_id;
+                    $log->save();
+                    $this->content['vkquery']->vk_reserved=0;
                     $this->content['vkquery']->save();
-                } else {
-                    $this->content['vkquery']->vk_reserved = 2;
-                    $this->content['vkquery']->save();
+                    continue;
                 }
-                sleep(random_int(10, 20));
 
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
