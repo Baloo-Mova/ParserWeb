@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Parser\ErrorLog;
+use App\Models\Proxy;
 use Illuminate\Http\Request;
 use App\Models\AccountsData;
 use Illuminate\Support\Facades\DB;
@@ -103,6 +104,35 @@ class AccountsDataController extends Controller {
         $data = new AccountsData;
         $data->fill($request->all());
         $type_id = $request->get("type_id");
+        $proxyAccType = 0;
+
+        switch ($type_id){
+            case 1:
+                $proxyAccType = 'vk';
+                break;
+            case 2:
+                $proxyAccType = 'ok';
+                break;
+            case 3:
+                $proxyAccType = 'email';
+                break;
+            case 6:
+                $proxyAccType = 'fb';
+                break;
+        }
+
+        $proxy = Proxy::where([
+            [$proxyAccType, '<', '3'],
+            ['valid', '=', 1]
+        ])->first();
+
+        if(!isset($proxy)){
+            return back();
+        }
+
+        DB::table('proxy')->where('id', '=', $proxy->id)->increment($proxyAccType, 1);
+        $data->proxy_id = $proxy->id;
+
         if (!(empty($request->get("smtp_port")))) {
             $data->smtp_port = $request->get("smtp_port");
         }
@@ -271,6 +301,25 @@ class AccountsDataController extends Controller {
         $data = AccountsData::whereId($id)->first();
         $data->delete();
 
+        $type = 0;
+
+        switch ($data->type_id){
+            case 1:
+                $type = 'vk';
+                break;
+            case 2:
+                $type = 'ok';
+                break;
+            case 3:
+                $type = 'email';
+                break;
+            case 6:
+                $type = 'fb';
+                break;
+        }
+
+        DB::table('proxy')->where('id',$data->proxy_id)->decrement($type, 1);
+
         return redirect()->back();
     }
 
@@ -284,6 +333,8 @@ class AccountsDataController extends Controller {
 
         DB::table('accounts_data')->where('type_id', '=', 1)->delete();
 
+        DB::table('proxy')->update(['vk' => 0]);
+
         return redirect()->route('accounts_data.vk');
     }
 
@@ -296,6 +347,8 @@ class AccountsDataController extends Controller {
     public function destroyOk() {
 
         DB::table('accounts_data')->where('type_id', '=', 2)->delete();
+
+        DB::table('proxy')->update(['ok' => 0]);
 
         return redirect()->route('accounts_data.ok');
     }
@@ -320,7 +373,9 @@ class AccountsDataController extends Controller {
      */
     public function destroyFb() {
 
-        DB::table('accounts_data')->where('type_id', '=', 5)->delete();
+        DB::table('accounts_data')->where('type_id', '=', 6)->delete();
+
+        DB::table('proxy')->update(['fb' => 0]);
 
         return redirect()->route('accounts_data.fb');
     }
@@ -348,6 +403,8 @@ class AccountsDataController extends Controller {
     public function destroyEmails() {
 
         DB::table('accounts_data')->where('type_id', '=', 3)->delete();
+
+        DB::table('proxy')->update(['email' => 0]);
 
         return redirect()->route('accounts_data.emails');
     }
@@ -386,6 +443,15 @@ class AccountsDataController extends Controller {
         return redirect()->route('accounts_data.vk');
     }
 
+    public function fbupload(Request $request) {
+        if (!(empty($request->get('text')))) {
+            $accounts = explode("\r\n", $request->get('text'));
+            $this->vkokParse($accounts, $request->get('user_id'), 6);
+        }
+
+        return redirect()->route('accounts_data.fb');
+    }
+
     /**
      * Сохранялка для массовой загрузки ВК м ОК
      *
@@ -393,18 +459,108 @@ class AccountsDataController extends Controller {
      * @return \Illuminate\Http\Response
      */
     public function vkokParse($data, $user, $type) {
+
+        $proxyAccType = 0;
+
+        switch ($type){
+            case 1:
+                $proxyAccType = 'vk';
+                break;
+            case 2:
+                $proxyAccType = 'ok';
+                break;
+            case 6:
+                $proxyAccType = 'fb';
+                break;
+        }
+
+        $proxy = $this->findProxy($proxyAccType);
+        if(!isset($proxy)){
+            return back();
+        }
+        $proxy_number = $this->proxyNumber($proxy, $type);
+
         foreach ($data as $line) {
+
+            if($proxy_number >= 3){
+                $this->saveProxyCounter($proxy, $type, 3);
+                $proxy = $this->findProxy($proxyAccType);
+                if(!isset($proxy)){
+                    return back();
+                }
+                $proxy_number = $this->proxyNumber($proxy, $type);
+            }
+
             $tmp = explode(":", $line);
             $accData = new AccountsData;
 
             $accData->login = $tmp[0];
             $accData->password = $tmp[1];
+            $accData->proxy_id = $proxy->id;
             $accData->type_id = $type;
             $accData->user_id = $user;
             $accData->save();
 
+            $proxy_number++;
+
             unset($tmp);
         }
+
+        if($proxy_number > 0){
+            $this->saveProxyCounter($proxy, $type, $proxy_number);
+        }
+
+    }
+
+    private function saveProxyCounter($proxy, $type, $number)
+    {
+        switch ($type){
+            case 1:
+                $proxy->vk = $number;
+                break;
+            case 2:
+                $proxy->ok = $number;
+                break;
+            case 3:
+                $proxy->email = $number;
+                break;
+            case 6:
+                $proxy->fb = $number;
+                break;
+        }
+        $proxy->save();
+    }
+
+    private function proxyNumber($proxy, $type)
+    {
+        switch ($type){
+            case 1:
+                return $proxy->vk;
+                break;
+            case 2:
+                return $proxy->ok;
+                break;
+            case 3:
+                return $proxy->email;
+                break;
+            case 6:
+                return $proxy->fb;
+                break;
+        }
+    }
+
+    private function findProxy($type)
+    {
+        $proxy = Proxy::where([
+            [$type, '<', '3'],
+            ['valid', '=', 1]
+        ])->first();
+
+        if(!isset($proxy)){
+            return "";
+        }
+
+        return $proxy;
     }
 
     /**
@@ -504,7 +660,24 @@ class AccountsDataController extends Controller {
      * @return \Illuminate\Http\Response
      */
     public function mailsParse($data, $user) {
+
+        $proxy = $this->findProxy("email");
+        if(!isset($proxy)){
+            return back();
+        }
+        $proxy_number = $this->proxyNumber($proxy, 3);
+
         foreach ($data as $line) {
+
+            if($proxy_number >= 3){
+                $this->saveProxyCounter($proxy, 3, 3);
+                $proxy = $this->findProxy("email");
+                if(!isset($proxy)){
+                    return back();
+                }
+                $proxy_number = $this->proxyNumber($proxy, 3);
+            }
+
             $tmp = explode(":", trim($line));
             $accData = new AccountsData;
             if (count($tmp) < 3) {
@@ -544,10 +717,17 @@ class AccountsDataController extends Controller {
                         "port" => $accData->smtp_port
                     ])
             ) {
+                $accData->proxy_id = $proxy->id;
+                $proxy_number++;
                 $accData->save();
             }
             unset($tmp);
         }
+
+        if($proxy_number > 0){
+            $this->saveProxyCounter($proxy, 3, $proxy_number);
+        }
+
     }
 
 }

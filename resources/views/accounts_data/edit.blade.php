@@ -21,16 +21,7 @@
                                 <input type="password" class="form-control" placeholder="Пароль" name="password" id="password" value="{{ $data->password }}"/>
                             </div>
                             <div class="form-group has-feedback">
-                                <label for="type_id" class="control-label">Тип Аккаунта</label>
-                                <select class="form-control" name="type_id" id="type_id">
-                                    <option value=""></option>
-                                    <option value="1" {{ $data->type_id == 1 ? "selected" : ""}}>VK</option>
-                                    <option value="2" {{ $data->type_id == 2 ? "selected" : ""}}>OK</option>
-                                    <option value="3" {{ $data->type_id == 3 ? "selected" : ""}}>SMTP</option>
-                                    <option value="4" {{ $data->type_id == 4 ? "selected" : ""}}>Twitter</option>
-                                    <option value="5" {{ $data->type_id == 5 ? "selected" : ""}}>Instagram</option>
-                                    <option value="6" {{ $data->type_id == 6 ? "selected" : ""}}>Facebook</option>
-                                </select>
+                                <input type="hidden" name="type_id" value="{{ $data->type_id }}">
                             </div>
                             @if($data->type_id == 3)
                             <div class="form-group has-feedback">

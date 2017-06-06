@@ -55,6 +55,7 @@ Route::group(['prefix' => 'accounts-data', 'middleware' => 'auth'], function () 
     Route::post('/ok-upload', ['uses'=>'AccountsDataController@okupload', 'as'=>'accounts_data.ok.upload']);
     Route::post('/tw-upload', ['uses'=>'AccountsDataController@twupload', 'as'=>'accounts_data.tw.upload']);
     Route::post('/ins-upload', ['uses'=>'AccountsDataController@insupload', 'as'=>'accounts_data.ins.upload']);
+    Route::post('/fb-upload', ['uses'=>'AccountsDataController@fbupload', 'as'=>'accounts_data.fb.upload']);
     Route::post('/mails-upload', ['uses'=>'AccountsDataController@mailsupload', 'as'=>'accounts_data.mails.upload']);
     });
 

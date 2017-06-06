@@ -9,7 +9,7 @@
         <div class="row">
             <div class="box box-primary">
                 <div class="box-body">
-                    <!--<a href="{!! route("smtpbase.create") !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>-->
+                    <a href="{!! route("smtpbase.create") !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>
                     <table class="table table-bordered table-striped">
                         <thead>
                             <tr>

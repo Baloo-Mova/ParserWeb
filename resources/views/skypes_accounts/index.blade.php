@@ -9,7 +9,7 @@
         <div class="row">
             <div class="box box-primary">
                 <div class="box-body">
-                    <!--<a href="{!! route("skypes_accounts.create") !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>-->
+                    <a href="{!! route("skypes_accounts.create") !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>
                     <a href="{{ route('skypes_accounts.destroy.sk') }}"
                        onclick="return confirm('Вы точно хотите удалить все записи типа Skype?')"
                        class="btn btn-danger btn-flat pull-right add__button delete__button"
@@ -31,10 +31,10 @@
                                     <td>{{ $item->password }}</td>
                                     <td>
                                         <a href="{{ route('skypes_accounts.edit',['id'=>$item['id']]) }}"
-                                           class="btn btn-default" title="Update"><span class="glyphicon glyphicon-pencil"></span></a>
+                                           class="btn btn-default btn-flat" title="Update"><span class="glyphicon glyphicon-pencil"></span></a>
                                         <a href="{{ route('skypes_accounts.delete',['id'=>$item['id']]) }}"
                                            onclick="return confirm('Удалить выбраную запись?')"
-                                           class="btn btn-danger" title="Delete"><span class="glyphicon glyphicon-trash"></span></a>
+                                           class="btn btn-danger btn-flat" title="Delete"><span class="glyphicon glyphicon-trash"></span></a>
                                     </td>
                                 </tr>
                             @empty

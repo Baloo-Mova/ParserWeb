@@ -1,7 +1,15 @@
 @extends('adminlte::layouts.app')
 
 @section('contentheader_title')
-Добавление Новых Данных Об Аккаунте
+    @if($type == 1)
+        Добавление Новых VK Аккаунтов
+    @elseif($type == 2)
+        Добавление Новых ОK Аккаунтов
+    @elseif($type == 3)
+        Добавление Новых Email Аккаунтов
+    @elseif($type == 6)
+        Добавление Новых Facebook Аккаунтов
+    @endif
 @endsection
 
 @section('main-content')

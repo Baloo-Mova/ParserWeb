@@ -9,7 +9,7 @@
         <div class="row">
             <div class="box box-primary">
                 <div class="box-body">
-                    <!--<a href="{!! route("accounts_data.create",["type" => 2]) !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>-->
+                    <a href="{!! route("accounts_data.create",["type" => 2]) !!}" class="btn btn-success btn-flat pull-left add__button">Добавить</a>
                     <a href="{{ route('accounts_data.destroy.ok') }}"
                        onclick="return confirm('Вы точно хотите удалить все записи типа OK?')"
                        class="btn btn-danger btn-flat pull-right add__button delete__button"
