@@ -28,7 +28,7 @@ class VK {
     private $client;
 
     public function __construct() {
-        
+
     }
 
     public function sendRandomMessage($to_userId, $messages) {
@@ -41,12 +41,12 @@ class VK {
                 DB::transaction(function () {
                     try {
                         $sender = AccountsData::where([
-                                    ['type_id', '=', 1],
-                                    ['valid', '=', 1],
-                                    ['is_sender', '=', 1],
-                                    ['reserved', '=', 0],
-                                    ['count_request', '<', 1000]
-                                ])->orderBy('count_request', 'asc')->first();
+                            ['type_id', '=', 1],
+                            ['valid', '=', 1],
+                            ['is_sender', '=', 1],
+                            ['reserved', '=', 0],
+                            ['count_request', '<', 401]
+                        ])->orderBy('count_request', 'asc')->first();
 
                         if (!isset($sender)) {
                             return;
@@ -71,7 +71,9 @@ class VK {
                     continue;
                 }
 
-                $this->cur_proxy = ProxyItem::find($sender->proxy_id);
+                $this->cur_proxy = $sender->getProxy;//ProxyItem::find($sender->proxy_id);
+                //dd($this->cur_proxy->proxy);
+
                 if (!isset($this->cur_proxy)) {
                     $sender->reserved = 0;
                     $sender->save();
@@ -107,16 +109,16 @@ class VK {
                     'allow_redirects' => true,
                     'timeout' => 15,
                     'proxy' => $this->proxy_string
-                        //'proxy' => '7zxShe:FhB871@127.0.0.1:8888'
+                    //'proxy' => '7zxShe:FhB871@127.0.0.1:8888'
                 ]);
 
                 if ($array->count() < 1) {
 
                     if ($this->login($sender->login, $sender->password)) {
-
-                        $sender = AccountsData::where(['id' => $sender->id])->first();
+                        echo('\nlogin good');
+                       // $sender = AccountsData::where(['id' => $sender->id])->first();
                     } else {
-                        $sender->valid = 0;
+                        $sender->valid = -1;
                         $sender->reserved = 0;
                         $sender->save();
                         // $this->cur_proxy->release();
@@ -133,20 +135,9 @@ class VK {
                     $sender->vk_cookie = null;
                     $sender->reserved = 0;
                     $sender->save();
-//                    $this->cur_proxy->release();
+//
                     continue;
                 }
-
-                //file_put_contents("vk.html", $data);
-                //dd();
-                if (strpos($data, "flat_button profile_btn_cut_left") === false || strpos($data, "profile_blocked page_block") === true) {
-                    $sender->reserved = 0;
-                    $sender->save();
-                    //dd("dd");
-//                    $this->cur_proxy->release();
-                    return false;
-                }
-
                 if (strpos($data, "login_blocked_wrap") === true) {
                     $sender->reserved = 0;
                     $sender->valid = -1;
@@ -155,10 +146,22 @@ class VK {
                     continue;
                 }
 
+                //file_put_contents("vk.html", $data);
+                //dd();
+                if (strpos($data, "flat_button profile_btn_cut_left") === false || strpos($data, "profile_blocked page_block") === true) {
+                    $sender->reserved = 0;
+                    $sender->save();
+                    //dd("https://vk.com/id" . $to_userId);
+//                    $this->cur_proxy->release();
+                    return false;
+                }
+
+
+
                 preg_match_all("/   hash\: '(\w*)'/s", $data, $chas);
                 $chas = $chas[1];
                 $request = $this->client->post("https://vk.com/al_mail.php", [
-                 
+
                     'form_params' => [
                         'act' => 'a_send',
                         'al' => 1,
@@ -184,26 +187,26 @@ class VK {
 
                     return false;
                 }
-                //$data = iconv('windows-1251','UTF-8',$data);
-                //echo "\n".$data;
-                
-               // if (strpos($data, "Сообщение отправлено") !== false) {
-                    $sender->count_sended_messages += 1;
+                $data = iconv('windows-1251','UTF-8',$data);
+                echo "\n".$data;
+
+                if (strpos($data, "Сообщение отправлено") !== false) {
+                    //$sender->count_sended_messages += 1;
                     $sender->count_request += 4;
                     $sender->reserved = 0;
                     $sender->save();
-                   
+                    //dd('sended');
                     return true;
-               // }else {
-                  //  $sender->count_request += 4;
-                //    $sender->reserved = 0;
-                 //   $sender->save();
-                 // 
-                  //  return false;
-                    
-               // }
-                    
-                
+                }else {
+                    $sender->count_request += 4;
+                    $sender->reserved = 0;
+                    $sender->save();
+                    //dd('not sended');
+                    return false;
+
+                }
+
+
             } catch (\Exception $ex) {
                 //dd($ex->getMessage() . " Line: " . $ex->getLine() . " ");
                 $sender->reserved = 0;
@@ -213,8 +216,10 @@ class VK {
                 $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
                 $error->task_id = 8888;
                 $error->save();
-
-                return false;
+                if (strpos($ex->getMessage(),"cURL")!== false ){
+                    continue;
+                }
+                else return false;
             }
         }
     }
@@ -346,29 +351,46 @@ class VK {
             try {
                 //while (true) {
 
-                $sender = AccountsData::where([
-                            'type_id' => 1,
-                            'valid' => 1,
-                            'is_sender' => 0
-                        ])->where([
-                            ['count_request', '<', config('config.total_requets_limit')],
-                            ['reserved', '<', 3]
-                        ])->orderByRaw('RAND()')->first();
-                // echo($sender->login . "\n Find groups " . $find . "\n");
+                DB::transaction(function () {
+                    try {
+                        $sender = AccountsData::where([
+                            ['type_id', '=', 1],
+                            ['valid', '=', 1],
+                            ['is_sender', '=', 0],
+                            ['reserved', '=', 0],
+                            ['count_request', '<', 401]
+                        ])->orderBy('count_request', 'asc')->first();
 
+                        if (!isset($sender)) {
+                            return;
+                        }
+
+                        $sender->reserved = 1;
+                        $sender->save();
+
+                        $this->accountData = $sender;
+                    } catch (\Exception $ex) {
+                        $error = new ErrorLog();
+                        $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                        $error->task_id = 8888;
+                        $error->save();
+                    }
+                });
+
+                $sender = $this->accountData;
                 if (!isset($sender)) {
                     sleep(random_int(5, 10));
                     continue;
                 }
-                $sender->reserved += 1;
+                $sender->reserved = 1;
                 $sender->save();
 
 //                    $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
 //                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where([['proxy.vk', '<', 1000],['proxy.vk', '>',-1 ], ])
 //                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
-                $this->cur_proxy = ProxyItem::getProxy(ProxyItem::VK, $sender->proxy_id);
+                $this->cur_proxy = $sender->getProxy;
                 if (!isset($this->cur_proxy)) {
-                    $sender->reserved -= 1;
+                    $sender->reserved = 0;
                     $sender->save();
                     sleep(random_int(5, 10));
                     continue;
@@ -417,11 +439,12 @@ class VK {
                 if ($array->count() < 1) {
                     // echo "no coikie logining\n";
                     if ($this->login($sender->login, $sender->password)) {
-                        $sender = AccountsData::where(['id' => $sender->id])->first();
+                       // $sender = AccountsData::where(['id' => $sender->id])->first();
+                        echo "\login good";
                         //dd($sender->vk_cookie);
                     } else {
                         $sender->valid = -1;
-                        $sender->reserved -= 1;
+                        $sender->reserved = 0;
                         $sender->save();
                         //$sender->delete();
                         //  echo "account not valid\n";
@@ -434,8 +457,6 @@ class VK {
                 // $this->login($sender->login, $sender->password);
                 $request = $this->client->request("GET", "https://vk.com/feed", [// 'proxy' => '127.0.0.1:8888',
                 ]);
-                $this->cur_proxy->inc();
-                //$this->cur_proxy->save();
 
                 $sender->count_request += 1;
                 $sender->save();
@@ -444,9 +465,9 @@ class VK {
 
                 if (strpos($data, "login_button")) {
                     sleep(1);
-                    $sender->reserved -= 1;
+                    $sender->reserved = 0;
                     $sender->save();
-                    $this->cur_proxy->release();
+
                     //$sender->delete();
                     //  echo "account not valid\n";
 
@@ -508,10 +529,10 @@ class VK {
                         $vkuser_id = $grouptmp["response"][0]["id"];
                         //echo $vkuser_id."\n";
                         $search = VKLinks::where([
-                                    'vkuser_id' => $vkuser_id,
-                                    'task_id' => $task_id,
-                                    'type' => 0
-                                ])->first();
+                            'vkuser_id' => $vkuser_id,
+                            'task_id' => $task_id,
+                            'type' => 0
+                        ])->first();
 
                         //dd(empty($search));
                         if (!empty($search)) {
@@ -530,25 +551,29 @@ class VK {
                     sleep(random_int(1, 5));
                     $counter += 20;
                 }
-                $sender->reserved -= 1;
+                $sender->reserved = 0;
                 $sender->save();
             } catch (\Exception $ex) {
-                $this->cur_proxy->release();
-                $sender->reserved -= 1;
+
+                $sender->reserved = 0;
                 $sender->save();
-                dd($ex->getMessage());
+               // dd($ex->getMessage());
                 if (strpos($ex->getMessage(), 'cURL') !== false) {
-                    $sender->proxy_id = 0;
+                    //$sender->proxy_id = 0;
                     $sender->vk_cookie = null;
                     $sender->save();
-                    $this->cur_proxy->vk = -1;
-                    $this->cur_proxy->save();
+                   // $this->cur_proxy->vk = -1;
+                    //$this->cur_proxy->save();
+                    $error = new ErrorLog();
+                    $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                    $error->task_id = 8888;
+                    $error->save();
                 }
                 //$this->cur_proxy->reportBad();
                 sleep(random_int(1, 5));
                 continue;
             }
-            $this->cur_proxy->release();
+
 
             //dd();
             return true;
@@ -559,29 +584,48 @@ class VK {
         while (true) {
             try {
                 // while (true) {
-                $sender = AccountsData::where([
-                            'type_id' => 1,
-                            'valid' => 1,
-                            'is_sender' => 0
-                        ])->where([
-                            ['count_request', '<', config('config.total_requets_limit')],
-                            ['reserved', '<', 3]
-                        ])->orderByRaw('RAND()')->first();
-                // echo($sender->login . "\n Parse group " . $vklink->link . "\n");
+                DB::transaction(function () {
+                    try {
+                        $sender = AccountsData::where([
+                            ['type_id', '=', 1],
+                            ['valid', '=', 1],
+                            ['is_sender', '=', 0],
+                            ['reserved', '=', 0],
+                            ['count_request', '<', 401]
+                        ])->orderBy('count_request', 'asc')->first();
+
+                        if (!isset($sender)) {
+                            return;
+                        }
+
+
+                        $sender->reserved = 1;
+                        $sender->save();
+
+                        $this->accountData = $sender;
+                    } catch (\Exception $ex) {
+                        $error = new ErrorLog();
+                        $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                        $error->task_id = 8888;
+                        $error->save();
+                    }
+                });
+
+                $sender = $this->accountData;
                 if (!isset($sender)) {
                     sleep(random_int(5, 10));
                     continue;
                 }
 
-                $sender->reserved += 1;
+                $sender->reserved = 1;
                 $sender->save();
 
 //                    $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
 //                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where([['proxy.vk', '<', 1000],['proxy.vk', '>',-1 ], ])
 //                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
-                $this->cur_proxy = ProxyItem::getProxy(ProxyItem::VK, $sender->proxy_id);
+                $this->cur_proxy = $sender->getProxy;
                 if (!isset($this->cur_proxy)) {
-                    $sender->reserved -= 1;
+                    $sender->reserved = 0;
                     $sender->save();
                     sleep(random_int(5, 10));
                     continue;
@@ -628,11 +672,11 @@ class VK {
                         //dd($sender->vk_cookie);
                     } else {
                         $sender->valid = -1;
-                        $sender->reserved -= 1;
+                        $sender->reserved = 0;
                         $sender->save();
                         // $sender->delete();
                         //  echo "account not valid\n";
-                        $this->cur_proxy->release();
+
                         continue;
                     }
                 }
@@ -640,16 +684,17 @@ class VK {
                 // $this->login($sender->login, $sender->password);
                 $request = $this->client->request("GET", "https://vk.com/feed", [// 'proxy' => '127.0.0.1:8888',
                 ]);
-                $this->cur_proxy->inc();
+                //$this->cur_proxy->inc();
                 $sender->count_request += 1;
                 $sender->save();
                 $data = $request->getBody()->getContents();
 
                 if (strpos($data, "login_button")) {
                     sleep(random_int(1, 5));
-                    $sender->reserved -= 1;
+                    $sender->reserved = 0;
+                    $sender->vk_cookie=null;
                     $sender->save();
-                    $this->cur_proxy->release();
+
                     continue;
                 }
                 sleep(random_int(1, 5));
@@ -658,7 +703,7 @@ class VK {
 
                 $request = $this->client->request("GET", $vklink->link, [// 'proxy' => '127.0.0.1:8888',
                 ]);
-                $this->cur_proxy->inc();
+               // $this->cur_proxy->inc();
                 $sender->count_request += 1;
                 $sender->save();
                 sleep(random_int(1, 5));
@@ -693,43 +738,51 @@ class VK {
                         $search_query->save();
                     }
                 }
-                $sender->reserved -= 1;
+                $sender->reserved = 0;
                 $sender->save();
-                $this->cur_proxy->release();
+
 
                 return true;
             } catch (\Exception $ex) {
-                $sender->reserved -= 1;
+                $sender->reserved = 0;
                 $sender->save();
-                $this->cur_proxy->release();
+
                 if (strpos($ex->getMessage(), 'cURL') !== false) {
 
-                    $this->cur_proxy->vk = -1;
-                    $this->cur_proxy->save();
+                   // $this->cur_proxy->vk = -1;
+                   // $this->cur_proxy->save();
+                    $error = new ErrorLog();
+                    $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                    $error->task_id = 8888;
+                    $error->save();
                 }
             }
         }
+        return true;
     }
 
     public function getUsersOfGroup(VKLinks $group) {
         //$group->vkuser_id = "6138125";
         while (true) {
             try {
-                $this->cur_proxy = ProxyItem::getProxy(ProxyItem::VK);
+                $this->cur_proxy = ProxyItem::where([['vk', '>',-1],
+                                   ['valid', '=', 1]
+            ])->inRandomOrder()->first();
                 //dd($this->cur_proxy);
                 if (!isset($this->cur_proxy)) {
                     sleep(random_int(5, 10));
                     continue;
                 }
+                //dd($this->cur_proxy);
                 $this->proxy_arr = parse_url($this->cur_proxy->proxy);
                 $this->setProxyClient();
-                $this->cur_proxy->inc();
+              //  $this->cur_proxy->inc();
                 //$query = file_get_contents("https://api.vk.com/method/groups.getMembers?v=5.60&group_id=" . $group->vkuser_id);
                 $request = $this->client->request("GET", "https://api.vk.com/method/groups.getMembers?v=5.60&group_id=" . $group->vkuser_id);
                 $query = $request->getBody()->getContents();
                 $userstmp = json_decode($query, true);
                 sleep(1);
-                $this->cur_proxy->inc();
+
 
                 $count = intval($userstmp["response"]["count"]);
                 $users = $userstmp["response"]["items"];
@@ -738,10 +791,10 @@ class VK {
                 foreach ($users as $value) {
 
                     $search = VKLinks::where([
-                                'vkuser_id' => $value,
-                                'task_id' => $group->task_id,
-                                'type' => 1
-                            ])->first();
+                        'vkuser_id' => $value,
+                        'task_id' => $group->task_id,
+                        'type' => 1
+                    ])->first();
 
                     //dd(empty($search));
                     if (!empty($search)) {
@@ -771,15 +824,15 @@ class VK {
                         //$users = array_unique($users);
                         $users = $userstmp["response"]["items"];
                         $users = array_unique($users);
-                        $this->cur_proxy->inc();
+                       // $this->cur_proxy->inc();
                         sleep(1);
                         foreach ($users as $value) {
 
                             $search = VKLinks::where([
-                                        'vkuser_id' => $value,
-                                        'task_id' => $group->task_id,
-                                        'type' => 1
-                                    ])->first();
+                                'vkuser_id' => $value,
+                                'task_id' => $group->task_id,
+                                'type' => 1
+                            ])->first();
 
                             //dd(empty($search));
                             if (!empty($search)) {
@@ -798,15 +851,19 @@ class VK {
                     }
                 }
 
-                $this->cur_proxy->release();
+                //$this->cur_proxy->release();
 
                 return true;
             } catch (\Exception $ex) {
-                $this->cur_proxy->release();
+
                 if (strpos($ex->getMessage(), 'cURL') !== false) {
 
-                    $this->cur_proxy->vk = -1;
-                    $this->cur_proxy->save();
+                   // $this->cur_proxy->vk = -1;
+                   // $this->cur_proxy->save();
+                    $error = new ErrorLog();
+                    $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                    $error->task_id = 8888;
+                    $error->save();
                 }
             }
         }
@@ -837,7 +894,9 @@ class VK {
 
         while (true) {
             try {
-                $this->cur_proxy = ProxyItem::getProxy(ProxyItem::VK);
+                $this->cur_proxy = ProxyItem::where([['vk', '>',-1],
+                    ['valid', '=', 1]
+                ])->inRandomOrder()->first();
                 //dd($this->cur_proxy);
                 if (!isset($this->cur_proxy)) {
                     sleep(random_int(5, 10));
@@ -849,7 +908,7 @@ class VK {
 
                 $request = $this->client->request("GET", "https://api.vk.com/method/users.get?v=5.60&&fields=can_write_private_message,connections,contacts,city,deactivated&user_ids=" . $user->vkuser_id);
                 $query = $request->getBody()->getContents();
-                $this->cur_proxy->inc();
+                //$this->cur_proxy->inc();
 
                 // $query = file_get_contents("https://api.vk.com/method/users.get?v=5.60&&fields=can_write_private_message,connections,contacts,city,deactivated&user_ids=" . $user->vkuser_id);
                 $usertmp = json_decode($query, true);
@@ -876,9 +935,9 @@ class VK {
 
                     // sleep(random_int(1, 3));
                     $search = $search = SearchQueries::where([
-                                'link' => $user->link,
-                                'task_id' => $user->task_id
-                            ])->first();
+                        'link' => $user->link,
+                        'task_id' => $user->task_id
+                    ])->first();
 //dd($user->link);
 
                     if (empty($search) && $usertmp["can_write_private_message"] == "1") {
@@ -897,22 +956,26 @@ class VK {
                     }
                     // echo("parse user complete - id ".$vkuser->vkuser_id."\n");
                     // $user->delete();
-                    $this->cur_proxy->release();
+
 
                     return true;
                 } else {
                     //$user->delete();
                     // echo("parse user complete - id ".$vkuser->vkuser_id."\n");
-                    $this->cur_proxy->release();
+
 
                     return false;
                 }
             } catch (\Exception $ex) {
-                $this->cur_proxy->release();
+
                 if (strpos($ex->getMessage(), 'cURL') !== false) {
 
-                    $this->cur_proxy->vk = -1;
-                    $this->cur_proxy->save();
+                   // $this->cur_proxy->vk = -1;
+                   // $this->cur_proxy->save();
+                    $error = new ErrorLog();
+                    $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                    $error->task_id = 8888;
+                    $error->save();
                 }
             }
         }
@@ -947,7 +1010,7 @@ class VK {
                     'Accept-Encoding' => 'gzip, deflate, sdch,',
                     'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
                     'X-Requested-With' => 'XMLHttpRequest',
-                //'Content-Type'=> 'application/x-www-form-urlencoded',
+                    //'Content-Type'=> 'application/x-www-form-urlencoded',
                 ],
                 'verify' => false,
                 'cookies' => true,
@@ -996,8 +1059,7 @@ class VK {
 
             $lg_h = $crawler->find('input[name="lg_h"]', 0)->value;
             $ip_h = $crawler->find('input[name="ip_h"]', 0)->value;
-            $proxy->vk += 1;
-            $proxy->save();
+
             $request = $this->client->post("https://vk.com/join.php?act=start", [
                 'form_params' => [
                     'al' => '1',
@@ -1007,9 +1069,9 @@ class VK {
                     'fname' => $f_name->name,
                     'frm' => '1',
                     'lname' => $str_s_name,
-                //'sex' => $gender,
+                    //'sex' => $gender,
                 ],
-                    // 'proxy' => '127.0.0.1:8888',
+                // 'proxy' => '127.0.0.1:8888',
             ]);
 
             $request = $this->client->get("https://vk.com/join.php?__query=join&_ref=&act=finish&al=-1&al_id=0&_rndVer=" . random_int(3000, 9999), [// 'proxy' => '127.0.0.1:8888',
@@ -1034,7 +1096,7 @@ class VK {
                 'headers' => [
                     'Referer' => 'https://vk.com/join?act=finish'
                 ],
-                    //  'proxy' => '127.0.0.1:8888',
+                //  'proxy' => '127.0.0.1:8888',
             ]);
 
             $code = $num->getCode();
@@ -1045,7 +1107,7 @@ class VK {
                     'code' => $code,
                     'recaptcha' => ''
                 ],
-                    // 'proxy' => '127.0.0.1:8888',
+                // 'proxy' => '127.0.0.1:8888',
             ]);
 
             $num->reportOK();
@@ -1073,7 +1135,7 @@ class VK {
                     'join_hash' => $hash,
                     'join_to_already' => 0
                 ],
-                    //'proxy' => '127.0.0.1:8888',
+                //'proxy' => '127.0.0.1:8888',
             ]);
             $data = $request->getBody()->getContents();
             //dd($data);
