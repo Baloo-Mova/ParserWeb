@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\AccountsDataTypes;
+use App\Models\Proxy as ProxyItem;
 
 /**
  * App\Models\AccountsData
@@ -19,7 +20,6 @@ use App\Models\AccountsDataTypes;
  * @property int $proxy_id
  * @property int $process_id
  * @property int $is_sender
- * @property int $count_sended_messages
  * @property string $ok_user_gwt
  * @property string $ok_user_tkn
  * @property string $vk_cookie
@@ -75,7 +75,7 @@ class AccountsData extends Model
         'password',
         'type_id',
         'user_id',
-        'count_sended_messages',
+        //'count_sended_messages',
         'vk_cookie',
         'fb_cookie',
         'fb_user_id',
@@ -90,6 +90,11 @@ class AccountsData extends Model
     public function accountType()
     {
         return $this->belongsTo(AccountsDataTypes::class, 'type_id');
+    }
+
+    public function getProxy(){
+        return $this->belongsTo(ProxyItem::class,'proxy_id');
+
     }
 
     static function scopeVk($query)
