@@ -20,6 +20,7 @@ use App\Models\EmailTemplates;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Supervisor\Api;
+use Illuminate\Support\Facades\Storage;
 
 class ParsingTasksController extends Controller {
 
@@ -135,6 +136,8 @@ class ParsingTasksController extends Controller {
     public function show($id) {
         $task = Tasks::whereId($id)->first();
         $mails = $task->getMail()->first();
+        $templateFile = TemplateDeliveryMailsFiles::whereMailId($mails->id)->first();
+        $mails_file = (isset($templateFile)) ? $templateFile->path : "";
         $skype = $task->getSkype()->first();
         $vk = $task->getVK()->first();
         $ok = $task->getOK()->first();
@@ -162,6 +165,7 @@ class ParsingTasksController extends Controller {
             'data' => $task,
             'active_type' => $active_type,
             'mails' => $mails,
+            'mails_file' => $mails_file,
             'skype' => $skype,
             'vk' => $vk,
             'ok' => $ok,
@@ -223,6 +227,8 @@ class ParsingTasksController extends Controller {
         $fb_text = $request->get("fb_text");
         $viber_text = $request->get("viber_text");
         $whats_text = $request->get("whats_text");
+        $mailsFile = $request->hasFile('mails_file');
+        $mail_id = $request->get('mail_id');
 
 
         if (isset($skype_text)) {
@@ -289,7 +295,39 @@ class ParsingTasksController extends Controller {
             }
 
             $mail->save();
+
         }
+
+        if($mailsFile){
+
+            if(!isset($mail_id)){
+                $mail_id = $mail->id;
+            }
+
+            $isExistFile = TemplateDeliveryMailsFiles::whereMailId($mail_id)->first();
+            $file = $request->file('mails_file');
+
+            if(isset($isExistFile)){
+                Storage::delete($isExistFile->path);
+                $filename = uniqid('mail_' . $mail_id, true) . '.' . $file->getClientOriginalExtension();
+                $file->storeAs('mail_files', $filename);
+                $isExistFile->name = $filename;
+                $isExistFile->path = 'mail_files/' . $filename;
+                $isExistFile->save();
+
+            }else{
+                $filename = uniqid('mail_' . $mail_id, true) . '.' . $file->getClientOriginalExtension();
+                $file->storeAs('mail_files', $filename);
+                $file_model = new TemplateDeliveryMailsFiles;
+                $file_model->mail_id = $mail_id;
+                $file_model->name = $filename;
+                $file_model->path = 'mail_files/' . $filename;
+                $file_model->save();
+            }
+
+        }
+
+
 
         if (isset($viber_text)) {
             $count_lines = substr_count($viber_text, "\r\n");
