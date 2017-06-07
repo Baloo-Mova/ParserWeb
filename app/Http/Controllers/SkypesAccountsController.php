@@ -25,31 +25,59 @@ class SkypesAccountsController extends Controller
     public function store(Request $request)
     {
 
-        $proxy = Proxy::where([
-            ['skype', '<', '3'],
-            ['valid', '=', 1]
-        ])->first();
-
-        if(!isset($proxy)){
-            return back();
-        }
+        $proxy = $this->findProxyId(3);
 
         $skype = new SkypeLogins;
         $skype->fill($request->all());
         $skype->valid = 1;
-        $skype->proxy_id = $proxy->id;
+        $skype->proxy_id = $proxy["proxy_id"];
         $skype->save();
         SkypeClassFacade::index($request->get('login'), $request->get('password'), "");
 
         $skype = SkypeLogins::where(['login' => $request->get('login')])->first();
         if ($skype->valid == 0) {
             $skype->delete();
-        }else{
-            $proxy->skype = $proxy->skype + 1;
-            $proxy->save();
         }
 
         return redirect()->route('skypes_accounts.index');
+    }
+
+    private function findProxyId($counter)
+    {
+        $res = [];
+
+        $proxyInfo = SkypeLogins::select(DB::raw('count(proxy_id) as count, proxy_id'))
+            ->groupBy('proxy_id')
+            ->orderBy('proxy_id', 'desc')
+            ->having('count', '<', $counter)
+            ->first();
+
+        if($proxyInfo !== null) {
+            return [
+                "proxy_id" => $proxyInfo->proxy_id,
+                "counter"  => $counter,
+                "number"   => $counter - $proxyInfo->count
+            ];
+        }else{
+            $proxyNumber = Proxy::count();
+            $proxyInAcc = SkypeLogins::distinct('proxy_id')->count('proxy_id');
+
+            if($proxyInAcc == $proxyNumber){ // если все прокси уже заняты по 3 раза, то увеличиваем счетчик
+                return $this->findProxyId(++$counter);
+            }
+
+            $max_proxy = SkypeLogins::max('proxy_id'); // иначе ищем макс. номер прокси в таблице
+
+            $max_proxy = ($max_proxy === null) ? 0 : $max_proxy;
+
+            $proxy = Proxy::where('id', '>', $max_proxy)->first(); // находим следующий прокси
+
+            return [
+                "proxy_id" => $proxy->id,
+                "counter"  => $counter,
+                "number"   => $counter - 0
+            ];
+        }
     }
 
     public function edit($id)
@@ -88,35 +116,23 @@ class SkypesAccountsController extends Controller
 
     public function textParse($data)
     {
+        $proxyNumber = 3;
 
-        $proxy = Proxy::where([
-            ['skype', '<', '3'],
-            ['valid', '=', 1]
-        ])->first();
-        if(!isset($proxy)){
-            return back();
-        }
-        $proxy_number = $proxy->skype;
+        $proxy = $this->findProxyId($proxyNumber);
+        $proxyNumber = $proxy["counter"];
+        $proxy_number = $proxy["number"];
 
         foreach ($data as $line) {
 
-            if($proxy_number >= 3){
-                $proxy->skype = 3;
-                $proxy->save();
-                $proxy = Proxy::where([
-                    ['skype', '<', '3'],
-                    ['valid', '=', 1]
-                ])->first();
-                if(!isset($proxy)){
-                    return back();
-                }
-                $proxy_number = $proxy->skype;
+            if($proxy_number >= $proxyNumber){
+                $proxy = $this->findProxyId($proxyNumber);
+                $proxyNumber = $proxy["counter"];
             }
 
             $tmp             = explode(":", $line);
             $skype           = new SkypeLogins;
             $skype->login    = $tmp[0];
-            $skype->proxy_id = $proxy->id;
+            $skype->proxy_id = $proxy["proxy_id"];
             $skype->password = $tmp[1];
             $skype->valid    = 1;
             $skype->save();
@@ -133,10 +149,6 @@ class SkypesAccountsController extends Controller
             unset($tmp);
         }
 
-        if($proxy_number > 0){
-            $proxy->skype = $proxy_number;
-            $proxy->save();
-        }
     }
 
 

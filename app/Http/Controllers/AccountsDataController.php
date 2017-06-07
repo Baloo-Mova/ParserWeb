@@ -104,34 +104,12 @@ class AccountsDataController extends Controller {
         $data = new AccountsData;
         $data->fill($request->all());
         $type_id = $request->get("type_id");
-        $proxyAccType = 0;
+        $proxyLimitNumber = 3;
 
-        switch ($type_id){
-            case 1:
-                $proxyAccType = 'vk';
-                break;
-            case 2:
-                $proxyAccType = 'ok';
-                break;
-            case 3:
-                $proxyAccType = 'email';
-                break;
-            case 6:
-                $proxyAccType = 'fb';
-                break;
-        }
+        $proxyInfo = $this->findProxyId($type_id, $proxyLimitNumber);
+        $proxyLimitNumber = $proxyInfo["counter"];
 
-        $proxy = Proxy::where([
-            [$proxyAccType, '<', '3'],
-            ['valid', '=', 1]
-        ])->first();
-
-        if(!isset($proxy)){
-            return back();
-        }
-
-        DB::table('proxy')->where('id', '=', $proxy->id)->increment($proxyAccType, 1);
-        $data->proxy_id = $proxy->id;
+        $data->proxy_id = $proxyInfo["proxy_id"];
 
         if (!(empty($request->get("smtp_port")))) {
             $data->smtp_port = $request->get("smtp_port");
@@ -185,6 +163,50 @@ class AccountsDataController extends Controller {
             case 6:
                 return redirect()->route('accounts_data.fb');
                 break;
+        }
+    }
+
+    private function findProxyId($type, $counter)
+    {
+        $res = [];
+
+        $proxyInfo = AccountsData::select(DB::raw('count(proxy_id) as count, proxy_id'))
+            ->where([
+                ['type_id', '=', $type]
+            ])
+            ->groupBy('proxy_id')
+            ->orderBy('proxy_id', 'desc')
+            ->having('count', '<', $counter)
+            ->first();
+
+        if($proxyInfo !== null) {
+            return [
+                "proxy_id" => $proxyInfo->proxy_id,
+                "counter"  => $counter,
+                "number"   => $counter - $proxyInfo->count
+            ];
+        }else{
+            $proxyNumber = Proxy::count();
+            $proxyInAcc = AccountsData::where('type_id', '=', $type)
+                ->distinct('proxy_id')
+                ->count('proxy_id');
+
+            if($proxyInAcc == $proxyNumber){ // если все прокси уже заняты по 3 раза, то увеличиваем счетчик
+                return $this->findProxyId($type, ++$counter);
+            }
+
+            $max_proxy = AccountsData::where('type_id', '=', $type)
+                ->max('proxy_id'); // иначе ищем макс. номер прокси в таблице
+
+            $max_proxy = ($max_proxy === null) ? 0 : $max_proxy;
+
+            $proxy = Proxy::where('id', '>', $max_proxy)->first(); // находим следующий прокси
+
+            return [
+                "proxy_id" => $proxy->id,
+                "counter"  => $counter,
+                "number"   => $counter - 0
+            ];
         }
     }
 
@@ -301,25 +323,6 @@ class AccountsDataController extends Controller {
         $data = AccountsData::whereId($id)->first();
         $data->delete();
 
-        $type = 0;
-
-        switch ($data->type_id){
-            case 1:
-                $type = 'vk';
-                break;
-            case 2:
-                $type = 'ok';
-                break;
-            case 3:
-                $type = 'email';
-                break;
-            case 6:
-                $type = 'fb';
-                break;
-        }
-
-        DB::table('proxy')->where('id',$data->proxy_id)->decrement($type, 1);
-
         return redirect()->back();
     }
 
@@ -333,8 +336,6 @@ class AccountsDataController extends Controller {
 
         DB::table('accounts_data')->where('type_id', '=', 1)->delete();
 
-        DB::table('proxy')->update(['vk' => 0]);
-
         return redirect()->route('accounts_data.vk');
     }
 
@@ -347,8 +348,6 @@ class AccountsDataController extends Controller {
     public function destroyOk() {
 
         DB::table('accounts_data')->where('type_id', '=', 2)->delete();
-
-        DB::table('proxy')->update(['ok' => 0]);
 
         return redirect()->route('accounts_data.ok');
     }
@@ -374,8 +373,6 @@ class AccountsDataController extends Controller {
     public function destroyFb() {
 
         DB::table('accounts_data')->where('type_id', '=', 6)->delete();
-
-        DB::table('proxy')->update(['fb' => 0]);
 
         return redirect()->route('accounts_data.fb');
     }
@@ -403,8 +400,6 @@ class AccountsDataController extends Controller {
     public function destroyEmails() {
 
         DB::table('accounts_data')->where('type_id', '=', 3)->delete();
-
-        DB::table('proxy')->update(['email' => 0]);
 
         return redirect()->route('accounts_data.emails');
     }
@@ -458,37 +453,20 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function vkokParse($data, $user, $type) {
+    public function vkokParse($data, $user, $type)
+    {
 
-        $proxyAccType = 0;
+        $proxyNumber = 3;
 
-        switch ($type){
-            case 1:
-                $proxyAccType = 'vk';
-                break;
-            case 2:
-                $proxyAccType = 'ok';
-                break;
-            case 6:
-                $proxyAccType = 'fb';
-                break;
-        }
-
-        $proxy = $this->findProxy($proxyAccType);
-        if(!isset($proxy)){
-            return back();
-        }
-        $proxy_number = $this->proxyNumber($proxy, $type);
+        $proxy = $this->findProxyId($type, $proxyNumber);
+        $proxyNumber = $proxy["counter"];
+        $proxy_number = $proxy["number"];
 
         foreach ($data as $line) {
 
-            if($proxy_number >= 3){
-                $this->saveProxyCounter($proxy, $type, 3);
-                $proxy = $this->findProxy($proxyAccType);
-                if(!isset($proxy)){
-                    return back();
-                }
-                $proxy_number = $this->proxyNumber($proxy, $type);
+            if($proxy_number >= $proxyNumber){
+                $proxy = $this->findProxyId($type, $proxyNumber);
+                $proxyNumber = $proxy["counter"];
             }
 
             $tmp = explode(":", $line);
@@ -496,7 +474,7 @@ class AccountsDataController extends Controller {
 
             $accData->login = $tmp[0];
             $accData->password = $tmp[1];
-            $accData->proxy_id = $proxy->id;
+            $accData->proxy_id = $proxy["proxy_id"];
             $accData->type_id = $type;
             $accData->user_id = $user;
             $accData->save();
@@ -506,62 +484,8 @@ class AccountsDataController extends Controller {
             unset($tmp);
         }
 
-        if($proxy_number > 0){
-            $this->saveProxyCounter($proxy, $type, $proxy_number);
-        }
-
     }
 
-    private function saveProxyCounter($proxy, $type, $number)
-    {
-        switch ($type){
-            case 1:
-                $proxy->vk = $number;
-                break;
-            case 2:
-                $proxy->ok = $number;
-                break;
-            case 3:
-                $proxy->email = $number;
-                break;
-            case 6:
-                $proxy->fb = $number;
-                break;
-        }
-        $proxy->save();
-    }
-
-    private function proxyNumber($proxy, $type)
-    {
-        switch ($type){
-            case 1:
-                return $proxy->vk;
-                break;
-            case 2:
-                return $proxy->ok;
-                break;
-            case 3:
-                return $proxy->email;
-                break;
-            case 6:
-                return $proxy->fb;
-                break;
-        }
-    }
-
-    private function findProxy($type)
-    {
-        $proxy = Proxy::where([
-            [$type, '<', '3'],
-            ['valid', '=', 1]
-        ])->first();
-
-        if(!isset($proxy)){
-            return "";
-        }
-
-        return $proxy;
-    }
 
     /**
      * Массовая загрузка ОК
@@ -661,21 +585,17 @@ class AccountsDataController extends Controller {
      */
     public function mailsParse($data, $user) {
 
-        $proxy = $this->findProxy("email");
-        if(!isset($proxy)){
-            return back();
-        }
-        $proxy_number = $this->proxyNumber($proxy, 3);
+        $proxyNumber = 3;
+
+        $proxy = $this->findProxyId(3,$proxyNumber);
+        $proxyNumber = $proxy["counter"];
+        $proxy_number = $proxy["number"];
 
         foreach ($data as $line) {
 
-            if($proxy_number >= 3){
-                $this->saveProxyCounter($proxy, 3, 3);
-                $proxy = $this->findProxy("email");
-                if(!isset($proxy)){
-                    return back();
-                }
-                $proxy_number = $this->proxyNumber($proxy, 3);
+            if($proxy_number >= $proxyNumber){
+                $proxy = $this->findProxyId(3, $proxyNumber);
+                $proxyNumber = $proxy["counter"];
             }
 
             $tmp = explode(":", trim($line));
@@ -717,15 +637,11 @@ class AccountsDataController extends Controller {
                         "port" => $accData->smtp_port
                     ])
             ) {
-                $accData->proxy_id = $proxy->id;
+                $accData->proxy_id = $proxy["proxy_id"];
                 $proxy_number++;
                 $accData->save();
             }
             unset($tmp);
-        }
-
-        if($proxy_number > 0){
-            $this->saveProxyCounter($proxy, 3, $proxy_number);
         }
 
     }
