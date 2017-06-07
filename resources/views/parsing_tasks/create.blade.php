@@ -65,6 +65,11 @@
                                     </div>
                                     <hr>
                                     <div class="form-group has-feedback">
+                                        <label for="ok_text" class="control-label">Текст Сообщения OK</label>
+                                        <textarea class="form-control" rows="5" name="ok_text" id="ok_text"></textarea>
+                                    </div>
+                                    <hr>
+                                    <div class="form-group has-feedback">
                                         <label for="fb_text" class="control-label">Текст Сообщения FB</label>
                                         <textarea class="form-control" rows="5" name="fb_text" id="fb_text"></textarea>
                                     </div>

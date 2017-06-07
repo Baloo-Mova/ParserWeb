@@ -66,7 +66,9 @@ class ParsingTasksController extends Controller {
             $mails->subject = $request->get('subject');
             $mails->text = $request->get('mails_text');
             $mails->task_id = $task->id;
-            $mails->save();
+            if($this->checkSymbolsInText($request->get('mails_text'))) {
+                $mails->save();
+            }
         }
         //Записываем в таблицу шаблонов mails
         //Записываем в таблицу шаблонов вложений для mails
@@ -90,25 +92,34 @@ class ParsingTasksController extends Controller {
             $skype = new TemplateDeliverySkypes();
             $skype->text = $request->get('skype_text');
             $skype->task_id = $task->id;
-            $skype->save();
+            if($this->checkSymbolsInText($request->get('skype_text'))) {
+                $skype->save();
+            }
+
         }
         if (!empty($request->get('vk_text'))) {
             $vk = new TemplateDeliveryVK();
             $vk->text = $request->get('vk_text');
             $vk->task_id = $task->id;
-            $vk->save();
+            if($this->checkSymbolsInText($request->get('vk_text'))) {
+                $vk->save();
+            }
         }
         if (!empty($request->get('ok_text'))) {
-            $vk = new TemplateDeliveryOK();
-            $vk->text = $request->get('ok_text');
-            $vk->task_id = $task->id;
-            $vk->save();
+            $ok = new TemplateDeliveryOK();
+            $ok->text = $request->get('ok_text');
+            $ok->task_id = $task->id;
+            if($this->checkSymbolsInText($request->get('ok_text'))) {
+                $ok->save();
+            }
         }
         if (!empty($request->get('tw_text'))) {
             $tw = new TemplateDeliveryTw();
             $tw->text = $request->get('tw_text');
             $tw->task_id = $task->id;
-            $tw->save();
+            if($this->checkSymbolsInText($request->get('tw_text'))) {
+                $tw->save();
+            }
         }
         if (!empty($request->get('fb_text'))) {
             $fb = new TemplateDeliveryFB();
@@ -120,13 +131,17 @@ class ParsingTasksController extends Controller {
             $viber = new TemplateDeliveryViber();
             $viber->text = $request->get('viber_text');
             $viber->task_id = $task->id;
-            $viber->save();
+            if($this->checkSymbolsInText($request->get('viber_text'))) {
+                $viber->save();
+            }
         }
         if (!empty($request->get('whats_text'))) {
             $whatsapp = new TemplateDeliveryWhatsapp();
             $whatsapp->text = $request->get('whats_text');
             $whatsapp->task_id = $task->id;
-            $whatsapp->save();
+            if($this->checkSymbolsInText($request->get('whats_text'))) {
+                $whatsapp->save();
+            }
         }
         //Записываем в таблицу шаблонов skypes
 
@@ -232,12 +247,17 @@ class ParsingTasksController extends Controller {
 
 
         if (isset($skype_text)) {
+            $skype = TemplateDeliverySkypes::where("task_id", "=", $request->get("delivery_id"))->first();
             if (empty($skype)) {
                 $skype = new TemplateDeliverySkypes;
                 $skype->task_id = $request->get("delivery_id");
             }
-            $skype->text = $skype_text;
-            $skype->save();
+
+            if($this->checkSymbolsInText($skype_text)){
+                $skype->text = $skype_text;
+                $skype->save();
+            }
+
         }
 
         if (isset($ok_text)) {
@@ -246,8 +266,10 @@ class ParsingTasksController extends Controller {
                 $ok = new TemplateDeliveryOK;
                 $ok->task_id = $request->get("delivery_id");
             }
-            $ok->text = $ok_text;
-            $ok->save();
+            if($this->checkSymbolsInText($ok_text)){
+                $ok->text = $ok_text;
+                $ok->save();
+            }
         }
 
         if (isset($vk_text)) {
@@ -256,8 +278,10 @@ class ParsingTasksController extends Controller {
                 $vk = new TemplateDeliveryVK;
                 $vk->task_id = $request->get("delivery_id");
             }
-            $vk->text = $vk_text;
-            $vk->save();
+            if($this->checkSymbolsInText($vk_text)){
+                $vk->text = $vk_text;
+                $vk->save();
+            }
         }
 
         /*if (isset($tw_text)) {
@@ -275,8 +299,10 @@ class ParsingTasksController extends Controller {
                 $fb = new TemplateDeliveryFB();
                 $fb->task_id = $request->get("delivery_id");
             }
-            $fb->text = $fb_text;
-            $fb->save();
+            if($this->checkSymbolsInText($fb_text)){
+                $fb->text = $fb_text;
+                $fb->save();
+            }
         }
 
         if (isset($mail_subj)) {
@@ -290,7 +316,10 @@ class ParsingTasksController extends Controller {
             $mail->subject = $mail_subj;
 
             if (isset($mail_text)) {
-                $mail->text = $mail_text;
+                if($this->checkSymbolsInText($mail_text)){
+                    $mail->text = $mail_text;
+                }
+
             }
 
             $mail->save();
@@ -339,8 +368,10 @@ class ParsingTasksController extends Controller {
                 $viber = new TemplateDeliveryViber();
                 $viber->task_id = $request->get("delivery_id");
             }
-            $viber->text = $viber_text;
-            $viber->save();
+            if($this->checkSymbolsInText($viber_text)){
+                $viber->text = $viber_text;
+                $viber->save();
+            }
         }
         if (isset($whats_text)) {
             $whatsapp = TemplateDeliveryWhatsapp::where("task_id", "=", $request->get("delivery_id"))->first();
@@ -348,10 +379,24 @@ class ParsingTasksController extends Controller {
                 $whatsapp = new TemplateDeliveryWhatsapp();
                 $whatsapp->task_id = $request->get("delivery_id");
             }
-            $whatsapp->text = $whats_text;
-            $whatsapp->save();
+            if($this->checkSymbolsInText($whats_text)){
+                $whatsapp->text = $whats_text;
+                $whatsapp->save();
+            }
         }
         return redirect()->back();
+    }
+
+    private function checkSymbolsInText($text)
+    {
+        $f = substr_count($text, "{");
+        $s = substr_count($text, "}");
+
+        if($f == $s){
+            return true;
+        }else{
+            return false;
+        }
     }
 
     public function getCsv($id) {
@@ -452,8 +497,10 @@ class ParsingTasksController extends Controller {
     }
 
     public function storeTestingDeliveryMails(Request $request) {
+        if(!$this->checkSymbolsInText($request->get('mails_text'))) {
+            return back();
+        }
         //Записываем в таблицу тасков
-
         $task = new Tasks();
         $task->task_type_id = 3;
         $task->task_query = "Тестовая рассылка";
@@ -559,6 +606,9 @@ class ParsingTasksController extends Controller {
     }
 
     public function storeTestingDeliverySkypes(Request $request) {
+        if(!$this->checkSymbolsInText($request->get('skypes_text'))) {
+            return back();
+        }
         //Записываем в таблицу тасков
         $task = new Tasks();
         $task->task_type_id = 3;
@@ -610,9 +660,11 @@ class ParsingTasksController extends Controller {
     }
 
     public function storeTestingDeliveryVK(Request $request) {
+        if(!$this->checkSymbolsInText($request->get('vk_text'))) {
+            return back();
+        }
         //Записываем в таблицу тасков
         $task = new Tasks();
-
         $task->task_type_id = 3;
         $task->task_query = "Тестовая рассылка";
         $task->active_type = 1;
@@ -663,10 +715,11 @@ class ParsingTasksController extends Controller {
     }
 
     public function storeTestingDeliveryOK(Request $request) {
-
+        if(!$this->checkSymbolsInText($request->get('ok_text'))) {
+            return back();
+        }
         //Записываем в таблицу тасков
         $task = new Tasks();
-
         $task->task_type_id = 3;
         $task->task_query = "Тестовая рассылка";
         $task->active_type = 1;
@@ -773,9 +826,11 @@ class ParsingTasksController extends Controller {
     }
 
     public function storeTestingDeliveryFB(Request $request) {
+        if(!$this->checkSymbolsInText($request->get('fb_text'))) {
+            return back();
+        }
         //Записываем в таблицу тасков
         $task = new Tasks();
-
         $task->task_type_id = 3;
         $task->task_query = "Тестовая рассылка";
         $task->active_type = 1;
@@ -826,6 +881,12 @@ class ParsingTasksController extends Controller {
     }
 
     public function storeTestingDeliveryAndroidBots(Request $request) {
+        if(!$this->checkSymbolsInText($request->get('viber_text'))) {
+            return back();
+        }
+        if(!$this->checkSymbolsInText($request->get('whats_text'))) {
+            return back();
+        }
         //Записываем в таблицу тасков
         $task = new Tasks();
 

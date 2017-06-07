@@ -133,16 +133,13 @@
                                     {{ csrf_field() }}
                                     <input type="hidden" name="delivery_id" value="{{ $data->id }}">
                                     <div class="row add_info_row">
-                                        <div class="col-xs-6 pr">
-                                            <div class="add_info_card_wrap {{ $mails_file == "" ? "add_info_card_wrap_normal" : "add_info_card_wrap_big" }}">
+                                        <div class="col-xs-12">
+                                            <div class="add_info_card_wrap {{ $mails_file == "" ? "add_info_card_wrap_medium" : "add_info_card_wrap_big" }}">
                                                 <h4>Mail subject</h4>
                                                 <input type="text" class="form-control" name="mail_subject" value="{{ empty($mails) ? "-" : $mails->subject }}">
                                                 <input type="hidden" name="mail_id" value="{{ empty($mails) ? "" : $mails->id }}">
-                                            </div>
-                                        </div>
-                                        <div class="col-xs-6 pl">
-                                            <div class="add_info_card_wrap {{ $mails_file == "" ? "add_info_card_wrap_normal" : "add_info_card_wrap_big" }}">
-                                                <h4>Mail text</h4>
+
+                                                <h4 style="margin-top: 10px;">Mail text</h4>
                                                 <textarea name="mail_text" class="form-control" cols="30" rows="4">{{ empty($mails) ? "-" : $mails->text }}</textarea>
                                                 <input type="hidden" name="mail_id" value="{{ empty($mails) ? "" : $mails->id }}">
                                                 @if($mails_file)
@@ -152,14 +149,14 @@
                                                         {{ storage_path('app/').$mails_file }}
                                                     </strong>
                                                     <br>
-                                                    <label for="mails_file" class="custom-file-upload">
+                                                    <label for="mails_file" class="custom-file-upload" style="margin-top: 10px;">
                                                         Изменить файл
                                                     </label>
                                                     <input id="mails_file" type="file" name="mails_file"/>
                                                 @else
                                                     <div class="small mails_file_path">
                                                     </div>
-                                                    <label for="mails_file" class="custom-file-upload cfu2">
+                                                    <label for="mails_file" class="custom-file-upload cfu2" style="margin-top: 10px;">
                                                         Добавить файл
                                                     </label>
                                                     <input id="mails_file" type="file" class="mails_file_input" name="mails_file"/>
@@ -288,7 +285,10 @@
             margin-bottom: 0px;
         }
         .add_info_card_wrap_big{
-            height: 270px;
+            height: 340px;
+        }
+        .add_info_card_wrap_medium{
+            height: 300px;
         }
         .add_info_card_wrap_normal{
             height: 220px;
