@@ -136,7 +136,7 @@ class ParsingTasksController extends Controller {
     public function show($id) {
         $task = Tasks::whereId($id)->first();
         $mails = $task->getMail()->first();
-        $templateFile = TemplateDeliveryMailsFiles::whereMailId($mails->id)->first();
+        $templateFile = (isset($mails)) ? TemplateDeliveryMailsFiles::whereMailId($mails->id)->first() : null;
         $mails_file = (isset($templateFile)) ? $templateFile->path : "";
         $skype = $task->getSkype()->first();
         $vk = $task->getVK()->first();
@@ -232,7 +232,6 @@ class ParsingTasksController extends Controller {
 
 
         if (isset($skype_text)) {
-            $skype = TemplateDeliverySkypes::where("task_id", "=", $request->get("delivery_id"))->first();
             if (empty($skype)) {
                 $skype = new TemplateDeliverySkypes;
                 $skype->task_id = $request->get("delivery_id");
@@ -300,7 +299,7 @@ class ParsingTasksController extends Controller {
 
         if($mailsFile){
 
-            if(!isset($mail_id)){
+            if(!$mail_id){
                 $mail_id = $mail->id;
             }
 
