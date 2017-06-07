@@ -357,10 +357,16 @@ class Skype
                 [
                     'headers' => ["X-Skypetoken" => $this->accountData->skypeToken]
                 ]);
-            $this->friendList = $req->getBody()->getContents();
+            $this->friendList = json_decode($req->getBody()->getContents());
         }
 
-        return strpos($this->friendList, $user) !== false;
+        foreach ($this->friendList->contacts as $item) {
+            if ($item->mri == "8:" . $user && $item->authorized) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }
