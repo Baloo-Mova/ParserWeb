@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Supervisor\Api;
 use Illuminate\Support\Facades\Storage;
+use Kamaln7\Toastr\Facades\Toastr;
 
 class ParsingTasksController extends Controller {
 
@@ -68,6 +69,8 @@ class ParsingTasksController extends Controller {
             $mails->task_id = $task->id;
             if($this->checkSymbolsInText($request->get('mails_text'))) {
                 $mails->save();
+            }else{
+                Toastr::error("В тексте Mails найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
         }
         //Записываем в таблицу шаблонов mails
@@ -94,6 +97,8 @@ class ParsingTasksController extends Controller {
             $skype->task_id = $task->id;
             if($this->checkSymbolsInText($request->get('skype_text'))) {
                 $skype->save();
+            }else{
+                Toastr::error("В тексте Skype найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
 
         }
@@ -103,6 +108,8 @@ class ParsingTasksController extends Controller {
             $vk->task_id = $task->id;
             if($this->checkSymbolsInText($request->get('vk_text'))) {
                 $vk->save();
+            }else{
+                Toastr::error("В тексте Вконтакте найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
         }
         if (!empty($request->get('ok_text'))) {
@@ -111,6 +118,8 @@ class ParsingTasksController extends Controller {
             $ok->task_id = $task->id;
             if($this->checkSymbolsInText($request->get('ok_text'))) {
                 $ok->save();
+            }else{
+                Toastr::error("В тексте Одноклассники найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
         }
         if (!empty($request->get('tw_text'))) {
@@ -125,7 +134,12 @@ class ParsingTasksController extends Controller {
             $fb = new TemplateDeliveryFB();
             $fb->text = $request->get('fb_text');
             $fb->task_id = $task->id;
-            $fb->save();
+            if($this->checkSymbolsInText($request->get('fb_text'))) {
+                $fb->save();
+            }else{
+                Toastr::error("В тексте Facebook найдены недопустимые символы!", $title = "Ошибка!", $options = []);
+            }
+
         }
         if (!empty($request->get('viber_text'))) {
             $viber = new TemplateDeliveryViber();
@@ -133,6 +147,8 @@ class ParsingTasksController extends Controller {
             $viber->task_id = $task->id;
             if($this->checkSymbolsInText($request->get('viber_text'))) {
                 $viber->save();
+            }else{
+                Toastr::error("В тексте Viber найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
         }
         if (!empty($request->get('whats_text'))) {
@@ -141,6 +157,8 @@ class ParsingTasksController extends Controller {
             $whatsapp->task_id = $task->id;
             if($this->checkSymbolsInText($request->get('whats_text'))) {
                 $whatsapp->save();
+            }else{
+                Toastr::error("В тексте WhatsApp найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
         }
         //Записываем в таблицу шаблонов skypes
@@ -256,6 +274,8 @@ class ParsingTasksController extends Controller {
             if($this->checkSymbolsInText($skype_text)){
                 $skype->text = $skype_text;
                 $skype->save();
+            }else{
+                Toastr::error("В тексте Skype найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
 
         }
@@ -269,6 +289,8 @@ class ParsingTasksController extends Controller {
             if($this->checkSymbolsInText($ok_text)){
                 $ok->text = $ok_text;
                 $ok->save();
+            }else{
+                Toastr::error("В тексте Одноклассники найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
         }
 
@@ -281,6 +303,8 @@ class ParsingTasksController extends Controller {
             if($this->checkSymbolsInText($vk_text)){
                 $vk->text = $vk_text;
                 $vk->save();
+            }else{
+                Toastr::error("В тексте Вконтакте найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
         }
 
@@ -302,6 +326,8 @@ class ParsingTasksController extends Controller {
             if($this->checkSymbolsInText($fb_text)){
                 $fb->text = $fb_text;
                 $fb->save();
+            }else{
+                Toastr::error("В тексте Facebook найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
         }
 
@@ -318,6 +344,8 @@ class ParsingTasksController extends Controller {
             if (isset($mail_text)) {
                 if($this->checkSymbolsInText($mail_text)){
                     $mail->text = $mail_text;
+                }else{
+                    Toastr::error("В тексте Mails найдены недопустимые символы!", $title = "Ошибка!", $options = []);
                 }
 
             }
@@ -371,6 +399,8 @@ class ParsingTasksController extends Controller {
             if($this->checkSymbolsInText($viber_text)){
                 $viber->text = $viber_text;
                 $viber->save();
+            }else{
+                Toastr::error("В тексте Viber найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
         }
         if (isset($whats_text)) {
@@ -382,6 +412,8 @@ class ParsingTasksController extends Controller {
             if($this->checkSymbolsInText($whats_text)){
                 $whatsapp->text = $whats_text;
                 $whatsapp->save();
+            }else{
+                Toastr::error("В тексте WhatsApp найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
         }
         return redirect()->back();
@@ -498,6 +530,7 @@ class ParsingTasksController extends Controller {
 
     public function storeTestingDeliveryMails(Request $request) {
         if(!$this->checkSymbolsInText($request->get('mails_text'))) {
+            Toastr::error("В тексте Mails найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             return back();
         }
         //Записываем в таблицу тасков
@@ -607,6 +640,7 @@ class ParsingTasksController extends Controller {
 
     public function storeTestingDeliverySkypes(Request $request) {
         if(!$this->checkSymbolsInText($request->get('skypes_text'))) {
+            Toastr::error("В тексте Skype найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             return back();
         }
         //Записываем в таблицу тасков
@@ -661,6 +695,7 @@ class ParsingTasksController extends Controller {
 
     public function storeTestingDeliveryVK(Request $request) {
         if(!$this->checkSymbolsInText($request->get('vk_text'))) {
+            Toastr::error("В тексте Вконтакте найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             return back();
         }
         //Записываем в таблицу тасков
@@ -716,6 +751,7 @@ class ParsingTasksController extends Controller {
 
     public function storeTestingDeliveryOK(Request $request) {
         if(!$this->checkSymbolsInText($request->get('ok_text'))) {
+            Toastr::error("В тексте Одноклассники найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             return back();
         }
         //Записываем в таблицу тасков
@@ -827,6 +863,7 @@ class ParsingTasksController extends Controller {
 
     public function storeTestingDeliveryFB(Request $request) {
         if(!$this->checkSymbolsInText($request->get('fb_text'))) {
+            Toastr::error("В тексте Facebook найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             return back();
         }
         //Записываем в таблицу тасков
@@ -882,9 +919,11 @@ class ParsingTasksController extends Controller {
 
     public function storeTestingDeliveryAndroidBots(Request $request) {
         if(!$this->checkSymbolsInText($request->get('viber_text'))) {
+            Toastr::error("В тексте Viber найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             return back();
         }
         if(!$this->checkSymbolsInText($request->get('whats_text'))) {
+            Toastr::error("В тексте WhatsApp найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             return back();
         }
         //Записываем в таблицу тасков

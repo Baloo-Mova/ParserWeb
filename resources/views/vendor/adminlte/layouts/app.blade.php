@@ -30,6 +30,7 @@ desired effect
 |---------------------------------------------------------|
 -->
 <body class="skin-blue sidebar-mini">
+{!! Toastr::render() !!}
 <div id="app">
     <div class="wrapper">
 
