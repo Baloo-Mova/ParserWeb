@@ -26,6 +26,7 @@ use App\Models\SearchQueries;
 use App\Models\Parser\VKLinks;
 use App\Models\Tasks;
 use App\Helpers\Macros;
+use Illuminate\Support\Facades\DB;
 
 class Tester extends Command
 {
@@ -63,11 +64,9 @@ class Tester extends Command
 
     public function handle()
     {
-
-
-        $data  = SkypeLogins::find(50);
+        $data  = SkypeLogins::find(505);
         $skype = new Skype($data);
-        dd($skype->addFriend('sdjsdkjghslghslkdghlsdhglskdhglskdhgl',uniqid()));
+        dd($skype->isMyFrined('live:petlyakssphone'));
     }
 
 }

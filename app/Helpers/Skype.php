@@ -53,7 +53,6 @@ class Skype
                 return Skype::NOT_VALID_ACCOUNT;
             }
         }
-
         try {
             $result = $this->client->post("https://contacts.skype.com/contacts/v2/users/" . $this->accountData->skype_id . "/contacts",
                 [
@@ -71,6 +70,7 @@ class Skype
 
             return true;
         } catch (ClientException $exception) {
+            dd($exception->getMessage());
             if (strpos($exception->getMessage(), "is not valid contact") > 0) {
                 $this->accountData->increment('count_request');
 
@@ -353,11 +353,12 @@ class Skype
         $this->countFriendsChecking = 0;
 
         if (empty($this->friendList) || $this->countFriendsChecking > 100) {
-            $req              = $this->client->get("https://contacts.skype.com/contacts/v2/users/" . $this->accountData->skype_id . "?reason=default",
+            $req              = $this->client->get("https://contacts.skype.com/contacts/v2/users/" . $this->accountData->skype_id . "?reason=default&page_size=1000",
                 [
                     'headers' => ["X-Skypetoken" => $this->accountData->skypeToken]
                 ]);
             $this->friendList = $req->getBody()->getContents();
+            var_dump($this->friendList);
         }
 
         return strpos($this->friendList, $user) !== false;

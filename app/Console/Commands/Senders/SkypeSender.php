@@ -8,6 +8,8 @@ use App\Models\TemplateDeliverySkypes;
 use App\Models\SearchQueries;
 use App\Models\Parser\ErrorLog;
 use Illuminate\Support\Facades\DB;
+use App\Models\SkypeLogins;
+use App\Helpers\Macros;
 
 class SkypeSender extends Command
 {
@@ -61,7 +63,21 @@ class SkypeSender extends Command
             try {
             $this->task = "";
             $this->sender = "";
-$this->skype = new Skype($this->sender);
+
+            DB::transaction(function () {
+                $this->sender = SkypeLogins::select(['*',DB::raw('MIN(count_request) as min_cr')])
+                    ->groupBy('id')
+                    ->orderBy('min_cr')
+                    ->lockForUpdate()
+                    ->first();
+
+                if (isset($this->sender)) {
+                    $this->sender->reserved = 1;
+                    $this->sender->save();
+                }
+            });
+
+            $this->skype = new Skype($this->sender);
 
                 DB::transaction(function () {
                     $this->task = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
@@ -81,22 +97,38 @@ $this->skype = new Skype($this->sender);
                     sleep(10);
                     continue;
                 }
-
                 $skypes  = array_filter(explode(",", $this->task->skypes));
                 $message = TemplateDeliverySkypes::where('task_id', '=', $this->task->task_id)->first();
 
                 if ( ! isset($message)) {
 
                     $log = new ErrorLog();
-                    $log->message =
+                    $log->message = 900001;
                     sleep(10);
                     continue;
+                }
+
+                if(substr_count ($message,"{")==substr_count ($message,"}")) {
+                    if ((substr_count($message, "{") == 0 && substr_count($message, "}") == 0)) {
+                        $str_mes = $message->text;
+                    } else {
+                        $str_mes = Macros::convertMacro($message->text);
+                    }
                 }
 
                 foreach ($skypes as $skype) {
                     if (empty($skype)) {
                         continue;
                     }
+
+                    $is_friend = $this->skype->isMyFrined($skype);
+
+                    if(!$is_friend){
+                        $this->skype->sendMessage($skype, $str_mes);
+                    }else{
+                        $this->skype->addFriend($skype, $str_mes);
+                    }
+
                     sleep(random_int(1, 5));
                 }
 
