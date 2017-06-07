@@ -11,6 +11,7 @@ use App\Models\Tasks;
 use App\Helpers\FB;
 use App\Models\Parser\ErrorLog;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\Macros;
 class FBSender extends Command
 {
     public $content;
@@ -84,9 +85,27 @@ class FBSender extends Command
                     $this->content['query']->save();
                     continue;
                 }
+                if(substr_count ($message,"{")==substr_count ($message,"}")) {
+                    if ((substr_count($message, "{") == 0 && substr_count($message, "}") == 0)) {
+                        $str_mes = $message->text;
+                    } else {
+                        $str_mes = Macros::convertMacro($message->text);
+                    }
+                }
+                else {
+
+                    $log          = new ErrorLog();
+                    $log->message = "FB_SEND: MESSAGE NOT CORRECT - update and try again";
+                    $log->task_id = $this->content['query']->task_id;
+                    $log->save();
+                    $this->content['query']->fb_reserved=0;
+                    $this->content['query']->save();
+                    sleep(random_int(2,3));
+                    continue;
+                }
 
                  $web = new FB();
-                $web->sendRandomMessage($this->content['query']->fb_id, $message->text);
+                $web->sendRandomMessage($this->content['query']->fb_id, $str_mes);
                     sleep(random_int(1, 5));
 
 

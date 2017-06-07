@@ -78,10 +78,13 @@ class VKSender extends Command
                     $this->content['vkquery']->save();
                     continue;
                 }
-                if(substr_count ($message,"{")==substr_count ($message,"}")||
-                    (substr_count ($message,"{")==0 && substr_count ($message,"}")==0)) {
-                    $str_mes = Macros::convertMacro($message->text);
-
+                if(substr_count ($message,"{")==substr_count ($message,"}")) {
+                    if((substr_count ($message,"{")==0 && substr_count ($message,"}")==0)){
+                        $str_mes= $message->text;
+                    }
+                    else {
+                        $str_mes = Macros::convertMacro($message->text);
+                    }
                     sleep(random_int(7, 10));
                     $web = new VK();
                     if ($web->sendRandomMessage($this->content['vkquery']->vk_id, $str_mes)) {
@@ -100,6 +103,7 @@ class VKSender extends Command
                     $log->save();
                     $this->content['vkquery']->vk_reserved=0;
                     $this->content['vkquery']->save();
+                    sleep(random_int(2,3));
                     continue;
                 }
 
