@@ -11,17 +11,20 @@ class Skype
 {
 
     const NOT_VALID_ACCOUNT = 10;
+    const NO_SEND_URL_FOUND = 20;
     private $accountData;
     private $client               = null;
     private $crawler              = null;
     private $countFriendsChecking = 0;
     private $friendList           = "";
+    private $proxy;
 
     public function __construct($accountData)
     {
 
         $this->crawler     = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
         $this->accountData = $accountData;
+        $this->proxy       = $this->accountData->proxy;
         $this->client      = new Client([
             'headers'         => [
                 'User-Agent'      => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
@@ -32,8 +35,15 @@ class Skype
             'verify'          => false,
             'allow_redirects' => true,
             'timeout'         => 20,
-            'proxy'           => '127.0.0.1:8888'
+            'proxy'           => $this->convertProxy($this->proxy)
         ]);
+    }
+
+    private function convertProxy($proxyObject)
+    {
+        $proxy_arr = parse_url($proxyObject->proxy);
+
+        return $proxy_arr['scheme'] . "://" . $proxyObject->login . ':' . $proxyObject->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port'];
     }
 
     public function addFriend($username, $message, $counts = 1)
@@ -57,9 +67,15 @@ class Skype
                         'Referer'      => 'https://web.skype.com/ru/'
                     ]
                 ]);
+            $this->accountData->increment('count_request');
 
             return true;
         } catch (ClientException $exception) {
+            if (strpos($exception->getMessage(), "is not valid contact") > 0) {
+                $this->accountData->increment('count_request');
+
+                return false;
+            }
             if ($exception->getCode() == 401) {
                 if ($counts == 2) {
                     return Skype::NOT_VALID_ACCOUNT;
@@ -90,7 +106,6 @@ class Skype
             $this->accountData->registrationToken = null;
             $this->accountData->expiry            = 0;
             $this->accountData->skypeToken        = null;
-
             $this->accountData->save();
 
             $client = new Client([
@@ -104,7 +119,7 @@ class Skype
                 'cookies'         => true,
                 'allow_redirects' => true,
                 'timeout'         => 20,
-                'proxy'           => '127.0.0.1:8888'
+                'proxy'           => $this->convertProxy($this->proxy)
             ]);
 
             $loginForm = $client->get("https://login.skype.com/login/oauth/microsoft?client_id=578134&redirect_uri=https%3A%2F%2Fweb.skype.com%2F&username=" . urlencode($this->accountData->login));
@@ -162,10 +177,7 @@ class Skype
                 $validAccount = false;
             }
 
-            if ($validAccount) {
-                $this->accountData->valid = 0;
-                $this->accountData->save();
-            } else {
+            if ( ! $validAccount) {
                 $this->accountData->valid = 0;
                 $this->accountData->save();
 
@@ -230,9 +242,12 @@ class Skype
             }
 
             $this->accountData->registrationToken = substr($token[0], 18, strpos($token[0], ";") - 18);
-            $this->accountData->expiry            = time() + 86400;
+            $this->accountData->expiry            = substr($token[0], strpos($token[0], "expires=") + 8,
+                strlen($token[0]) - strpos($token[0], "expires=") + 8);
             $this->accountData->valid             = 1;
             $this->accountData->save();
+
+            $this->getSendUrl();
 
             return true;
         } catch (\Exception $ex) {
@@ -245,6 +260,25 @@ class Skype
         }
     }
 
+    public function getSendUrl()
+    {
+        try {
+            $conversationForm            = $this->client->get("https://client-s.gateway.messenger.live.com/v1/users/ME/conversations?startTime=" . intval(round(microtime(true) * 1000)) . "&pageSize=1&view=msnp24Equivalent&targetType=Passport|Skype|Lync|Thread|PSTN",
+                [
+                    'headers' => [
+                        'RegistrationToken' => "registrationToken=" . $this->accountData->registrationToken
+                    ]
+                ]);
+            $conversationData            = json_decode($conversationForm->getBody()->getContents());
+            $this->accountData->send_url = parse_url($conversationData->_metadata->backwardLink, PHP_URL_HOST);
+            $this->accountData->save();
+
+            return true;
+        } catch (\Exception $ex) {
+            return false;
+        }
+    }
+
     public function sendMessage($toUser, $message, $counts = 1)
     {
         if ( ! $this->checkLogin()) {
@@ -253,17 +287,24 @@ class Skype
             }
         }
 
+        if ( ! isset($this->accountData->send_url)) {
+            if ( ! $this->getSendUrl()) {
+                return Skype::NO_SEND_URL_FOUND;
+            }
+        }
+
         try {
-            $result = $this->client->post("https://client-s.gateway.messenger.live.com/v1/users/ME/conversations/8:" . $toUser . "/messages",
+            $result  = $this->client->post("https://" . $this->accountData->send_url . "/v1/users/ME/conversations/8:" . $toUser . "/messages",
                 [
-                    'json'    => [
+                    'allow_redirects' => false,
+                    'json'            => [
                         'clientmessageid' => intval(round(microtime(true) * 1000)),
                         'content'         => $message,
                         'contenttype'     => 'text',
                         'Has-Mentions'    => false,
                         'messagetype'     => 'RichText'
                     ],
-                    'headers' => [
+                    'headers'         => [
                         'RegistrationToken' => "registrationToken=" . $this->accountData->registrationToken,
                         'Accept'            => 'application/json, text/javascript',
                         'Referer'           => 'https://web.skype.com/ru/',
@@ -271,8 +312,25 @@ class Skype
                         'Expires'           => 0
                     ]
                 ]);
+            $body    = $result->getBody()->getContents();
+            $headers = $result->getHeaders();
+            if (array_key_exists('Set-RegistrationToken', $headers) && array_key_exists('Location', $headers)) {
+                $this->accountData->send_url = parse_url($headers['Location'][0], PHP_URL_HOST);
+                $this->accountData->save();
+                if ($counts == 2) {
+                    return Skype::NOT_VALID_ACCOUNT;
+                }
 
-            return true;
+                return $this->sendMessage($toUser, $message, 2);
+            }
+
+            if (strpos($body, "OriginalArrivalTime") !== false) {
+                $this->accountData->increment('count_request');
+
+                return true;
+            }
+
+            return false;
         } catch (ClientException $exception) {
             if ($exception->getCode() == 401) {
                 if ($counts == 2) {
@@ -287,7 +345,9 @@ class Skype
     public function isMyFrined($user)
     {
         if ( ! $this->checkLogin()) {
-            $this->login();
+            if ( ! $this->login()) {
+                return Skype::NOT_VALID_ACCOUNT;
+            }
         }
 
         $this->countFriendsChecking = 0;

@@ -21,6 +21,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ErrorLog extends Model
 {
+
+    const SKYPE_NO_MESSAGE = 900001;
+
     public $table = "errors";
     public $fillable = [
         'message'

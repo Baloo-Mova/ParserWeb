@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Proxy;
 
 /**
  * App\Models\SkypeLogins
@@ -44,4 +45,8 @@ class SkypeLogins extends Model
         'process_id',
         'proxy_id',
     ];
+
+    public function proxy(){
+        return $this->belongsTo(Proxy::class,'proxy_id');
+    }
 }
