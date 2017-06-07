@@ -86,17 +86,31 @@ class ParseOk extends Command
                 }
 
                 $page_numb = $task->ok_offset;
+
                 $from      = null;
 
                 while (true) {
-                    $from = AccountsData::where([
-                        ['type_id', '=', 2],
-                        ['is_sender', '=', 0],
-                        ['valid', '=', 1],
-                        ['count_request','<',config('config.total_requets_limit')],
-                        ['reserved','=',0]
 
-                    ])->orderByRaw('RAND()')->first(); // Получаем случайный логин и пас
+                    $this->content['from'] = null;
+                    DB::transaction(function () {
+                        $from = AccountsData::where([
+                            ['type_id', '=', 2],
+                            ['is_sender', '=', 0],
+                            ['valid', '=', 1],
+                            ['count_request', '<', config('config.total_requets_limit')],
+                            ['reserved', '=', 0]
+
+                        ])->orderBy('count_request', 'asc')->first(); // Получаем случайный логин и пас
+                        if (!isset($from)) {
+                            return;
+
+                        }
+                        $from->reserved=1;
+                        $from->save();
+                        $this->content['from'] = $from;
+                    });
+
+                    $from =  $this->content['from'];  // Получаем случайный логин и пас
 
 
                     if ( ! isset($from)) {
@@ -106,7 +120,7 @@ class ParseOk extends Command
                     }
                     $from->reserved=1;
                     $from->save();
-                    $this->cur_proxy=    ProxyItem::getProxy(ProxyItem::OK, $from->proxy_id);
+                    $this->cur_proxy=    $from->getProxy;//ProxyItem::getProxy(ProxyItem::OK, $from->proxy_id);
                     if ( ! isset($this->cur_proxy)) {
                         $from->reserved=0;
                         $from->save();
@@ -114,6 +128,7 @@ class ParseOk extends Command
 
                         continue;
                     }
+
 
                     $this->proxy_arr = parse_url($this->cur_proxy->proxy);
                     $this->proxy_string = $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'];
@@ -147,7 +162,7 @@ class ParseOk extends Command
                         $from->reserved =0;
 
                         $from->save();
-                        $this->cur_proxy->release();
+                       // $this->cur_proxy->release();
                         continue;
                     }
                 }
@@ -167,7 +182,7 @@ class ParseOk extends Command
                     ]);
                 $from->count_request+=1;
                 $from->save();
-                $this->cur_proxy->inc();
+              //  $this->cur_proxy->inc();
                 //var_dump($groups_data);
 
                 if ( ! empty($groups_data->getHeaderLine('TKN'))) {
@@ -179,6 +194,7 @@ class ParseOk extends Command
                 }
                 $page_numb+=1;
                 do { // Вытаскиваем линки групп на всех остальных страницах
+
                     $groups_data = $this->client->request('POST',
                         'http://ok.ru/search?cmd=PortalSearchResults&gwt.requested=' . $this->gwt . '&st.cmd=searchResult&st.mode=Groups&st.query=' . $task->task_query . '&st.grmode=Groups&st.posted=set&',
                         [
@@ -206,7 +222,7 @@ class ParseOk extends Command
                     sleep(random_int(2, 7));
                     $from->increment('count_request');
                     $from->save();
-                    $this->cur_proxy->inc();
+                   // $this->cur_proxy->inc();
                     $from = AccountsData::find($from->id);
                     if ($from->count_request > config('config.total_requets_limit')) {
                         $task              = $this->data['task'];
@@ -221,7 +237,7 @@ class ParseOk extends Command
 
                 $from->ok_user_tkn = $this->tkn;
                 $from->save();
-                $this->cur_proxy->release();
+               // $this->cur_proxy->release();
             } catch (\Exception $ex) {
 
                 $err          = new ErrorLog();
@@ -235,11 +251,15 @@ class ParseOk extends Command
                 }
                 $from->reserved=0;
                 $from->save();
-                $this->cur_proxy->release();
+               // $this->cur_proxy->release();
                 if (strpos($ex->getMessage(), "cURL") !== false) {
 
-                    $this->cur_proxy->ok=-1;
-                    $this->cur_proxy->save();
+                    //$this->cur_proxy->ok=-1;
+                    //$this->cur_proxy->save();
+                    $error = new ErrorLog();
+                    $error->message = "OK_parse: ".$ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                    $error->task_id = 7777;
+                    $error->save();
 
                 }
 
@@ -268,7 +288,7 @@ class ParseOk extends Command
             //'proxy' => '7zxShe:FhB871@127.0.0.1:8888'
             'proxy'       => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
         ]);
-$this->cur_proxy->inc();
+
         $html_doc = $data->getBody()->getContents();
         if (strpos($html_doc, 'Профиль заблокирован') > 0 || strpos($html_doc,
                 'восстановления доступа')
