@@ -164,8 +164,12 @@ class FB
                         $sender->fb_user_id      = null;
                         $sender->fb_access_token = null;
                         $sender->save();
-                        $this->proxy->fb = -1;
-                        $this->proxy->save();
+                       // $this->proxy->fb = -1;
+                       // $this->proxy->save();
+                        $error = new ErrorLog();
+                        $error->message = "FB_SEND: ".$ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                        $error->task_id = 7777;
+                        $error->save();
                         continue;
                     }
                     $sender->reserved -= 1;
@@ -240,9 +244,11 @@ class FB
                     $sender->fb_user_id      = null;
                     $sender->fb_access_token = null;
                     $sender->save();
-                    $this->proxy->fb = -1;
-                    $this->proxy->save();
-
+                    //$this->proxy->fb = -1;
+                    $error = new ErrorLog();
+                    $error->message = "FB_SEND: ".$ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                    $error->task_id = 7777;
+                    $error->save();
                     continue;
                 }
             }
@@ -537,9 +543,12 @@ class FB
                         //$sender->reserved-=1;
                         $sender->save();
 
-                        $this->proxy->fb = -1;
-                        $this->proxy->save();
-                        $this->proxy->release();
+                        //$this->proxy->fb = -1;
+                       // $this->proxy->save();
+                        $error = new ErrorLog();
+                        $error->message = "FB_Get_grAPI: ".$exd->getMessage() . " Line: " . $exd->getLine() . " ";
+                        $error->task_id = 7777;
+                        $error->save();
                         continue;
                     }
                 }
@@ -572,9 +581,12 @@ class FB
                         //$sender->fb_user_id = null;
                         $sender->fb_access_token = null;
                         $sender->save();
-                        $this->proxy->fb = -1;
-                        $this->proxy->save();
-                        $this->proxy->release();
+                        //$this->proxy->fb = -1;
+                        //$this->proxy->save();
+                        $error = new ErrorLog();
+                        $error->message = "FB_SEND: ".$e->getMessage() . " Line: " . $e->getLine() . " ";
+                        $error->task_id = 7777;
+                        $error->save();
                         continue;
                     }
                 }
@@ -963,8 +975,12 @@ class FB
                     $sender->fb_user_id      = null;
                     $sender->fb_access_token = null;
                     $sender->save();
-                    $this->proxy->fb = -1;
-                    $this->proxy->save();
+                    //$this->proxy->fb = -1;
+                    //$this->proxy->save();
+                    $error = new ErrorLog();
+                    $error->message = "FB_Parse_Gr: ".$ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                    $error->task_id = 7777;
+                    $error->save();
                     continue;
                 }
             }
@@ -991,9 +1007,12 @@ class FB
                 $sender->fb_access_token = null;
                 $sender->save();
 
-                $this->proxy->release();
-                $this->proxy->fb = -1;
-                $this->proxy->save();
+                //  $this->proxy->fb = -1;
+               // $this->proxy->save();
+                $error = new ErrorLog();
+                $error->message = "FB_SEND: ".$ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                $error->task_id = 7777;
+                $error->save();
             }
         }
         $data = $request->getBody()->getContents();
@@ -1181,8 +1200,12 @@ class FB
                     $sender->fb_user_id      = null;
                     $sender->fb_access_token = null;
                     $sender->save();
-                    $this->proxy->fb = -1;
-                    $this->proxy->save();
+                   // $this->proxy->fb = -1;
+                   // $this->proxy->save();
+                    $error = new ErrorLog();
+                    $error->message = "FB_parse_Users_GR: ".$ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                    $error->task_id = 7777;
+                    $error->save();
                     continue;
                 }
             }
@@ -1301,10 +1324,13 @@ class FB
                 $sender->fb_user_id      = null;
                 $sender->fb_access_token = null;
                 $sender->save();
-                $this->proxy->release();
+                $error = new ErrorLog();
+                $error->message = "FB_SEND: ".$ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                $error->task_id = 7777;
+                $error->save();
             }
         }
-        $this->proxy->release();
+       // $this->proxy->release();
         $sender->reserved -= 1;
         $sender->save();
 
@@ -1450,8 +1476,12 @@ class FB
                     $sender->fb_user_id      = null;
                     $sender->fb_access_token = null;
                     $sender->save();
-                    $this->proxy->fb = -1;
-                    $this->proxy->save();
+                    //$this->proxy->fb = -1;
+                    //$this->proxy->save();
+                    $error = new ErrorLog();
+                    $error->message = "FB_ParseUsers: ".$ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                    $error->task_id = 7777;
+                    $error->save();
                     continue;
                 }
             }

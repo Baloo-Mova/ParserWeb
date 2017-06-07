@@ -15,6 +15,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\Macros;
 class OkSender extends Command {
 
     public $client = null;
@@ -92,13 +93,33 @@ class OkSender extends Command {
                 $message = TemplateDeliveryOK::where('task_id', '=', $this->content['query']->task_id)->first();
 
                 if (!isset($message)) {
+                    $this->content['query']->ok_reserved = 0;
+                    $this->content['query']->save();
                     sleep(10);
+                    continue;
+                }
+                if(substr_count ($message,"{")==substr_count ($message,"}")) {
+                    if ((substr_count($message, "{") == 0 && substr_count($message, "}") == 0)) {
+                        $str_mes = $message->text;
+                    } else {
+                        $str_mes = Macros::convertMacro($message->text);
+                    }
+                }
+                else {
+
+                    $log          = new ErrorLog();
+                    $log->message = "OK_SEND: MESSAGE NOT CORRECT - update and try again";
+                    $log->task_id = $this->content['query']->task_id;
+                    $log->save();
+                    $this->content['query']->ok_reserved=0;
+                    $this->content['query']->save();
+                    sleep(random_int(2,3));
                     continue;
                 }
 
 
 
-                while (true) {
+                    while (true) {
                     $this->content['from'] = null;
                     DB::transaction(function () {
                         $from = AccountsData::where([
@@ -126,7 +147,8 @@ class OkSender extends Command {
                     }
                    // $from->reserved=1;
                     //$from->save();
-                    $this->cur_proxy=    ProxyItem::getProxy(ProxyItem::OK, $from->proxy_id);
+                    $this->cur_proxy=    $from->getProxy;
+                   // dd($this->cur_proxy);
                     if ( ! isset($this->cur_proxy)) {
                         $from->reserved=0;
                         $from->save();
@@ -187,7 +209,7 @@ class OkSender extends Command {
                             $from->reserved=0;
 
                             $from->save();
-                            $this->cur_proxy->release();
+                           // $this->cur_proxy->release();
                         }
                     } else {
                         $this->gwt = $from->ok_user_gwt;
@@ -204,14 +226,14 @@ class OkSender extends Command {
                     //'Accept-Encoding' => 'gzip, deflate'
                     ],
                     'form_params' => [
-                        "st.txt" => $message->text,
+                        "st.txt" => $str_mes,//$message->text,
                         "st.uuid" => time(),
                         "st.ptfu" => "true",
                         "gwt.requested" => $this->gwt
                     ],
 
                 ]);
-                $this->cur_proxy->inc();
+               // $this->cur_proxy->inc();
                 $from->increment('count_request');
                 $from->save();
 
@@ -219,7 +241,7 @@ class OkSender extends Command {
                 if (!empty($data->getHeaderLine('TKN'))) {
                     $this->tkn = $data->getHeaderLine('TKN');
                 }
-                sleep(random_int(10, 15));
+                sleep(random_int(15, 25));
                 $contents = $data->getBody()->getContents();
                 if (empty($contents)) {
 
@@ -233,7 +255,7 @@ class OkSender extends Command {
 
                         break;
                     } else {
-                        $this->cur_proxy->release();
+                     //   $this->cur_proxy->release();
                         $from->reserved=0;
                         $from->save();
                     }
@@ -247,7 +269,7 @@ class OkSender extends Command {
                     }
                     else{
                         if(strpos($contents,"Вы слишком часто отправляете сообщения")!==false){
-                            $from->valid=0;
+                            $from->valid=2;
                             //$from->reserved=0;
                            // $from->ok_user_gwt=null;
                            // $from->ok_user_tkn=null;
@@ -279,7 +301,7 @@ class OkSender extends Command {
                     }
 
 
-                    $this->cur_proxy->release();
+                   // $this->cur_proxy->release();
                     $from->reserved=0;
                     $from->save();
                     continue;
@@ -287,7 +309,7 @@ class OkSender extends Command {
 
                 $this->content['query']->ok_sended = 1;
                 $this->content['query']->save();
-                $this->cur_proxy->release();
+             //   $this->cur_proxy->release();
                 $from->reserved=0;
                 //$from->count_sended_messages+=1;
                 $from->save();
@@ -300,7 +322,7 @@ class OkSender extends Command {
                 $log->task_id = $task_id;
                 $log->save();
                 //$this->cur_proxy->reportBad();
-                 $from->proxy_id = 0;
+                // $from->proxy_id = 0;
                             $from->ok_user_gwt = null;
                             $from->ok_user_tkn = null;
                             $from->ok_cookie = null;
@@ -329,7 +351,7 @@ class OkSender extends Command {
             // 'proxy' => '127.0.0.1:8888'
             'proxy' => $this->proxy_string,
         ]);
-        $this->cur_proxy->inc();
+       // $this->cur_proxy->inc();
         // echo ("\n".$this->cur_proxy->proxy);
         $html_doc = $data->getBody()->getContents();
         // dd($html_doc);

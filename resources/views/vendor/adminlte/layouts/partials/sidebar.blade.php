@@ -40,31 +40,31 @@
                 </a>
                 <ul class="treeview-menu" style="display: none;">
                     <li>
-                        <a href="{{ route('parsing_tasks.testingDeliverySkypes') }}" class="{{ Request::path() == 'parsing_tasks/parsing_tasks.testingDeliverySkypes' ? 'link_active' : ''}}">
+                        <a href="{{ route('parsing_tasks.testingDeliverySkypes') }}" class="{{ Request::path() == 'parsing-tasks/testing-delivery-skypes' ? 'link_active' : ''}}">
                             <i class='fa fa-skype'></i>
                             <span>Skype</span>
                         </a>
-                        <a href="{{ route('parsing_tasks.testingDeliveryMails') }}" class="{{ Request::path() == 'parsing_tasks/parsing_tasks.testingDeliveryMails' ? 'link_active' : ''}}">
+                        <a href="{{ route('parsing_tasks.testingDeliveryMails') }}" class="{{ Request::path() == 'parsing-tasks/testing-delivery-mails' ? 'link_active' : ''}}">
                             <i class='fa fa-envelope-o'></i>
                             <span>Emails</span>
                         </a>
-                        <a href="{{ route('parsing_tasks.testingDeliveryVK') }}" class="{{ Request::path() == 'parsing_tasks/parsing_tasks.testingDeliveryVK' ? 'link_active' : ''}}">
+                        <a href="{{ route('parsing_tasks.testingDeliveryVK') }}" class="{{ Request::path() == 'parsing-tasks/testing-delivery-vk' ? 'link_active' : ''}}">
                             <i class='fa fa-vk'></i>
                             <span>VK</span>
                         </a>
-                        <a href="{{ route('parsing_tasks.testingDeliveryOK') }}" class="{{ Request::path() == 'parsing_tasks/parsing_tasks.testingDeliveryOK' ? 'link_active' : ''}}">
+                        <a href="{{ route('parsing_tasks.testingDeliveryOK') }}" class="{{ Request::path() == 'parsing-tasks/testing-delivery-ok' ? 'link_active' : ''}}">
                             <i class='fa fa-odnoklassniki'></i>
                             <span>OK</span>
                         </a>
-                        <!--<a href="{{ route('parsing_tasks.testingDeliveryTW') }}" class="{{ Request::path() == 'parsing_tasks/parsing_tasks.testingDeliveryTW' ? 'link_active' : ''}}">
+                        <!--<a href="{{ route('parsing_tasks.testingDeliveryTW') }}" class="{{ Request::path() == 'parsing-tasks/testing-delivery-tw' ? 'link_active' : ''}}">
                             <i class='fa fa-twitter'></i>
                             <span>Twitter</span>
                         </a>-->
-                        <a href="{{ route('parsing_tasks.testingDeliveryFB') }}" class="{{ Request::path() == 'parsing_tasks/parsing_tasks.testingDeliveryFB' ? 'link_active' : ''}}">
+                        <a href="{{ route('parsing_tasks.testingDeliveryFB') }}" class="{{ Request::path() == 'parsing-tasks/testing-delivery-fb' ? 'link_active' : ''}}">
                             <i class='fa fa-facebook'></i>
                             <span>Facebook</span>
                         </a>
-                        <a href="{{ route('parsing_tasks.testingDeliveryAndroidBots') }}" class="{{ Request::path() == 'parsing_tasks/parsing_tasks.testingDeliveryAndroidBots' ? 'link_active' : ''}}">
+                        <a href="{{ route('parsing_tasks.testingDeliveryAndroidBots') }}" class="{{ Request::path() == 'parsing-tasks/testing-delivery-android-bots' ? 'link_active' : ''}}">
                             <i class='fa fa-whatsapp'></i>
                             <span>Viber, Whatsapp</span>
                         </a>

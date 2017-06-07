@@ -15,7 +15,8 @@
         "league/flysystem": "^1.0",
         "phpmailer/phpmailer": "^5.2",
         "doctrine/dbal":"2.5.*",
-        "barryvdh/laravel-ide-helper": "^2.3"
+        "barryvdh/laravel-ide-helper": "^2.3",
+        "oriceon/toastr-5-laravel": "dev-master"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
