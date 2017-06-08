@@ -116,6 +116,7 @@ class SkypeSender extends Command
 
                     $log          = new ErrorLog();
                     $log->message = ErrorLog::SKYPE_NO_MESSAGE;
+                    $log->task_id = $this->task->id;
                     $log->save();
                     sleep(10);
                     continue;
@@ -129,6 +130,7 @@ class SkypeSender extends Command
 
                     $log          = new ErrorLog();
                     $log->message = ErrorLog::SKYPE_MESSAGE_TEXT_ERROR;
+                    $log->task_id = $this->task->id;
                     sleep(10);
                     continue;
                 }

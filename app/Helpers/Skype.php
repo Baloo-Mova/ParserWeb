@@ -12,6 +12,7 @@ class Skype
 
     const NOT_VALID_ACCOUNT = 10;
     const NO_SEND_URL_FOUND = 20;
+
     private $accountData;
     private $client               = null;
     private $crawler              = null;
