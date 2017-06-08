@@ -248,7 +248,6 @@ class Skype
             $this->accountData->save();
 
             $this->getSendUrl();
-
             return true;
         } catch (\Exception $ex) {
             $log          = new ErrorLog();

@@ -23,6 +23,8 @@ class ErrorLog extends Model
 {
 
     const SKYPE_NO_MESSAGE = 900001;
+    const SKYPE_MESSAGE_TEXT_ERROR = 900002;
+    const SKYPE_NOT_VALID_USER = 900003;
 
     public $table = "errors";
     public $fillable = [

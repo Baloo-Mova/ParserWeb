@@ -63,9 +63,9 @@ class Tester extends Command
 
     public function handle()
     {
-        $data  = SkypeLogins::find(51);
+        $data  = SkypeLogins::find(507);
         $skype = new Skype($data);
-        dd($skype->isMyFrined('live:petlyakssphone','askdhasd'));
+        dd($skype->checkLogin());
     }
 
 }
