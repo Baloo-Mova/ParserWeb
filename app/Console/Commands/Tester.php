@@ -65,7 +65,7 @@ class Tester extends Command
     {
         $data  = SkypeLogins::find(507);
         $skype = new Skype($data);
-        dd($skype->checkLogin());
+
     }
 
 }

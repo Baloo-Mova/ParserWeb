@@ -18,6 +18,7 @@ use App\Models\Proxy;
  * @property int $proxy_id
  * @property int $process_id
  * @property int $skype_id
+ * @property int $reserved
  * @method static \Illuminate\Database\Query\Builder|\App\Models\SkypeLogins whereExpiry($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\SkypeLogins whereId($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\SkypeLogins whereLogin($value)

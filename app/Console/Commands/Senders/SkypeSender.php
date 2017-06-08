@@ -15,12 +15,23 @@ class SkypeSender extends Command
 {
     public $content;
     /**
+     * @var SearchQueries
+     */
+    public $task = null;
+    /**
+     * @var SkypeLogins
+     */
+    public $sender = null;
+    /**
+     * @var Skype
+     */
+    public $skype = null;
+    /**
      * The name and signature of the console command.
      *
      * @var string
      */
     protected $signature = 'send:skype';
-
     /**
      * The console command description.
      *
@@ -39,20 +50,6 @@ class SkypeSender extends Command
     }
 
     /**
-     * @var SearchQueries
-     */
-    public $task = null;
-    /**
-     * @var SkypeSender
-     */
-    public $sender = null;
-
-    /**
-     * @var Skype
-     */
-    public $skype = null;
-
-    /**
      * Execute the console command.
      *
      * @return mixed
@@ -61,16 +58,12 @@ class SkypeSender extends Command
     {
         while (true) {
             try {
-                $this->task = "";
-                $this->sender = "";
+                $this->task   = null;
+                $this->sender = null;
 
                 DB::transaction(function () {
-                    $this->sender = SkypeLogins::select(['*', DB::raw('MIN(count_request) as min_cr')])
-                        ->where('reserved', '0')
-                        ->groupBy('id')
-                        ->orderBy('min_cr')
-                        ->lockForUpdate()
-                        ->first();
+                    $this->sender = SkypeLogins::
+                    where('reserved', '=', '0')->orderBy('count_request', 'asc')->lockForUpdate()->first();
 
                     if (isset($this->sender)) {
                         $this->sender->reserved = 1;
@@ -80,18 +73,18 @@ class SkypeSender extends Command
 
                 $this->skype = new Skype($this->sender);
 
-                if (!$this->skype->checkLogin()) {
-                    $this->sender->valid = 0;
-                    $this->sender->save();
-
-                    $log = new ErrorLog();
-                    $log->message = ErrorLog::SKYPE_NOT_VALID_USER . " user id = " . $this->sender->id;
-                    $log->task_id = 0;
-                    $log->save();
-
-                    sleep(10);
-                    continue;
-                }
+//                if ( ! $this->skype->checkLogin()) {
+//                    $this->sender->valid = 0;
+//                    $this->sender->save();
+//
+//                    $log          = new ErrorLog();
+//                    $log->message = ErrorLog::SKYPE_NOT_VALID_USER . " user id = " . $this->sender->id;
+//                    $log->task_id = 0;
+//                    $log->save();
+//
+//                    sleep(10);
+//                    continue;
+//                }
 
                 DB::transaction(function () {
                     $this->task = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
@@ -107,20 +100,21 @@ class SkypeSender extends Command
                     }
                 });
 
-                if (!isset($this->task)) {
+                if ( ! isset($this->task)) {
                     $this->sender->reserved = 0;
                     $this->sender->save();
                     sleep(10);
                     continue;
                 }
-                $skypes = array_filter(explode(",", trim($this->task->skypes)));
+
+                $skypes  = array_filter(explode(",", trim($this->task->skypes)));
                 $message = TemplateDeliverySkypes::where('task_id', '=', $this->task->task_id)->first();
 
-                if (!isset($message)) {
+                if ( ! isset($message)) {
                     $this->sender->reserved = 0;
                     $this->sender->save();
 
-                    $log = new ErrorLog();
+                    $log          = new ErrorLog();
                     $log->message = ErrorLog::SKYPE_NO_MESSAGE;
                     $log->save();
                     sleep(10);
@@ -128,16 +122,12 @@ class SkypeSender extends Command
                 }
 
                 if (substr_count($message, "{") == substr_count($message, "}")) {
-                    if ((substr_count($message, "{") == 0 && substr_count($message, "}") == 0)) {
-                        $str_mes = $message->text;
-                    } else {
-                        $str_mes = Macros::convertMacro($message->text);
-                    }
+                    $str_mes = Macros::convertMacro($message->text);
                 } else {
                     $this->sender->reserved = 0;
                     $this->sender->save();
 
-                    $log = new ErrorLog();
+                    $log          = new ErrorLog();
                     $log->message = ErrorLog::SKYPE_MESSAGE_TEXT_ERROR;
                     sleep(10);
                     continue;
@@ -169,16 +159,14 @@ class SkypeSender extends Command
 
                 $this->task->sk_sended = $sendedCounter;
                 $this->task->save();
-                sleep(random_int(1, 5));
-
+                sleep(random_int(10, 15));
             } catch (\Exception $ex) {
-                $log = new ErrorLog();
+                $log          = new ErrorLog();
                 $log->message = "SKYPE sender" . $ex->getMessage() . " " . $ex->getLine();
                 $log->task_id = $this->task->id;
                 $log->save();
             }
         }
     }
-
 
 }
