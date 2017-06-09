@@ -140,7 +140,7 @@
                                                 <input type="hidden" name="mail_id" value="{{ empty($mails) ? "" : $mails->id }}">
 
                                                 <h4 style="margin-top: 10px;">Mail text</h4>
-                                                <textarea name="mail_text" class="form-control" cols="30" rows="4">{{ empty($mails) ? "-" : $mails->text }}</textarea>
+                                                <textarea name="mail_text" class="form-control" cols="30" rows="4">{!! empty($mails) ? "-" : $mails->text !!}</textarea>
                                                 <input type="hidden" name="mail_id" value="{{ empty($mails) ? "" : $mails->id }}">
                                                 @if($mails_file)
                                                     <label for="mails_file" class="mails_file_label">Mail file</label>
@@ -170,14 +170,14 @@
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>Skype text</h4>
                                                 <input type="hidden" name="skype_id" value="{{ empty($skype) ? "" : $skype->id }}">
-                                                <textarea name="skype_text" class="form-control" cols="30" rows="6">{{ empty($skype) ? "-" : $skype->text }}</textarea>
+                                                <textarea name="skype_text" class="form-control" cols="30" rows="6">{!! empty($skype) ? "-" : $skype->text !!}</textarea>
                                             </div>
                                         </div>
                                         <div class="col-xs-6 pl">
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>VK text</h4>
                                                 <input type="hidden" name="vk_id" value="{{ empty($vk) ? "" : $vk->id }}">
-                                                <textarea name="vk_text" class="form-control" cols="30" rows="6">{{ empty($vk) ? "-" : $vk->text }}</textarea>
+                                                <textarea name="vk_text" class="form-control" cols="30" rows="6">{!! empty($vk) ? "-" : $vk->text !!}</textarea>
                                             </div>
                                         </div>
                                     </div>
@@ -187,14 +187,14 @@
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>OK text</h4>
                                                 <input type="hidden" name="ok_id" value="{{ empty($ok) ? "" : $ok->id }}">
-                                                <textarea name="ok_text" class="form-control" cols="30" rows="6">{{ empty($ok) ? "-" : $ok->text }}</textarea>
+                                                <textarea name="ok_text" class="form-control" cols="30" rows="6">{!! empty($ok) ? "-" : $ok->text !!}</textarea>
                                             </div>
                                         </div>
                                         <div class="col-xs-6 pl">
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>FB text</h4>
                                                 <input type="hidden" name="fb_id" value="{{ empty($fb) ? "" : $fb->id }}">
-                                                <textarea name="fb_text" class="form-control" cols="30" rows="6">{{ empty($fb) ? "-" : $fb->text }}</textarea>
+                                                <textarea name="fb_text" class="form-control" cols="30" rows="6">{!! empty($fb) ? "-" : $fb->text !!}</textarea>
                                             </div>
                                         </div>
                                     </div>
@@ -207,14 +207,14 @@
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>Viber text</h4>
                                                 <input type="hidden" name="viber_id" value="{{ empty($viber) ? "" : $viber->id }}">
-                                                <textarea name="viber_text" class="form-control" cols="30" rows="6">{{ empty($viber) ? "-" : $viber->text }}</textarea>
+                                                <textarea name="viber_text" class="form-control" cols="30" rows="6">{!! empty($viber) ? "-" : $viber->text !!}</textarea>
                                             </div>
                                         </div>
                                         <div class="col-xs-6 pl">
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>WhatsApp text</h4>
                                                 <input type="hidden" name="whats_id" value="{{ empty($whats) ? "" : $whats->id }}">
-                                                <textarea name="whats_text" class="form-control" cols="30" rows="6">{{ empty($whats) ? "-" : $whats->text }}</textarea>
+                                                <textarea name="whats_text" class="form-control" cols="30" rows="6">{!! empty($whats) ? "-" : $whats->text !!}</textarea>
                                             </div>
                                         </div>
                                     </div>

@@ -156,6 +156,12 @@
                     <span>Общие Настройки</span>
                 </a>
             </li>
+            <li class="{{ Request::path() == 'test-macross' ? 'active' : '' }}">
+                <a href="{{ route('macross.index') }}">
+                    <i class='fa fa-wrench'></i>
+                    <span>Тестирование макроссов</span>
+                </a>
+            </li>
         </ul><!-- /.sidebar-menu -->
     </section>
     <!-- /.sidebar -->

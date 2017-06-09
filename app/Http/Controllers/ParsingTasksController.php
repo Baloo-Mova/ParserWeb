@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Supervisor\Api;
 use Illuminate\Support\Facades\Storage;
 use Kamaln7\Toastr\Facades\Toastr;
+use App\Helpers\Macros;
 
 class ParsingTasksController extends Controller {
 
@@ -70,7 +71,7 @@ class ParsingTasksController extends Controller {
             if($this->checkSymbolsInText($request->get('mails_text'))) {
                 $mails->save();
             }else{
-                Toastr::error("В тексте Mails найдены недопустимые символы!", $title = "Ошибка!", $options = []);
+                Toastr::error("В тексте Contacts найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
         }
         //Записываем в таблицу шаблонов mails
@@ -93,9 +94,10 @@ class ParsingTasksController extends Controller {
         //Записываем в таблицу шаблонов skypes
         if (!empty($request->get('skype_text'))) {
             $skype = new TemplateDeliverySkypes();
-            $skype->text = $request->get('skype_text');
+
             $skype->task_id = $task->id;
             if($this->checkSymbolsInText($request->get('skype_text'))) {
+                $skype->text = Macros::convertMacro($request->get('skype_text'));
                 $skype->save();
             }else{
                 Toastr::error("В тексте Skype найдены недопустимые символы!", $title = "Ошибка!", $options = []);
@@ -104,9 +106,9 @@ class ParsingTasksController extends Controller {
         }
         if (!empty($request->get('vk_text'))) {
             $vk = new TemplateDeliveryVK();
-            $vk->text = $request->get('vk_text');
             $vk->task_id = $task->id;
             if($this->checkSymbolsInText($request->get('vk_text'))) {
+                $vk->text = Macros::convertMacro($request->get('vk_text'));
                 $vk->save();
             }else{
                 Toastr::error("В тексте Вконтакте найдены недопустимые символы!", $title = "Ошибка!", $options = []);
@@ -114,9 +116,9 @@ class ParsingTasksController extends Controller {
         }
         if (!empty($request->get('ok_text'))) {
             $ok = new TemplateDeliveryOK();
-            $ok->text = $request->get('ok_text');
             $ok->task_id = $task->id;
             if($this->checkSymbolsInText($request->get('ok_text'))) {
+                $ok->text = Macros::convertMacro($request->get('ok_text'));
                 $ok->save();
             }else{
                 Toastr::error("В тексте Одноклассники найдены недопустимые символы!", $title = "Ошибка!", $options = []);
@@ -124,17 +126,17 @@ class ParsingTasksController extends Controller {
         }
         if (!empty($request->get('tw_text'))) {
             $tw = new TemplateDeliveryTw();
-            $tw->text = $request->get('tw_text');
             $tw->task_id = $task->id;
             if($this->checkSymbolsInText($request->get('tw_text'))) {
+                $tw->text = Macros::convertMacro($request->get('tw_text'));
                 $tw->save();
             }
         }
         if (!empty($request->get('fb_text'))) {
             $fb = new TemplateDeliveryFB();
-            $fb->text = $request->get('fb_text');
             $fb->task_id = $task->id;
             if($this->checkSymbolsInText($request->get('fb_text'))) {
+                $fb->text = Macros::convertMacro($request->get('fb_text'));
                 $fb->save();
             }else{
                 Toastr::error("В тексте Facebook найдены недопустимые символы!", $title = "Ошибка!", $options = []);
@@ -143,9 +145,9 @@ class ParsingTasksController extends Controller {
         }
         if (!empty($request->get('viber_text'))) {
             $viber = new TemplateDeliveryViber();
-            $viber->text = $request->get('viber_text');
             $viber->task_id = $task->id;
             if($this->checkSymbolsInText($request->get('viber_text'))) {
+                $viber->text = Macros::convertMacro($request->get('viber_text'));
                 $viber->save();
             }else{
                 Toastr::error("В тексте Viber найдены недопустимые символы!", $title = "Ошибка!", $options = []);
@@ -153,9 +155,9 @@ class ParsingTasksController extends Controller {
         }
         if (!empty($request->get('whats_text'))) {
             $whatsapp = new TemplateDeliveryWhatsapp();
-            $whatsapp->text = $request->get('whats_text');
             $whatsapp->task_id = $task->id;
             if($this->checkSymbolsInText($request->get('whats_text'))) {
+                $whatsapp->text = Macros::convertMacro($request->get('whats_text'));
                 $whatsapp->save();
             }else{
                 Toastr::error("В тексте WhatsApp найдены недопустимые символы!", $title = "Ошибка!", $options = []);
@@ -272,7 +274,7 @@ class ParsingTasksController extends Controller {
             }
 
             if($this->checkSymbolsInText($skype_text)){
-                $skype->text = $skype_text;
+                $skype->text = Macros::convertMacro($skype_text);
                 $skype->save();
             }else{
                 Toastr::error("В тексте Skype найдены недопустимые символы!", $title = "Ошибка!", $options = []);
@@ -287,7 +289,7 @@ class ParsingTasksController extends Controller {
                 $ok->task_id = $request->get("delivery_id");
             }
             if($this->checkSymbolsInText($ok_text)){
-                $ok->text = $ok_text;
+                $ok->text = Macros::convertMacro($ok_text);
                 $ok->save();
             }else{
                 Toastr::error("В тексте Одноклассники найдены недопустимые символы!", $title = "Ошибка!", $options = []);
@@ -301,7 +303,7 @@ class ParsingTasksController extends Controller {
                 $vk->task_id = $request->get("delivery_id");
             }
             if($this->checkSymbolsInText($vk_text)){
-                $vk->text = $vk_text;
+                $vk->text = Macros::convertMacro($vk_text);
                 $vk->save();
             }else{
                 Toastr::error("В тексте Вконтакте найдены недопустимые символы!", $title = "Ошибка!", $options = []);
@@ -324,7 +326,7 @@ class ParsingTasksController extends Controller {
                 $fb->task_id = $request->get("delivery_id");
             }
             if($this->checkSymbolsInText($fb_text)){
-                $fb->text = $fb_text;
+                $fb->text = Macros::convertMacro($fb_text);
                 $fb->save();
             }else{
                 Toastr::error("В тексте Facebook найдены недопустимые символы!", $title = "Ошибка!", $options = []);
@@ -343,9 +345,9 @@ class ParsingTasksController extends Controller {
 
             if (isset($mail_text)) {
                 if($this->checkSymbolsInText($mail_text)){
-                    $mail->text = $mail_text;
+                    $mail->text = Macros::convertMacro($mail_text);
                 }else{
-                    Toastr::error("В тексте Mails найдены недопустимые символы!", $title = "Ошибка!", $options = []);
+                    Toastr::error("В тексте Contacts найдены недопустимые символы!", $title = "Ошибка!", $options = []);
                 }
 
             }
@@ -397,7 +399,7 @@ class ParsingTasksController extends Controller {
                 $viber->task_id = $request->get("delivery_id");
             }
             if($this->checkSymbolsInText($viber_text)){
-                $viber->text = $viber_text;
+                $viber->text = Macros::convertMacro($viber_text);
                 $viber->save();
             }else{
                 Toastr::error("В тексте Viber найдены недопустимые символы!", $title = "Ошибка!", $options = []);
@@ -410,7 +412,7 @@ class ParsingTasksController extends Controller {
                 $whatsapp->task_id = $request->get("delivery_id");
             }
             if($this->checkSymbolsInText($whats_text)){
-                $whatsapp->text = $whats_text;
+                $whatsapp->text = Macros::convertMacro($whats_text);
                 $whatsapp->save();
             }else{
                 Toastr::error("В тексте WhatsApp найдены недопустимые символы!", $title = "Ошибка!", $options = []);
@@ -530,7 +532,7 @@ class ParsingTasksController extends Controller {
 
     public function storeTestingDeliveryMails(Request $request) {
         if(!$this->checkSymbolsInText($request->get('mails_text'))) {
-            Toastr::error("В тексте Mails найдены недопустимые символы!", $title = "Ошибка!", $options = []);
+            Toastr::error("В тексте Contacts найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             return back();
         }
         //Записываем в таблицу тасков

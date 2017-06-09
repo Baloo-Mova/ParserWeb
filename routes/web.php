@@ -159,3 +159,6 @@ Route::group(['prefix' => 'get-numbers'/*, 'middleware' => 'auth'*/], function (
     Route::post('/replace-bot', ['uses' => 'GetNumbersController@replaceBotAndroid', 'as' => 'getnumbers.replacebotandroid']);
     
 });
+
+Route::get('/test-macross', ['uses' => 'TestMacrossController@index', 'as' => 'macross.index']);
+Route::post('/test-macross', ['uses' => 'TestMacrossController@store', 'as' => 'macross.index']);
