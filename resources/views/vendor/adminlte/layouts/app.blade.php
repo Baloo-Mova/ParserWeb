@@ -31,7 +31,7 @@ desired effect
 -->
 <body class="skin-blue sidebar-mini">
 {!! Toastr::render() !!}
-<div id="app">
+<div id="app_">
     <div class="wrapper">
 
     @include('adminlte::layouts.partials.mainheader')
