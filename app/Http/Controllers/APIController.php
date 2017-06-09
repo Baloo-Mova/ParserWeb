@@ -116,7 +116,7 @@ class APIController extends Controller
                 ->first();
 
             if ($proxyInfo !== null) {
-                $proxy = Proxy::where('id', '>', $proxyInfo->proxy_id)->first();
+                $proxy = Proxy::where('id', '=', $proxyInfo->proxy_id)->first();
                 return [
                     "proxy_id" => $proxyInfo->proxy_id,
                     "proxy" => $proxy->proxy,
@@ -151,10 +151,7 @@ class APIController extends Controller
             }
 
 
-
-        }
-        else{
-
+        } else {
 
 
             $proxyInfo = AccountsData::select(DB::raw('count(proxy_id) as count, proxy_id'))
@@ -166,19 +163,23 @@ class APIController extends Controller
                 ->having('count', '<', $counter)
                 ->first();
 
-            if($proxyInfo !== null) {
+            if ($proxyInfo !== null) {
+                $proxy = Proxy::where('id', '=', $proxyInfo->proxy_id)->first();
                 return [
                     "proxy_id" => $proxyInfo->proxy_id,
-                    "counter"  => $counter,
-                    "number"   => $counter - $proxyInfo->count
+                    "proxy" => $proxy->proxy,
+                    "login" => $proxy->login,
+                    "password" => $proxy->password,
+                    "counter" => $counter,
+                    "number" => $counter - $proxyInfo->count
                 ];
-            }else{
+            } else {
                 $proxyNumber = Proxy::count();
                 $proxyInAcc = AccountsData::where('type_id', '=', $type)
                     ->distinct('proxy_id')
                     ->count('proxy_id');
 
-                if($proxyInAcc == $proxyNumber){ // если все прокси уже заняты по 3 раза, то увеличиваем счетчик
+                if ($proxyInAcc == $proxyNumber) { // если все прокси уже заняты по 3 раза, то увеличиваем счетчик
                     return $this->findProxyId($type, ++$counter);
                 }
 
@@ -191,34 +192,73 @@ class APIController extends Controller
 
                 return [
                     "proxy_id" => $proxy->id,
-                    "counter"  => $counter,
-                    "number"   => $counter - 0
+                    "proxy" => $proxy->proxy,
+                    "login" => $proxy->login,
+                    "password" => $proxy->password,
+                    "counter" => $counter,
+                    "number" => $counter - 0
                 ];
             }
 
         }
 
     }
-    public function addAccs($type,Request $request)
+
+    public function addAccs($type, Request $request)
     {
-    if($type=="skype"){
-       $json= $request->getContent();
-       $json = json_decode($json,true);
-try {
-    SkypeLogins::insert([
-        'login' => $json["login"],
-        'password' => $json["password"],
-        'proxy_id' => $json["proxy_id"],
-    ]);
-} catch (\Exception $ex){return $ex->getMessage();}
-    return [
-        'login'=>$json["login"],
+        if ($type == "skype") {
+            $json = $request->getContent();
+            $json = json_decode($json, true);
+            try {
+                SkypeLogins::insert([
+                    'login' => $json["login"],
+                    'password' => $json["password"],
+                    'proxy_id' => $json["proxy_id"],
+                ]);
+
+            } catch (\Exception $ex) {
+                return $ex->getMessage();
+            }
+
+            return [
+                'login' => $json["login"],
 
 
-    ];
+            ];
 
 
-    }
+        }
+        else{
+            //if $type
+
+            $json = $request->getContent();
+            $json = json_decode($json, true);
+            //return [
+             //  "login"=>$json["proxy_id"],
+            //];
+
+            try {
+                AccountsData::insert([
+                    'login' => $json["login"],
+                    'password' => $json["password"],
+                    'proxy_id' => $json["proxy_id"],
+                    'type_id' => $type,
+                ]);
+
+            } catch (\Exception $ex) {
+                return [
+                    'login' => $ex->getMessage(),
+
+
+                ];
+            }
+            return [
+                'login' => $json["login"],
+
+
+            ];
+        }
+
 
     }
 
