@@ -26,6 +26,8 @@ use App\Models\SearchQueries;
 use App\Models\Parser\VKLinks;
 use App\Models\Tasks;
 use App\Helpers\Macros;
+use Illuminate\Support\Facades\DB;
+use App\Models\Skypes;
 
 class Tester extends Command
 {
@@ -63,8 +65,6 @@ class Tester extends Command
 
     public function handle()
     {
-        $data  = SkypeLogins::find(507);
-        $skype = new Skype($data);
 
     }
 

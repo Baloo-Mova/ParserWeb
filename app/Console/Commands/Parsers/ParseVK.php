@@ -12,6 +12,7 @@ use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\Parser\VKLinks;
 use Illuminate\Support\Facades\DB;
+
 class ParseVK extends Command {
     public $content;
     /**

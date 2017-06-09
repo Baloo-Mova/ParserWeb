@@ -11,6 +11,7 @@ use App\Models\SearchQueries;
 use App\Models\Proxy as ProxyItem;
 use App\Models\ProxyTemp;
 use App\Models\UserNames;
+use App\Models\Contacts;
 
 class FB
 {
@@ -1027,16 +1028,15 @@ class FB
         $emails = array_unique($emails[0]);
         //dd($emails);
         $skypes = strpos($data, "skype");
-        $skype  = "";
+        $skype  = [];
 
         if ($skypes) {
-            $skype = (substr($data, $skypes, 20));
+            $skype[] = (substr($data, $skypes, 20));
             //dd($skype);
         }
         //echo($skype."\n");
         //print_r(count($emails)."\n");
         if (count($emails) != 0 || $skypes) {
-            $txt_email = implode($emails, ', ');
 
             $search = SearchQueries::where(['link' => $fblink->link, 'task_id' => $fblink->task_id])->first();
 
@@ -1044,13 +1044,12 @@ class FB
             if (empty($search)) {
                 $search_query          = new SearchQueries;
                 $search_query->link    = $fblink->link;
-                $search_query->mails   = $txt_email;
-                $search_query->phones  = " ";
-                $search_query->skypes  = $skype;
                 $search_query->fb_id   = " "; //$fblink->vkuser_id;
-                $search_query->fb_name = $title;
+                $search_query->name = $title;
                 $search_query->task_id = $fblink->task_id;
                 $search_query->save();
+
+                $this->saveContactsInfo($emails, $skype, [], $search_query->id);
             }
         }
         $this->proxy->release();
@@ -1522,11 +1521,13 @@ class FB
 
         $phones     = $phones[1];
         $phones_str = " ";
+        $phones_arr = [];
         if ( ! empty($phones)) {
             $phones_str = implode(",", $phones);
             $phones_str = str_replace(" ", "", $phones_str);
             $phones_str = str_replace(",", ", ", $phones_str);
         }
+        $phones_arr = explode(",", $phones_str);
         preg_match_all("/eid\=(AI\%40[\._a-zA-Z0-9-]*)/i", $data, $fix);
         $fix = array_unique($fix[1]);
         //dd($fix);
@@ -1538,13 +1539,12 @@ class FB
 
         preg_match_all("/[\._a-zA-Z0-9-]+\%40[\._a-zA-Z0-9-]+/i", $data, $emails);
         $emails    = array_unique($emails[0]);
-        $txt_email = " ";
+        $emails_arr = [];
         if (count($emails) != 0) {
-
             $txt_email = implode($emails, ', ');
             $txt_email = str_replace("%40", "@", $txt_email);
         }
-
+        $emails_arr = explode(",", $txt_email);
         $text = substr($data, strpos($data, "fb-timeline-cover-name"), 100);
         $text = substr($text, strpos($text, ">"), strpos($text, "</span>") - strpos($text, ">"));
         $text = str_replace(">", "", $text);
@@ -1558,15 +1558,13 @@ class FB
             $search_query = new SearchQueries;
 
             $search_query->link    = $user->link;
-            $search_query->mails   = $txt_email;
-            $search_query->phones  = $phones_str;
-            $search_query->skypes  = " ";
             $search_query->fb_id   = $user->user_id;
-            $search_query->fb_name = $text;
+            $search_query->name = $text;
             $search_query->task_id = $user->task_id;
 
             try {
                 $search_query->save();
+                $this->saveContactsInfo($emails_arr, [], $phones_arr, $search_query->id);
             } catch (\Exception $e) {
                 echo($e->getMessage() . "\n");
             }
@@ -1577,6 +1575,49 @@ class FB
         $this->proxy->release();
 
         return true;
+    }
+
+    public function saveContactsInfo($mails, $skypes, $phones, $search_q_id)
+    {
+        $contacts = [];
+
+        if (!empty($mails)) {
+
+            foreach ($mails as $ml) {
+                $contacts[] = [
+                    "value" => $ml,
+                    "search_queries_id" => $search_q_id,
+                    "type" => Contacts::MAILS
+                ];
+            }
+        }
+
+        if (!empty($skypes)) {
+
+            foreach ($skypes as $sk) {
+                $contacts[] = [
+                    "value" => $sk,
+                    "search_queries_id" => $search_q_id,
+                    "type" => Contacts::SKYPES
+                ];
+            }
+        }
+
+        if (!empty($phones)) {
+
+            foreach ($phones as $ph) {
+                $contacts[] = [
+                    "value" => $ph,
+                    "search_queries_id" => $search_q_id,
+                    "type" => Contacts::PHONES
+                ];
+            }
+        }
+
+        if(count($contacts) > 0){
+            Contacts::insert($contacts);
+        }
+
     }
 
     public function registrateUser()

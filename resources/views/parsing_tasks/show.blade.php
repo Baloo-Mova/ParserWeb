@@ -328,6 +328,7 @@
         $(document).ready(function () {
             window.number = 1;
             //Number(window.location.hash.replace(/\D+/g,"")) == 0 ? paginatePrint(1) : paginatePrint(Number(window.location.hash.replace(/\D+/g,"")));
+
             paginateConstruct(1);
 
             function getNewInfo() {
@@ -345,7 +346,6 @@
                         method  : "get",
                         url     : "{{ url('api/actualParsed') }}/" + taskId + "/" + lastId,
                         success : function (data) {
-                            console.log(data);
                             if (data.success == true) {
                                 $(".task_result_span_parsed").text(data.count_parsed);
                                 $(".task_result_span_queue").text(data.count_queue);
@@ -366,8 +366,7 @@
                 }
             }
 
-            setInterval(
-                    getNewInfo, 3000);
+            setInterval(getNewInfo, 3000);
 
             function pagination(c, m) {
                 var current = c,
@@ -429,8 +428,6 @@
                     method  : "get",
                     url     : "{{ url('api/paginateParsed') }}/" + page + "/" + $(".reserve_task_id").data("taskId"),
                     success : function (data) {
-
-                        console.log(data);
 
                         var l = 0;
 
@@ -497,14 +494,11 @@
                                             "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.skypes + "</div></td>" +
                                             "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + socn + "</div></td>" +
                                             "</tr>");
-
-                                });
+                                    });
 
                             //}
                         }
 
-
-                        console.log(data);
 
                     },
                     dataType: "json"
