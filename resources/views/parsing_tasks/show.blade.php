@@ -214,7 +214,7 @@
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>WhatsApp text</h4>
                                                 <input type="hidden" name="whats_id" value="{{ empty($whats) ? "" : $whats->id }}">
-                                                <textarea name="whats_text" class="form-control" cols="30" rows="6" maxlength="100">{{ empty($whats) ? "-" : $whats->text }}</textarea>
+                                                <textarea name="whats_text" class="form-control" cols="30" rows="6">{{ empty($whats) ? "-" : $whats->text }}</textarea>
                                             </div>
                                         </div>
                                     </div>
@@ -490,8 +490,8 @@
                                     $(".task_result_table").append("<tr>" +
                                             "<td  data-id='" + item.id + "' data-task-id='" + item.task_id + "' data-list-number='"+ ((data.number - page * 10) + 10 - i ) +"'>" + ((data.number - page * 10) + 10 - i ) + "</td>" +
                                             "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.link+"\">" + item.link + "</div></td>" +
-                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.vk_name + "</div></td>" +
-                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.vk_city+"\">" + item.vk_city + "</div></td>" +
+                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.name + "</div></td>" +
+                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.city+"\">" + item.city + "</div></td>" +
                                             "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.mails + "</div></td>" +
                                             "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.phones + "</div></td>" +
                                             "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.skypes + "</div></td>" +
