@@ -131,17 +131,17 @@
                             <div id="data" class="tab-pane well fade">
                                 <form action="{{ route('parsing_tasks.changeDeliveryInfo') }}" enctype="multipart/form-data" method="post">
                                     {{ csrf_field() }}
-                                    <input type="hidden" name="delivery_id" value="{{ $data->id }}">
+                                    <input type="hidden" name="delivery_id" value="{!! $data->id !!}">
                                     <div class="row add_info_row">
                                         <div class="col-xs-12">
-                                            <div class="add_info_card_wrap {{ $mails_file == "" ? "add_info_card_wrap_medium" : "add_info_card_wrap_big" }}">
+                                            <div class="add_info_card_wrap {!! $mails_file == "" ? "add_info_card_wrap_medium" : "add_info_card_wrap_big" !!}">
                                                 <h4>Mail subject</h4>
-                                                <input type="text" class="form-control" name="mail_subject" value="{{ empty($mails) ? "-" : $mails->subject }}">
-                                                <input type="hidden" name="mail_id" value="{{ empty($mails) ? "" : $mails->id }}">
+                                                <input type="text" class="form-control" name="mail_subject" value="{!! empty($mails) ? "-" : $mails->subject !!}">
+                                                <input type="hidden" name="mail_id" value="{!! empty($mails) ? "" : $mails->id !!}">
 
                                                 <h4 style="margin-top: 10px;">Mail text</h4>
-                                                <textarea name="mail_text" class="form-control" cols="30" rows="4">{{ empty($mails) ? "-" : $mails->text }}</textarea>
-                                                <input type="hidden" name="mail_id" value="{{ empty($mails) ? "" : $mails->id }}">
+                                                <textarea name="mail_text" class="form-control" cols="30" rows="4">{!! empty($mails) ? "-" : $mails->text !!}</textarea>
+                                                <input type="hidden" name="mail_id" value="{!! empty($mails) ? "" : $mails->id !!}">
                                                 @if($mails_file)
                                                     <label for="mails_file" class="mails_file_label">Mail file</label>
                                                     <br>
@@ -169,15 +169,15 @@
                                         <div class="col-xs-6 pr">
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>Skype text</h4>
-                                                <input type="hidden" name="skype_id" value="{{ empty($skype) ? "" : $skype->id }}">
-                                                <textarea name="skype_text" class="form-control" cols="30" rows="6">{{ empty($skype) ? "-" : $skype->text }}</textarea>
+                                                <input type="hidden" name="skype_id" value="{!! empty($skype) ? "" : $skype->id !!}">
+                                                <textarea name="skype_text" class="form-control" cols="30" rows="6">{!! empty($skype) ? "-" : $skype->text !!}</textarea>
                                             </div>
                                         </div>
                                         <div class="col-xs-6 pl">
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>VK text</h4>
-                                                <input type="hidden" name="vk_id" value="{{ empty($vk) ? "" : $vk->id }}">
-                                                <textarea name="vk_text" class="form-control" cols="30" rows="6">{{ empty($vk) ? "-" : $vk->text }}</textarea>
+                                                <input type="hidden" name="vk_id" value="{!! empty($vk) ? "" : $vk->id !!}">
+                                                <textarea name="vk_text" class="form-control" cols="30" rows="6">{!! empty($vk) ? "-" : $vk->text !!}</textarea>
                                             </div>
                                         </div>
                                     </div>
@@ -186,35 +186,35 @@
                                         <div class="col-xs-6 pr">
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>OK text</h4>
-                                                <input type="hidden" name="ok_id" value="{{ empty($ok) ? "" : $ok->id }}">
-                                                <textarea name="ok_text" class="form-control" cols="30" rows="6">{{ empty($ok) ? "-" : $ok->text }}</textarea>
+                                                <input type="hidden" name="ok_id" value="{!! empty($ok) ? "" : $ok->id !!}">
+                                                <textarea name="ok_text" class="form-control" cols="30" rows="6">{!! empty($ok) ? "-" : $ok->text !!}</textarea>
                                             </div>
                                         </div>
                                         <div class="col-xs-6 pl">
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>FB text</h4>
-                                                <input type="hidden" name="fb_id" value="{{ empty($fb) ? "" : $fb->id }}">
-                                                <textarea name="fb_text" class="form-control" cols="30" rows="6">{{ empty($fb) ? "-" : $fb->text }}</textarea>
+                                                <input type="hidden" name="fb_id" value="{!! empty($fb) ? "" : $fb->id !!}">
+                                                <textarea name="fb_text" class="form-control" cols="30" rows="6">{!! empty($fb) ? "-" : $fb->text !!}</textarea>
                                             </div>
                                         </div>
                                     </div>
 
                                         <!--<th>Twitter text</th>-->
-                                        <!--<td><textarea name="tw_text" class="form-control" cols="30" rows="3" maxlength="100">{{ empty($tw) ? "-" : $tw->text }}</textarea></td>-->
+                                        <!--<td><textarea name="tw_text" class="form-control" cols="30" rows="3" maxlength="100">{!! empty($tw) ? "-" : $tw->text !!}</textarea></td>-->
 
                                     <div class="row add_info_row">
                                         <div class="col-xs-6 pr">
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>Viber text</h4>
-                                                <input type="hidden" name="viber_id" value="{{ empty($viber) ? "" : $viber->id }}">
-                                                <textarea name="viber_text" class="form-control" cols="30" rows="6">{{ empty($viber) ? "-" : $viber->text }}</textarea>
+                                                <input type="hidden" name="viber_id" value="{!! empty($viber) ? "" : $viber->id !!}">
+                                                <textarea name="viber_text" class="form-control" cols="30" rows="6">{!! empty($viber) ? "-" : $viber->text !!}</textarea>
                                             </div>
                                         </div>
                                         <div class="col-xs-6 pl">
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>WhatsApp text</h4>
-                                                <input type="hidden" name="whats_id" value="{{ empty($whats) ? "" : $whats->id }}">
-                                                <textarea name="whats_text" class="form-control" cols="30" rows="6">{{ empty($whats) ? "-" : $whats->text }}</textarea>
+                                                <input type="hidden" name="whats_id" value="{!! empty($whats) ? "" : $whats->id !!}">
+                                                <textarea name="whats_text" class="form-control" cols="30" rows="6">{!! empty($whats) ? "-" : $whats->text !!}</textarea>
                                             </div>
                                         </div>
                                     </div>

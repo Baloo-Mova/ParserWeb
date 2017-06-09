@@ -70,7 +70,7 @@ class ParsingTasksController extends Controller {
             if($this->checkSymbolsInText($request->get('mails_text'))) {
                 $mails->save();
             }else{
-                Toastr::error("В тексте Mails найдены недопустимые символы!", $title = "Ошибка!", $options = []);
+                Toastr::error("В тексте Contacts найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
         }
         //Записываем в таблицу шаблонов mails
@@ -345,7 +345,7 @@ class ParsingTasksController extends Controller {
                 if($this->checkSymbolsInText($mail_text)){
                     $mail->text = $mail_text;
                 }else{
-                    Toastr::error("В тексте Mails найдены недопустимые символы!", $title = "Ошибка!", $options = []);
+                    Toastr::error("В тексте Contacts найдены недопустимые символы!", $title = "Ошибка!", $options = []);
                 }
 
             }
@@ -530,7 +530,7 @@ class ParsingTasksController extends Controller {
 
     public function storeTestingDeliveryMails(Request $request) {
         if(!$this->checkSymbolsInText($request->get('mails_text'))) {
-            Toastr::error("В тексте Mails найдены недопустимые символы!", $title = "Ошибка!", $options = []);
+            Toastr::error("В тексте Contacts найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             return back();
         }
         //Записываем в таблицу тасков
