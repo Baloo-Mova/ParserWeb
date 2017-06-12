@@ -103,4 +103,5 @@ class SearchQueries extends Model
     public function getSkypeTemplate(){
         return TemplateDeliverySkypes::where('task_id', '=', $this->task_id)->first();
     }
+
 }

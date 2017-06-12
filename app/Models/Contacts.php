@@ -21,4 +21,6 @@ class Contacts extends Model
         'type',
         'search_queries_id',
     ];
+
+
 }

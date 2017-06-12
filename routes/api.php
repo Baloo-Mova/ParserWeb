@@ -13,8 +13,9 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::get('/actualParsed/{taskId}/{lastId}', ["uses" => "APIController@getActualTaskData", "as" => "get.actual.parsed.data"]);
-Route::get('/paginateParsed/{page}/{taskId}', ["uses" => "APIController@getPaginateTaskData", "as" => "get.paginate.parsed.data"]);
+Route::get('/actualParsed/{taskId}/{lastId}/{pageNumber}', ["uses" => "APIController@getTaskParsedInfo", "as" => "get.task.parsed.info"]);
+//Route::get('/actualParsed/{taskId}/{lastId}', ["uses" => "APIController@getActualTaskData", "as" => "get.actual.parsed.data"]);
+//Route::get('/paginateParsed/{page}/{taskId}', ["uses" => "APIController@getPaginateTaskData", "as" => "get.paginate.parsed.data"]);
 Route::get('/selectEmailTemplate/{id}', ["uses" => "APIController@getSelectEmailTemplate", "as" => "get.select.email.template"]);
 Route::get('/getProxy/{type}',["uses"=> "APIController@getRandomProxy", "as"=>"get.proxy"]);
 Route::post('/addAccs/{type}',["uses"=> "APIController@addAccs", "as"=>"add.accs"]);
