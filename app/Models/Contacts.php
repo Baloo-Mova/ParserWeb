@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\TemplateDeliveryMails;
 
 class Contacts extends Model
 {
@@ -22,5 +23,8 @@ class Contacts extends Model
         'search_queries_id',
     ];
 
+    public function getEmailTemplate($id){
+        return TemplateDeliveryMails::with('attaches')->where('task_id', '=', $id)->first();
+    }
 
 }

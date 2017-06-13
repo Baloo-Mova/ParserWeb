@@ -600,59 +600,23 @@ class ParsingTasksController extends Controller {
         if (!empty($mails_list)) {
 
             $mails = explode("\r\n", $mails_list);
-            $mails_number = count($mails);
-            $tmp_mail = [];
+            $contacts = [];
 
-            if ($mails_number > 3) {
-                foreach ($mails as $key => $value) {
-                    ++$key;
-                    $tmp_mail[] = $value;
+            $search_query = new SearchQueries;
+            $search_query->link = "Тестовая рассылка";
+            $search_query->task_id = $task_id;
+            $search_query->email_reserved = 0;
+            $search_query->email_sended = 0;
+            $search_query->sk_recevied = 0;
+            $search_query->sk_sended = 0;
+            $search_query->save();
 
-                    if ($key % 3 == 0) {
-                        $search_query = new SearchQueries;
-                        $search_query->link = "Тестовая рассылка";
-                        $search_query->mails = implode(",", $tmp_mail);
-                        $search_query->phones = null;
-                        $search_query->skypes = null;
-                        $search_query->task_id = $task_id;
-                        $search_query->email_reserved = 0;
-                        $search_query->email_sended = 0;
-                        $search_query->sk_recevied = 0;
-                        $search_query->sk_sended = 0;
-                        $search_query->save();
-
-                        unset($tmp_mail);
-                    }
-                    if ($key == $mails_number) {
-                        $search_query = new SearchQueries;
-                        $search_query->link = "Тестовая рассылка";
-                        $search_query->mails = implode(",", $tmp_mail);
-                        $search_query->phones = null;
-                        $search_query->skypes = null;
-                        $search_query->task_id = $task_id;
-                        $search_query->email_reserved = 0;
-                        $search_query->email_sended = 0;
-                        $search_query->sk_recevied = 0;
-                        $search_query->sk_sended = 0;
-                        $search_query->save();
-                    }
-                }
-            } else {
-                foreach ($mails as $item) {
-                    $tmp_mail[] = $item;
-                }
-                $search_query = new SearchQueries;
-                $search_query->link = "Тестовая рассылка";
-                $search_query->mails = implode(",", $tmp_mail);
-                $search_query->phones = null;
-                $search_query->skypes = null;
-                $search_query->task_id = $task_id;
-                $search_query->email_reserved = 0;
-                $search_query->email_sended = 0;
-                $search_query->sk_recevied = 0;
-                $search_query->sk_sended = 0;
-                $search_query->save();
+            foreach ($mails as $mailItem) {
+                $contacts[] = ["value" => $mailItem, "type" => 1, "search_queries_id" => $search_query->id];
             }
+
+            Contacts::insert($contacts);
+            $contacts = [];
         }
         //Обрабатываем список сайтов, если есть
         //Записываем в таблицу шаблонов mails
@@ -773,9 +737,6 @@ class ParsingTasksController extends Controller {
             foreach ($vks as $item) {
                 $search_query = new SearchQueries;
                 $search_query->link = "Тестовая рассылка";
-                $search_query->mails = " ";
-                $search_query->phones = " ";
-                $search_query->skypes = "";
                 $search_query->vk_id = $item;
                 $search_query->task_id = $task_id;
                 $search_query->email_reserved = 0;
@@ -998,21 +959,24 @@ class ParsingTasksController extends Controller {
         if (!empty($phones_list)) {
             $phones_list = str_replace(["+"],"",$phones_list);
             $phones_list = explode("\r\n", $phones_list);
-            $phones_list = implode(",", $phones_list);
+            $contacts = [];
            
           //dd($phones_list);
                 $search_query = new SearchQueries;
                 $search_query->link = "Тестовая рассылка";
-                $search_query->mails = " ";
-                $search_query->phones = $phones_list;
-                $search_query->skypes = "";
-                $search_query->fb_name = "";
                 $search_query->task_id = $task_id;
                 $search_query->email_reserved = 0;
                 $search_query->email_sended = 0;
                 $search_query->sk_recevied = 0;
                 $search_query->sk_sended = 0;
                 $search_query->save();
+
+            foreach($phones_list as $ph){
+                $contacts[] = ["type" => 2, "value" => $ph, "search_queries_id" => $search_query->id];
+            }
+
+            Contacts::insert($contacts);
+
             
         }
 

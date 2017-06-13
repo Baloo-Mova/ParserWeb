@@ -15,6 +15,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use App\Models\Proxy as ProxyItem;
+use App\Models\Contacts;
 
 class EmailSender extends Command {
     public $content;
@@ -70,22 +71,29 @@ class EmailSender extends Command {
                 $this->content['emails'] = null;
                 DB::transaction(function () {
 
-                    $emails = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
-                        ['search_queries.mails', '<>', ''],
-                        'search_queries.email_reserved' => 0,
-                        'search_queries.email_sended' => 0,
-                        'tasks.need_send' => 1,
-                        'tasks.active_type' => 1,
-                    ])->select('search_queries.*')->lockForUpdate()->first();
-                    if ( !isset($emails)) {
+                    $emails = Contacts::join('search_queries', 'search_queries.id', '=', 'contacts.search_queries_id')
+                        ->join('tasks', 'tasks.id', '=', 'search_queries.task_id')
+                        ->where([
+                            ['contacts.type', '=', 1],
+                            ['contacts.sended', '=', 0],
+                            ['contacts.reserved', '=', 0],
+                            ['tasks.need_send', '=', 1],
+                            ['tasks.active_type', '=', 1],
+                        ])
+                        ->lockForUpdate()->limit(10)->get(['contacts.*', 'search_queries.task_id']);
+
+                    if ( !isset($emails) || count($emails) == 0) {
                         return;
                     }
-                    $emails->email_reserved = 1;
-                    $emails->save();
+
+                    foreach ($emails as $mailItem){
+                        $mailItem->reserved = 1;
+                        $emails->save();
+                    }
+
                     $this->content['emails'] = $emails;
                 });
-                if (!isset($this->content['emails'])) {
-
+                if (!isset($this->content['emails']) || count($this->content['emails']) == 0) {
                     sleep(10);
                     continue;
                 }
@@ -93,7 +101,9 @@ class EmailSender extends Command {
                 //$emails->email_reserved = 1;
                // $emails->save();
 
-                $template = $this->content['emails']->getEmailTemplate();
+                $template = $this->content['emails'][0]->getEmailTemplate($this->content['emails'][0]->task_id);
+dd($template);
+                dd($template);
 
                 if (empty($template->text) || empty($template->subject)) {
                     $log = new ErrorLog();

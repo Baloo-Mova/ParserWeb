@@ -95,6 +95,7 @@ class SkypeSender extends Command
                             ['contacts.sended', '=', 0],
                             ['contacts.reserved', '=', 0],
                             ['tasks.need_send', '=', 1],
+                            ['tasks.active_type', '=', 1],
                         ])
                         ->lockForUpdate()->limit(10)->get(['contacts.*', 'search_queries.task_id']);
                     if (isset($this->task) && count($this->task) > 0) {
