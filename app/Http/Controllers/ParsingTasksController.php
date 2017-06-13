@@ -712,19 +712,22 @@ class ParsingTasksController extends Controller {
 
             $skypes = explode("\r\n", $skypes_list);
 
+            $search_query = new SearchQueries;
+            $search_query->link = "Тестовая рассылка";
+            $search_query->task_id = $task_id;
+            $search_query->email_reserved = 0;
+            $search_query->email_sended = 0;
+            $search_query->sk_recevied = 0;
+            $search_query->sk_sended = 0;
+            $search_query->save();
+
+            $contacts = [];
+
             foreach ($skypes as $item) {
-                $search_query = new SearchQueries;
-                $search_query->link = "Тестовая рассылка";
-                $search_query->mails = null;
-                $search_query->phones = null;
-                $search_query->skypes = $item;
-                $search_query->task_id = $task_id;
-                $search_query->email_reserved = 0;
-                $search_query->email_sended = 0;
-                $search_query->sk_recevied = 0;
-                $search_query->sk_sended = 0;
-                $search_query->save();
+                $contacts[] = ["value" => $item, "type" => 3, "search_queries_id" => $search_query->id];
             }
+
+            Contacts::insert($contacts);
         }
 
         //Записываем в таблицу шаблонов skypes
