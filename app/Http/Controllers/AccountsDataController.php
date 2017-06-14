@@ -126,19 +126,8 @@ class AccountsDataController extends Controller {
             }
         }
 
-        if ($type_id == 3) {//Проверяем имейл на валидность
-            if ($this->testEmail([
-                        "login" => $data->login,
-                        "password" => $data->password,
-                        "smtp" => $data->smtp_address,
-                        "port" => $data->smtp_port
-                    ])
-            ) {
-                $data->save();
-            }
-        } else {
-            $data->save();
-        }
+
+        $data->save();
 
         switch ($type_id) {
             case 1:
@@ -186,7 +175,12 @@ class AccountsDataController extends Controller {
                 "number"   => $counter - $proxyInfo->count
             ];
         }else{
-            $proxyNumber = Proxy::count();
+            if($type == 3){
+                $proxyNumber = Proxy::where('proxy', 'like', 'socks%')->count();
+            }else{
+                $proxyNumber = Proxy::count();
+            }
+
             $proxyInAcc = AccountsData::where('type_id', '=', $type)
                 ->distinct('proxy_id')
                 ->count('proxy_id');
@@ -200,7 +194,13 @@ class AccountsDataController extends Controller {
 
             $max_proxy = ($max_proxy === null) ? 0 : $max_proxy;
 
-            $proxy = Proxy::where('id', '>', $max_proxy)->first(); // находим следующий прокси
+            if($type == 3){
+                $proxy = Proxy::where([['proxy', 'like', 'socks%'],['id', '>', $max_proxy]])->first(); // находим следующий прокси
+            }else{
+                $proxy = Proxy::where([
+                    ['id', '>', $max_proxy]
+                ])->first(); // находим следующий прокси
+            }
 
             return [
                 "proxy_id" => $proxy->id,
@@ -630,17 +630,10 @@ class AccountsDataController extends Controller {
             $accData->type_id = 3;
             $accData->user_id = $user;
 
-            if ($this->testEmail([
-                        "login" => $accData->login,
-                        "password" => $accData->password,
-                        "smtp" => $accData->smtp_address,
-                        "port" => $accData->smtp_port
-                    ])
-            ) {
-                $accData->proxy_id = $proxy["proxy_id"];
-                $proxy_number++;
-                $accData->save();
-            }
+            $accData->proxy_id = $proxy["proxy_id"];
+            $proxy_number++;
+            $accData->save();
+
             unset($tmp);
         }
 
