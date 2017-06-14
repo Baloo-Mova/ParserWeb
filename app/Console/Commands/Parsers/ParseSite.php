@@ -10,6 +10,7 @@ use App\Helpers\Web;
 use App\Helpers\SimpleHtmlDom;
 use App\Models\IgnoreDomains;
 use Illuminate\Support\Facades\DB;
+use App\Models\Contacts;
 
 class ParseSite extends Command
 {
@@ -26,8 +27,8 @@ class ParseSite extends Command
      *
      * @var string
      */
-    protected $description       = 'Parse Site from list';
-    private   $ua_operators_code = [
+    protected $description = 'Parse Site from list';
+    private $ua_operators_code = [
         "039",
         "050",
         "066",
@@ -45,7 +46,7 @@ class ParseSite extends Command
         "094",
         "044"
     ];
-    private   $check             = [];
+    private $check = [];
 
     /**
      * Create a new command instance.
@@ -86,24 +87,24 @@ class ParseSite extends Command
             ".gif"
         ];
         while (true) {
-            $web                = new Web();
-            $crawler            = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' '); //TRANSLIT//IGNORE
+            $web = new Web();
+            $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' '); //TRANSLIT//IGNORE
             $this->data['link'] = null;
             try {
 
                 DB::transaction(function () {
                     $link = SiteLinks::join('tasks', 'tasks.id', '=', 'site_links.task_id')->where([
                         'site_links.reserved' => 0,
-                        'tasks.active_type'   => 1
+                        'tasks.active_type' => 1
                     ])->select('site_links.*')->lockForUpdate()->first();
                     if (isset($link)) {
                         $this->data['link'] = $link;
-                        $link->reserved     = 1;
+                        $link->reserved = 1;
                         $link->save();
                     }
                 });
                 $link = $this->data['link'];
-                if ( ! isset($link)) {
+                if (!isset($link)) {
                     sleep(10);
                     continue;
                 }
@@ -115,7 +116,7 @@ class ParseSite extends Command
                     continue;
                 }
 
-                $task_id      = $link->task_id;
+                $task_id = $link->task_id;
                 $default_link = $link->link;
 
                 $data = $web->get($link->link);
@@ -124,7 +125,7 @@ class ParseSite extends Command
                 $crawler->load($data);
 
                 $data = $crawler->find('body', 0);
-                if ( ! isset($data)) {
+                if (!isset($data)) {
                     $link->delete();
                     continue;
                 };
@@ -133,28 +134,26 @@ class ParseSite extends Command
                 } catch (\Exception $ex) {
                     if (strpos($ex->getMessage(), "conv():")) {
                         $crawler = new SimpleHtmlDom(null, true, true, 'windows-1251', true, '\r\n', ' ');
-                        $data    = $web->get($link->link);
+                        $data = $web->get($link->link);
                         $crawler->clear();
                         $crawler->load($data);
                         $data = $crawler->find('body', 0);
                     }
                 }
 
-                if ( ! empty($data)) {
+                if (!empty($data)) {
                     $baseData = parse_url($link->link);
-                    $emails   = $this->extractEmails($data);
-                    $phones   = $this->extractPhones($data);
-                    $skypes   = $this->extractSkype($data);
+                    $emails = $this->extractEmails($data);
+                    $phones = $this->extractPhones($data);
+                    $skypes = $this->extractSkype($data);
 
                     if (count($emails) > 0 || count($phones) > 0 || count($skypes) > 0) {
-                        $res          = new SearchQueries();
-                        $res->mails   = implode(',', $emails);
-                        $res->phones  = implode(',', $phones);
-                        $res->skypes  = implode(',', $skypes);
-                        $res->link    = $default_link;
+                        $res = new SearchQueries();
+                        $res->link = $default_link;
                         $res->task_id = $task_id;
                         $res->save();
                         $link->delete();
+                        $this->saveContactsInfo($emails, $skypes, $phones, $res->id);
                         continue;
                     }
 
@@ -180,13 +179,12 @@ class ParseSite extends Command
                             $skypes = $this->extractSkype($data, $skypes);
                             $phones = $this->extractPhones($data);
                             if (count($emails) > 0 || count($phones) > 0 || count($skypes) > 0) {
-                                $res          = new SearchQueries();
-                                $res->mails   = implode(',', $emails);
-                                $res->phones  = implode(',', $phones);
-                                $res->skypes  = implode(',', $skypes);
-                                $res->link    = $default_link;
+                                $res = new SearchQueries();
+                                $res->link = $default_link;
                                 $res->task_id = $task_id;
                                 $res->save();
+
+                                $this->saveContactsInfo($emails, $skypes, $phones, $res->id);
                                 break;
                             }
                         } catch (\Exception $ex) {
@@ -196,12 +194,55 @@ class ParseSite extends Command
                     $link->delete();
                 }
             } catch (\Exception $ex) {
-                $log          = new ErrorLog();
+                $log = new ErrorLog();
                 $log->message = $ex->getMessage() . " line:" . $ex->getLine();
                 $log->task_id = 0;
                 $log->save();
             }
         }
+    }
+
+    public function saveContactsInfo($mails, $skypes, $phones, $search_q_id)
+    {
+        $contacts = [];
+
+        if (!empty($mails)) {
+
+            foreach ($mails as $ml) {
+                $contacts[] = [
+                    "value" => $ml,
+                    "search_queries_id" => $search_q_id,
+                    "type" => Contacts::MAILS
+                ];
+            }
+        }
+
+        if (!empty($skypes)) {
+
+            foreach ($skypes as $sk) {
+                $contacts[] = [
+                    "value" => $sk,
+                    "search_queries_id" => $search_q_id,
+                    "type" => Contacts::SKYPES
+                ];
+            }
+        }
+
+        if (!empty($phones)) {
+
+            foreach ($phones as $ph) {
+                $contacts[] = [
+                    "value" => $ph,
+                    "search_queries_id" => $search_q_id,
+                    "type" => Contacts::PHONES
+                ];
+            }
+        }
+
+        if(count($contacts) > 0){
+            Contacts::insert($contacts);
+        }
+
     }
 
     public function extractEmails($data, $before = [])

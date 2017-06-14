@@ -12,6 +12,7 @@ use App\Models\TemplateDeliveryWhatsapp;
 use App\Models\TemplateDeliveryViber;
 use App\Models\SearchQueries;
 use App\Models\AndroidBots;
+use App\Models\Contacts;
 
 class GetNumbersController extends Controller {
     private   $ua_operators_code = ["039", "050", "066", "095", "099", "039", "067", "068", "096", "097", "098", "093", "091", "092", "094", "044"
@@ -27,35 +28,44 @@ class GetNumbersController extends Controller {
         }
         $device->updated_at= date("Y-m-d H:i:s");
         $device->save();
-        $wh_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
-                    ['search_queries.phones', '<>', ''],
-                     'search_queries.phones_reserved_wh'   => 0,
-                    //'search_queries.wh_reserved' => 0,
-                    'tasks.need_send' => 1,
-                    'tasks.active_type' => 1,
-                ])->select('search_queries.*')->first();
+        $wh_query = Contacts::join('search_queries', 'search_queries.id', '=', 'contacts.search_queries_id')
+            ->join('tasks', 'tasks.id', '=', 'search_queries.task_id')
+            ->where([
+                ['contacts.type', '=', 2],
+                ['contacts.reserved_whatsapp', '=', 0],
+                ['tasks.need_send', '=', 1],
+                ['tasks.active_type', '=', 1],
+            ])
+            ->lockForUpdate()->limit(10)->get(['contacts.*', 'search_queries.task_id']);
 
 
-        if (!isset($wh_query)) {
+        if (!isset($wh_query) || count($wh_query) == 0) {
             return null;
         }
 
-        $message = TemplateDeliveryWhatsapp::where(['task_id' => $wh_query->task_id])->first();
+        $message = TemplateDeliveryWhatsapp::where(['task_id' => $wh_query[0]->task_id])->first();
 
         if (!isset($message)) {
             dd("noMessages");
              //$wh_query->phones_reserved_wh = 0;
              //$wh_query->save();
         }
-        $wh_query->phones = str_replace(["+"], "", $wh_query->phones);
-        $wh_query->phones_reserved_wh=1;
-        $wh_query->save();
+
+        $phone_numbers = [];
+
+        foreach ($wh_query as $ph){
+            $ph->value = str_replace(["+"], "", $ph->value);
+            $ph->reserved_whatsapp = 1;
+            $ph->save();
+            $phone_numbers[] = $ph->value;
+        }
+
        /*для переключателя акков в старой версии бота когда все операции проводились напрямую с андроид устройства*/
        // if($wh_query->phones_reserved_viber==1){
        //  $device->status=1;
        //  $device->save();
        // }
-        $phone_numbers = explode(",", $wh_query->phones);
+
 //dd($phone_numbers);  
         $json = [];
         $phone_arr=[];
@@ -134,35 +144,44 @@ class GetNumbersController extends Controller {
         $device->updated_at= date("Y-m-d H:i:s");
         $device->save();
        
-        $vb_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
-                    ['search_queries.phones', '<>', ''],
-                     'search_queries.phones_reserved_viber'   => 0,
-                    //'search_queries.wh_reserved' => 0,
-                    'tasks.need_send' => 1,
-                    'tasks.active_type' => 1,
-                ])->select('search_queries.*')->first();
+        $vb_query = Contacts::join('search_queries', 'search_queries.id', '=', 'contacts.search_queries_id')
+            ->join('tasks', 'tasks.id', '=', 'search_queries.task_id')
+            ->where([
+                ['contacts.type', '=', 2],
+                ['contacts.reserved_viber', '=', 0],
+                ['tasks.need_send', '=', 1],
+                ['tasks.active_type', '=', 1],
+            ])
+            ->lockForUpdate()->limit(10)->get(['contacts.*', 'search_queries.task_id']);
 
 
-        if (!isset($vb_query)) {
+        if (!isset($vb_query) || count($vb_query) == 0) {
             return null;
         }
         
-        $message = TemplateDeliveryViber::where(['task_id' => $vb_query->task_id])->first();
+        $message = TemplateDeliveryViber::where(['task_id' => $vb_query[0]->task_id])->first();
 
         if (!isset($message)) {
             dd("noMessages");
             // $wh_query->phones_reserved_viber = 0;
             //$wh_query->save();
         }
-        $vb_query->phones = str_replace("+", "", $vb_query->phones);
-        $vb_query->phones_reserved_viber=1;
-        $vb_query->save();
+
+
+        $phone_numbers = [];
+
+        foreach ($vb_query as $vb){
+            $vb->value = str_replace(["+"], "", $vb->value);
+            $vb->reserved_viber = 1;
+            $vb->save();
+            $phone_numbers[] = $vb->value;
+        }
         /*для переключателя акков в старой версии бота когда все операции проводились напрямую с андроид устройства*/
         //if($vb_query->phones_reserved_wh==1){
        //  $device->status=1;
       //  $device->save();
      // }
-        $phone_numbers = explode(",", $vb_query->phones);
+
 //dd($phone_numbers);  
         $json = [];
         $phone_arr=[];

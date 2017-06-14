@@ -43,7 +43,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="text-center">Нет Записей!</td>
+                                    <td colspan="5" class="text-center">Нет Записей!</td>
                                 </tr>
                             @endforelse
                         </tbody>

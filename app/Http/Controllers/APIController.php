@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Contacts;
 use App\Models\Parser\SiteLinks;
 use App\Models\SearchQueries;
 use Illuminate\Http\Request;
@@ -24,12 +25,17 @@ class APIController extends Controller
     }
 
 
-    public function getActualTaskData(Request $request, $taskId, $lastId)
+     public function getTaskParsedInfo($taskId, $lastId, $page_number)
     {
         $maxId = \intval($lastId);
 
-        $results = SearchQueries::where('task_id', '=', $taskId)->where('id', '>', $lastId)->orderBy('id',
-            'desc')->get();
+        $skip = ($page_number - 1) * 10;
+        $results = DB::select( DB::raw('SELECT search_queries.*, 
+                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=1) as mails,
+                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=2) as phones,
+                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=3) as skypes 
+                                    FROM search_queries where task_id='.$taskId.' order by id desc limit '.$skip.',10'));
+
 
         if (count($results) > 0) {
             $maxId = $results[0]->id;
@@ -42,45 +48,17 @@ class APIController extends Controller
             + TwLinks::where('task_id', '=', $taskId)->count()
             + InsLinks::where('task_id', '=', $taskId)->count()
             + FBLinks::where('task_id', '=', $taskId)->count();
-        $countSended = SearchQueries::where([
-            'task_id' => $taskId
-        ])->select(DB::raw('SUM(email_sended) + SUM(sk_sended)+SUM(vk_sended)+SUM(ok_sended)+SUM(tw_sended)+SUM(fb_sended) + SUM(phones_reserved_wh = 1) + SUM(phones_reserved_viber = 1)  as total'))->first()->total;
+
+        $countSended = Contacts::join('search_queries', 'contacts.search_queries_id', '=', 'search_queries.id')
+            ->where(['search_queries.task_id' => $taskId, 'contacts.sended' => 1])
+            ->select('contacts.id')
+            ->count();
 
         return json_encode([
             'success' => true,
             'count_parsed' => $count,
             'count_queue' => $countQueue,
             'count_sended' => $countSended,
-            'max_id' => $maxId,
-            'result' => $results
-        ]);
-
-    }
-
-    public function getPaginateTaskData(Request $request, $page_number, $taskId)
-    {
-
-        $results = DB::table('search_queries')->where('task_id', '=', $taskId)
-            ->orderBy('id', 'desc')->skip((($page_number - 1) * 10))->take(10)->get();
-
-        $number = DB::table('search_queries')->where('task_id', '=', $taskId)->count();
-
-        if (count($results) > 0) {
-            $maxId = $results[0]->id;
-        }
-
-        $countQueue = SiteLinks::where('task_id', '=', $taskId)->count()
-            + VKLinks::where('task_id', '=', $taskId)->count()
-            + OkGroups::where('task_id', '=', $taskId)->count()
-            + TwLinks::where('task_id', '=', $taskId)->count()
-            + InsLinks::where('task_id', '=', $taskId)->count()
-            + FBLinks::where('task_id', '=', $taskId)->count();
-
-        return json_encode([
-            'success' => true,
-            'number' => $number,
-            'count_parsed' => $number,
-            'count_queue' => $countQueue,
             'max_id' => $maxId,
             'result' => $results
         ]);
