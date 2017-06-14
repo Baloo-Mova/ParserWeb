@@ -19,7 +19,13 @@ use App\Models\SkypeLogins;
 
 class APIController extends Controller
 {
-    public function getTaskParsedInfo($taskId, $lastId, $page_number)
+
+    public function getEmailSendData(){
+        echo 1;
+    }
+
+
+     public function getTaskParsedInfo($taskId, $lastId, $page_number)
     {
         $maxId = \intval($lastId);
 
