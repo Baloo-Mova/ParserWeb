@@ -14,8 +14,8 @@ class AddMessengersInContacts extends Migration
     public function up()
     {
         Schema::table('contacts', function (Blueprint $table) {
-            $table->boolean('reserved_viber')->after('reserved')->nullable();
-            $table->boolean('reserved_whatsapp')->after('reserved_viber')->nullable();
+            $table->boolean('reserved_viber')->after('reserved')->default(0);
+            $table->boolean('reserved_whatsapp')->after('reserved_viber')->default(0);
         });
     }
 
