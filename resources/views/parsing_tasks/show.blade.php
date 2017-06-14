@@ -225,7 +225,7 @@
                         </div>
                     </div>
                     <div class="box-footer text-center">
-                        <input type="hidden" class="last_task_id" value="0">
+                        <span class="last_task_id hidden" data-value="0"></span>
                     </div>
                 </div>
             </div>
@@ -333,7 +333,7 @@
 
             function getNewInfo() {
                 var
-                    lastId      = $(".last_task_id").val(),
+                    lastId      = $(".last_task_id").data("value"),
                     taskId      = $(".reserve_task_id").data("taskId"),
                     page_number = Number(window.location.hash.replace(/\D+/g,"")) == 0 ? 1 : Number(window.location.hash.replace(/\D+/g,""));
                 window.number = $(".task_result_table td:first").data("listNumber") == null ? 0 : $(".task_result_table td:first").data("listNumber");
@@ -372,7 +372,7 @@
                                 $(".task_result_span_parsed").text(data.count_parsed);
                                 $(".task_result_span_queue").text(data.count_queue);
                                 $(".task_result_span_sended").text(data.count_sended);
-                                $(".last_task_id").val(data.max_id);
+                                $(".last_task_id").data("value", data.max_id);
 
                                 if (Object.keys(data.result).length > 0) {
                                     $('.no_results_class').remove();
