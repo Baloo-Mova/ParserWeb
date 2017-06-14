@@ -18,13 +18,11 @@ class Contacts extends Model
     public $fillable = [
         'value',
         'reserved',
+        'reserved_viber',
+        'reserved_whatsapp',
         'sended',
         'type',
         'search_queries_id',
     ];
-
-    public function getEmailTemplate($id){
-        return TemplateDeliveryMails::with('attaches')->where('task_id', '=', $id)->first();
-    }
 
 }
