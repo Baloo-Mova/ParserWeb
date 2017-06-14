@@ -327,26 +327,47 @@
     <script>
         $(document).ready(function () {
             window.number = 1;
-            //Number(window.location.hash.replace(/\D+/g,"")) == 0 ? paginatePrint(1) : paginatePrint(Number(window.location.hash.replace(/\D+/g,"")));
-            paginateConstruct(1);
+
+            getNewInfo();
 
             function getNewInfo() {
-
                 var
-                        lastId      = $(".last_task_id").val(),
-                        taskId      = $(".reserve_task_id").data("taskId"),
-                        page_number = Number(window.location.hash.replace(/\D+/g,"")) == 0 ? 1 : Number(window.location.hash.replace(/\D+/g,""));
-                        window.number = $(".task_result_table td:first").data("listNumber") == null ? 0 : $(".task_result_table td:first").data("listNumber");
+                    lastId      = $(".last_task_id").val(),
+                    taskId      = $(".reserve_task_id").data("taskId"),
+                    page_number = Number(window.location.hash.replace(/\D+/g,"")) == 0 ? 1 : Number(window.location.hash.replace(/\D+/g,""));
+                window.number = $(".task_result_table td:first").data("listNumber") == null ? 0 : $(".task_result_table td:first").data("listNumber");
 
                 window.location.hash = "page="+page_number;
 
-                if (page_number == 0 || page_number == 1) {
+
                     $.ajax({
                         method  : "get",
-                        url     : "{{ url('api/actualParsed') }}/" + taskId + "/" + lastId,
+                        url     : "{{ url('api/actualParsed') }}/" + taskId + "/" + lastId + "/" + page_number,
                         success : function (data) {
-                            console.log(data);
                             if (data.success == true) {
+
+                                window.location.hash = "page="+page_number;
+
+                                var l = 0;
+
+                                if(data.count_parsed > 10){
+                                    if(data.count_parsed / 10 > 1){
+                                        l = parseInt((data.count_parsed / 10), 10) + 1;
+                                    }else{
+                                        l = (data.count_parsed / 10).toFixed();
+                                    }
+                                }else{
+                                    if(data.count_parsed / 10 < 1){
+                                        l = 1;
+                                    }else{
+                                        l = (data.count_parsed / 10).toFixed();
+                                    }
+                                }
+
+                                if(data.count_parsed > 10){
+                                    paginatePrint(l, page_number); // Рисуем пагинацию
+                                }
+
                                 $(".task_result_span_parsed").text(data.count_parsed);
                                 $(".task_result_span_queue").text(data.count_queue);
                                 $(".task_result_span_sended").text(data.count_sended);
@@ -354,20 +375,50 @@
 
                                 if (Object.keys(data.result).length > 0) {
                                     $('.no_results_class').remove();
+                                    $(".task_result_tbody").html("");
                                 }
 
-                                    paginateConstruct(1);
+                                var i = 1;
+
+                                data.result.forEach(function (item, i, arr) {
+                                    var socn = "";
+
+                                    if(item.vk_id != null){
+                                        socn = "ВК "+item.vk_id;
+                                    }
+                                    if(item.ok_user_id != null){
+                                        socn = "ОК "+item.ok_user_id;
+                                    }
+                                    if(item.fb_id != null){
+                                        socn = "ФБ "+item.fb_id;
+                                    }
+                                    if(item.tw_user_id != null){
+                                        socn = "Твиттер "+item.tw_user_id;
+                                    }
+                                    if(item.ins_user_id != null){
+                                        socn = "Инстаграм "+item.ins_user_id;
+                                    }
+
+                                    $(".task_result_table").append("<tr>" +
+                                        "<td  data-id='" + item.id + "' data-task-id='" + item.task_id + "' data-list-number='"+ ((data.count_parsed - page_number * 10) + 10 - i ) +"'>" + ((data.count_parsed - page_number * 10) + 10 - i ) + "</td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.link+"\">" + item.link + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.name + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.city+"\">" + item.city + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.mails+"\">" + item.mails + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.phones+"\">" + item.phones + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.skypes+"\">" + item.skypes + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + socn + "</div></td>" +
+                                        "</tr>");
+                                });
 
                             }
                         },
                         dataType: "json"
                     });
 
-                }
             }
 
-            setInterval(
-                    getNewInfo, 3000);
+            setInterval(getNewInfo, 3000);
 
             function pagination(c, m) {
                 var current = c,
@@ -422,95 +473,6 @@
                 //Рисуем пагинацию
             }
 
-            function paginateConstruct(page)
-            {
-                window.location.hash = "page="+page;
-                $.ajax({
-                    method  : "get",
-                    url     : "{{ url('api/paginateParsed') }}/" + page + "/" + $(".reserve_task_id").data("taskId"),
-                    success : function (data) {
-
-                        console.log(data);
-
-                        var l = 0;
-
-                        if(data.number > 10){
-                            if(data.number / 10 > 1){
-                                l = parseInt((data.number / 10), 10) + 1;
-                            }else{
-                                l = (data.number / 10).toFixed();
-                            }
-                        }else{
-                           if(data.number / 10 < 1){
-                               l = 1;
-                           }else{
-                               l = (data.number / 10).toFixed();
-                           }
-                        }
-
-                        if(data.number > 10){
-                            paginatePrint(l, page); // Рисуем пагинацию
-                        }
-
-
-
-                        if (data.success == true) {
-
-                            $(".task_result_span_parsed").text(data.count_parsed);
-                            $(".task_result_span_queue").text(data.count_queue);
-                            $(".last_task_id").val(data.max_id);
-
-                            if (Object.keys(data.result).length > 0) {
-                                $('.no_results_class').remove();
-                                $(".task_result_tbody").html("");
-                            }
-
-                            //if(page != 0 || page != 1){
-                                var i = 1;
-                                data.result.forEach(function (item, i, arr) {
-
-                                    var socn = "";
-
-                                    if(item.vk_id != null){
-                                        socn = "ВК "+item.vk_id;
-                                    }
-                                    if(item.ok_user_id != null){
-                                        socn = "ОК "+item.ok_user_id;
-                                    }
-                                    if(item.fb_id != null){
-                                        socn = "ФБ "+item.fb_id;
-                                    }
-                                    if(item.tw_user_id != null){
-                                        socn = "Твиттер "+item.tw_user_id;
-                                    }
-                                    if(item.ins_user_id != null){
-                                        socn = "Инстаграм "+item.ins_user_id;
-                                    }
-
-                                    $(".task_result_table").append("<tr>" +
-                                            "<td  data-id='" + item.id + "' data-task-id='" + item.task_id + "' data-list-number='"+ ((data.number - page * 10) + 10 - i ) +"'>" + ((data.number - page * 10) + 10 - i ) + "</td>" +
-                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.link+"\">" + item.link + "</div></td>" +
-                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.vk_name + "</div></td>" +
-                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.vk_city+"\">" + item.vk_city + "</div></td>" +
-                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.mails + "</div></td>" +
-                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.phones + "</div></td>" +
-                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.skypes + "</div></td>" +
-                                            "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + socn + "</div></td>" +
-                                            "</tr>");
-
-                                });
-
-                            //}
-                        }
-
-
-                        console.log(data);
-
-                    },
-                    dataType: "json"
-                });
-            }
-
             $("body").on("click", ".pagination a", function (e) {
                 e.preventDefault();
                 if($(this).text() == "..."){
@@ -518,7 +480,7 @@
                 }
                 var page = $(this).text() == 0 ? 1 : $(this).text();
                 window.location.hash = "page="+page;
-                paginateConstruct(parseInt(page, 10));
+                getNewInfo();
             });
 
             $('#file-upload').change(function() {

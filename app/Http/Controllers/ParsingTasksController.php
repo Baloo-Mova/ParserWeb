@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Contacts;
 use Illuminate\Http\Request;
 use App\Models\TasksType;
 use App\Models\Tasks;
@@ -433,8 +434,12 @@ class ParsingTasksController extends Controller {
 
     public function getCsv($id) {
 
-        $table = SearchQueries::where('task_id', '=', $id)
-            ->get(["link", "mails", "phones", "skypes", "vk_city", "vk_name"])->toArray();
+        $table = DB::select( DB::raw('SELECT search_queries.link, search_queries.city, search_queries.name,
+                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=1) as mails,
+                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=2) as phones,
+                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=3) as skypes 
+                                    FROM search_queries where task_id='.$id));
+
         $cols = [];
         $res = [];
         $i = 0;
@@ -443,25 +448,14 @@ class ParsingTasksController extends Controller {
             $file = fopen("parse_result_".$id.".csv", 'w');
 
             foreach ($table[0] as $key => $row) {
-                switch ($key){
-                    case "vk_name":
-                        $cols[] = "name";
-                        break;
-                    case "vk_city":
-                        $cols[] = "city";
-                        break;
-                    default:
-                        $cols[] = $key;
-                        break;
-                }
-
+                $cols[] = $key;
             }
 
             fputcsv($file, $cols, ";");
             foreach ($table as $row) {
                 $res = [];
                 foreach ($row as $item) {
-                    $res[] = $item === null ? null : "=\"" .iconv("UTF-8", "Windows-1251", $item). "\"";
+                    $res[] = $item === null ? null : "=\"" .iconv("UTF-8", "Windows-1251//IGNORE", $item). "\"";
                 }
                 $i++;
                 fputcsv($file, $res, ';');
@@ -487,37 +481,93 @@ class ParsingTasksController extends Controller {
             return redirect()->back();
         }
 
+        $task_id = $request->get('task_id');
+
         $row = 1;
         $res = [];
 
         $cols = [];
 
-        foreach (fgetcsv($file, 1000, ";") as $item){
-            switch ($item){
-                case "name":
-                    $cols[] = "vk_name";
-                    break;
-                case "city":
-                    $cols[] = "vk_city";
-                    break;
-                default:
-                    $cols[] = $item;
-                    break;
+        $contacts = [];
+        $noCols = [];
+
+        foreach (fgetcsv($file, 1000, ";") as $key=>$item){
+            if($item == "mails"){
+                $noCols["mails"] = $key;
+                continue;
             }
+            if($item == "phones"){
+                $noCols["phones"] = $key;
+                continue;
+            }
+            if($item == "skypes"){
+                $noCols["skypes"] = $key;
+                continue;
+            }
+            $cols[] = $item;
         }
 
         while (($data = fgetcsv($file, 1000, ";")) !== FALSE) {
 
             $num = count($data);
+            $res = [];
+            $contacts = [];
 
             for ($c=0; $c < $num; $c++) {
-                $res[$row][$cols[$c]] = ($data[$c] == '') ? NULL : str_replace(["\"", "="], "", $data[$c]);
+                if($c != $noCols["mails"] && $c != $noCols["phones"] && $c != $noCols["skypes"]){
+                    $res[$cols[$c]] = ($data[$c] == '') ? NULL : str_replace(["\"", "="], "", $data[$c]);
+                    $res["task_id"] = $task_id;
+                }
             }
-            $res[$row]["task_id"] = $request->get('task_id');
+
+            $ins = SearchQueries::create($res);
+
+            // mails
+            $tmp_res = trim(str_replace(["\"", "="], "", $data[$noCols["mails"]]));
+            if($tmp_res != ''){
+                $tmp = explode(",", $tmp_res);
+                if(count($tmp) > 1){
+                    foreach ($tmp as $i){
+                        $contacts[] = ["value" => $i, "type" => 1, "search_queries_id" => $ins->id];
+                    }
+                }else{
+                    $contacts[] = ["value" => $tmp[0], "type" => 1, "search_queries_id" => $ins->id];
+                }
+            }
+            //mails
+
+            //phones
+            $tmp_res = trim(str_replace(["\"", "="], "", $data[$noCols["phones"]]));
+            if($tmp_res != '') {
+                $tmp = explode(",", $tmp_res);
+                if (count($tmp) > 1) {
+                    foreach ($tmp as $i) {
+                        $contacts[] = ["value" => $i, "type" => 2, "search_queries_id" => $ins->id];
+                    }
+                } else {
+                    $contacts[] = ["value" => $tmp[0], "type" => 2, "search_queries_id" => $ins->id];
+                }
+            }
+            //phones
+            //
+            $tmp_res = trim(str_replace(["\"", "="], "", $data[$noCols["skypes"]]));
+            if($tmp_res != '') {
+                $tmp = explode(",", $tmp_res);
+                if (count($tmp) > 1) {
+                    foreach ($tmp as $i) {
+                        $contacts[] = ["value" => $i, "type" => 3, "search_queries_id" => $ins->id];
+                    }
+                } else {
+                    $contacts[] = ["value" => $tmp[0], "type" => 3, "search_queries_id" => $ins->id];
+                }
+            }
+            //
+
+            Contacts::insert($contacts);
             $row++;
+
         }
 
-        DB::table('search_queries')->insert($res);
         return redirect()->back();
     }
 
@@ -550,59 +600,23 @@ class ParsingTasksController extends Controller {
         if (!empty($mails_list)) {
 
             $mails = explode("\r\n", $mails_list);
-            $mails_number = count($mails);
-            $tmp_mail = [];
+            $contacts = [];
 
-            if ($mails_number > 3) {
-                foreach ($mails as $key => $value) {
-                    ++$key;
-                    $tmp_mail[] = $value;
+            $search_query = new SearchQueries;
+            $search_query->link = "Тестовая рассылка";
+            $search_query->task_id = $task_id;
+            $search_query->email_reserved = 0;
+            $search_query->email_sended = 0;
+            $search_query->sk_recevied = 0;
+            $search_query->sk_sended = 0;
+            $search_query->save();
 
-                    if ($key % 3 == 0) {
-                        $search_query = new SearchQueries;
-                        $search_query->link = "Тестовая рассылка";
-                        $search_query->mails = implode(",", $tmp_mail);
-                        $search_query->phones = null;
-                        $search_query->skypes = null;
-                        $search_query->task_id = $task_id;
-                        $search_query->email_reserved = 0;
-                        $search_query->email_sended = 0;
-                        $search_query->sk_recevied = 0;
-                        $search_query->sk_sended = 0;
-                        $search_query->save();
-
-                        unset($tmp_mail);
-                    }
-                    if ($key == $mails_number) {
-                        $search_query = new SearchQueries;
-                        $search_query->link = "Тестовая рассылка";
-                        $search_query->mails = implode(",", $tmp_mail);
-                        $search_query->phones = null;
-                        $search_query->skypes = null;
-                        $search_query->task_id = $task_id;
-                        $search_query->email_reserved = 0;
-                        $search_query->email_sended = 0;
-                        $search_query->sk_recevied = 0;
-                        $search_query->sk_sended = 0;
-                        $search_query->save();
-                    }
-                }
-            } else {
-                foreach ($mails as $item) {
-                    $tmp_mail[] = $item;
-                }
-                $search_query = new SearchQueries;
-                $search_query->link = "Тестовая рассылка";
-                $search_query->mails = implode(",", $tmp_mail);
-                $search_query->phones = null;
-                $search_query->skypes = null;
-                $search_query->task_id = $task_id;
-                $search_query->email_reserved = 0;
-                $search_query->email_sended = 0;
-                $search_query->sk_recevied = 0;
-                $search_query->sk_sended = 0;
-                $search_query->save();
+            foreach ($mails as $mailItem) {
+                $contacts[] = ["value" => $mailItem, "type" => 1, "search_queries_id" => $search_query->id];
             }
+
+            Contacts::insert($contacts);
+            $contacts = [];
         }
         //Обрабатываем список сайтов, если есть
         //Записываем в таблицу шаблонов mails
@@ -662,19 +676,22 @@ class ParsingTasksController extends Controller {
 
             $skypes = explode("\r\n", $skypes_list);
 
+            $search_query = new SearchQueries;
+            $search_query->link = "Тестовая рассылка";
+            $search_query->task_id = $task_id;
+            $search_query->email_reserved = 0;
+            $search_query->email_sended = 0;
+            $search_query->sk_recevied = 0;
+            $search_query->sk_sended = 0;
+            $search_query->save();
+
+            $contacts = [];
+
             foreach ($skypes as $item) {
-                $search_query = new SearchQueries;
-                $search_query->link = "Тестовая рассылка";
-                $search_query->mails = null;
-                $search_query->phones = null;
-                $search_query->skypes = $item;
-                $search_query->task_id = $task_id;
-                $search_query->email_reserved = 0;
-                $search_query->email_sended = 0;
-                $search_query->sk_recevied = 0;
-                $search_query->sk_sended = 0;
-                $search_query->save();
+                $contacts[] = ["value" => $item, "type" => 3, "search_queries_id" => $search_query->id];
             }
+
+            Contacts::insert($contacts);
         }
 
         //Записываем в таблицу шаблонов skypes
@@ -720,9 +737,6 @@ class ParsingTasksController extends Controller {
             foreach ($vks as $item) {
                 $search_query = new SearchQueries;
                 $search_query->link = "Тестовая рассылка";
-                $search_query->mails = " ";
-                $search_query->phones = " ";
-                $search_query->skypes = "";
                 $search_query->vk_id = $item;
                 $search_query->task_id = $task_id;
                 $search_query->email_reserved = 0;
@@ -945,21 +959,24 @@ class ParsingTasksController extends Controller {
         if (!empty($phones_list)) {
             $phones_list = str_replace(["+"],"",$phones_list);
             $phones_list = explode("\r\n", $phones_list);
-            $phones_list = implode(",", $phones_list);
+            $contacts = [];
            
           //dd($phones_list);
                 $search_query = new SearchQueries;
                 $search_query->link = "Тестовая рассылка";
-                $search_query->mails = " ";
-                $search_query->phones = $phones_list;
-                $search_query->skypes = "";
-                $search_query->fb_name = "";
                 $search_query->task_id = $task_id;
                 $search_query->email_reserved = 0;
                 $search_query->email_sended = 0;
                 $search_query->sk_recevied = 0;
                 $search_query->sk_sended = 0;
                 $search_query->save();
+
+            foreach($phones_list as $ph){
+                $contacts[] = ["type" => 2, "value" => $ph, "search_queries_id" => $search_query->id];
+            }
+
+            Contacts::insert($contacts);
+
             
         }
 

@@ -18,6 +18,7 @@ use App\Models\GoodProxies;
 use App\Models\Proxy as ProxyItem;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use App\Models\Contacts;
 
 class ParseOkGroups extends Command
 {
@@ -250,7 +251,12 @@ class ParseOkGroups extends Command
                     if (!empty($mails_group)) {
 
                         foreach ($mails_group as $m) {
-                            $mails[] = $m;
+                            $contacts[] =  [
+                                "value" => $m,
+                                "search_queries_id" => 0,
+                                "type" => Contacts::MAILS
+                            ];
+
                         }
                     }
 
@@ -261,10 +267,12 @@ class ParseOkGroups extends Command
                     if (!empty($skypes_group)) {
 
                         foreach ($skypes_group as $s) {
-                            $skypes[] = $s;
+                            $contacts[] = [
+                                "value" => $s,
+                                "search_queries_id" => 0,
+                                "type" => Contacts::SKYPES
+                            ];
                         }
-                    } else {
-                        $skypes = [];
                     }
 
                     $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url . "/members");
@@ -331,10 +339,13 @@ class ParseOkGroups extends Command
                             //  dd($ex->getMessage());
 
                         }
+                        $page_numb++;
                         $query_data->offset = $page_numb;
                         $query_data->save();
                         $from->count_request += 1;
                         $from->save();
+
+
 
                         //$this->cur_proxy->release();
 
@@ -372,20 +383,25 @@ class ParseOkGroups extends Command
                     $from->reserved = 0;
                     $from->save();
                   //  dd("dd");
-                    SearchQueries::insert([
+                    $search_q = SearchQueries::create([
                         'link' => "https://ok.ru" . $gr_url,
-                        'mails' => count($mails) != 0 ? implode(",", $mails) : null,
-                        'phones' => null,
-                        'skypes' => count($skypes) != 0 ? implode(",", $skypes) : null,
+                        //'mails' => count($mails) != 0 ? implode(",", $mails) : null,
+                        //'phones' => null,
+                        //'skypes' => count($skypes) != 0 ? implode(",", $skypes) : null,
                         'task_id' => $query_data->task_id,
-                        'fb_name' => null,
-                        'vk_name' => isset($fio) && strlen($fio) > 0 && strlen($fio) < 500 ? $this->clearstr($fio) : "",
-                        'vk_city' => isset($user_info) && strlen($user_info) > 0 && strlen($user_info) < 500 ? $user_info : null,
+                        'name' => (isset($fio) && strlen($fio) > 0 && strlen($fio) < 500) ? $this->clearstr($fio) : "",
+                        'city' => isset($user_info) && strlen($user_info) > 0 && strlen($user_info) < 500 ? $user_info : null,
                         'ok_user_id' => null, //isset($people_id) ? $people_id :
-
-
                     ]);
                     //$this->saveInfo($gr_url, null, null, $mails, $skypes, $query_data->task_id, null);
+
+                    foreach ($contacts as $key=>$sk){
+                        $contacts[$key]["search_queries_id"] = $search_q->id;
+                    }
+
+                    Contacts::insert($contacts);
+
+
 
                     $query_data->delete();    // Получили всех пользователей, удаляем группу
                     if ($from->count_request > 1000) {
@@ -407,9 +423,8 @@ class ParseOkGroups extends Command
                         $groups_data = $this->client->request('GET', 'http://ok.ru' . $item->group_url);
                         $html_doc = $groups_data->getBody()->getContents();
 
-                        $mails = [];
-                        $skypes = [];
-                        $phones = [];
+                        $contacts = [];
+
                         $this->crawler->clear();
                         $this->crawler->load($html_doc);
 
@@ -424,7 +439,11 @@ class ParseOkGroups extends Command
                         if (!empty($mails_users)) {
 
                             foreach ($mails_users as $m1) {
-                                $mails[] = $m1;
+                                $contacts[] = [
+                                    "value" => $m1,
+                                    "search_queries_id" => 0,
+                                    "type" => Contacts::MAILS
+                                ];
                             }
                         }
 
@@ -433,7 +452,11 @@ class ParseOkGroups extends Command
                         if (!empty($skypes_users)) {
 
                             foreach ($skypes_users as $s1) {
-                                $skypes[] = $s1;
+                                $contacts[] = [
+                                    "value" => $s1,
+                                    "search_queries_id" => 0,
+                                    "type" => Contacts::SKYPES
+                                ];
                             }
                         }
 
@@ -448,19 +471,24 @@ class ParseOkGroups extends Command
 
                         // $this->saveInfo($item->group_url, $fio, $user_info, $mails, $skypes, $item->task_id, $people_id);
                         try {
-                            SearchQueries::insert([
+                            $sq = SearchQueries::create([
                                 'link' => "https://ok.ru" . $item->group_url,
-                                'mails' => count($mails) != 0 ? implode(",", $mails) : null,
-                                'phones' => null,
-                                'skypes' => count($skypes) != 0 ? implode(",", $skypes) : null,
+                                //'mails' => count($mails) != 0 ? implode(",", $mails) : null,
+                                //'phones' => null,
+                                //'skypes' => count($skypes) != 0 ? implode(",", $skypes) : null,
                                 'task_id' => $item->task_id,
-                                'fb_name' => null,
-                                'vk_name' => isset($fio) && strlen($fio) > 0 && strlen($fio) < 500 ? $this->clearstr($fio) : "",
-                                'vk_city' => isset($user_info) && strlen($user_info) > 0 && strlen($user_info) < 500 ? $user_info : null,
-                                'ok_user_id' => $people_id,
-
-
+                                'city' => isset($user_info) && strlen($user_info) > 0 && strlen($user_info) < 500 ? $user_info : null,
+                                'name' => (isset($fio) && strlen($fio) > 0 && strlen($fio) < 500) ? $this->clearstr($fio) : "",
+                                'ok_user_id' => isset($people_id) ? $people_id : null,
                             ]);
+
+
+                            foreach ($contacts as $key=>$k){
+                                $contacts[$key]["search_queries_id"] = $sq->id;
+                            }
+
+                            Contacts::insert($contacts);
+
                         } catch (\Exception $exp) {
                         }
                         $item->delete();

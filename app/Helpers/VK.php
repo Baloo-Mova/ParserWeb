@@ -17,6 +17,7 @@ use App\Models\Proxy as ProxyItem;
 use App\Models\ProxyTemp;
 use App\Models\UserNames;
 use App\Helpers\PhoneNumber;
+use App\Models\Contacts;
 
 class VK {
 
@@ -715,13 +716,13 @@ class VK {
                 $emails = array_unique($emails[0]);
                 //dd($emails);
                 $skypes = strpos($data, "skype");
-                $skype = "";
+                $skype = [];
                 if ($skypes) {
-                    $skype = (substr($data, $skypes, 20));
+                    $skype[] = (substr($data, $skypes, 20));
                 }
-                echo($skype);
+                //echo $skype[0];
                 if (count($emails) != 0) {
-                    $txt_email = implode($emails, ', ');
+
 
                     $search = SearchQueries::where(['link' => $vklink->link, 'task_id' => $vklink->task_id])->first();
 
@@ -729,13 +730,12 @@ class VK {
                     if (empty($search)) {
                         $search_query = new SearchQueries;
                         $search_query->link = $vklink->link;
-                        $search_query->mails = $txt_email;
-                        $search_query->phones = " ";
-                        $search_query->skypes = $skype;
                         $search_query->vk_id = " "; //$vklink->vkuser_id;
-                        $search_query->vk_name = " ";
+                        $search_query->name = " ";
                         $search_query->task_id = $vklink->task_id;
                         $search_query->save();
+
+                        $this->saveContactsInfo($emails, $skype, [], $search_query->id);
                     }
                 }
                 $sender->reserved = 0;
@@ -916,18 +916,18 @@ class VK {
                 //print_r($usertmp);
                 if (empty($usertmp["deactivated"])) {
 
-                    $phones = "";
-                    $skype = "";
+                    $phones = [];
+                    $skype = [];
                     $city = "";
                     if (!empty($usertmp["home_phone"])) {
-                        $phones .= $usertmp["home_phone"] . ",";
+                        $phones[] = $usertmp["home_phone"];
                     }
                     if (!empty($usertmp["mobile_phone"])) {
-                        $phones .= $usertmp["mobile_phone"] . ",";
+                        $phones[] = $usertmp["mobile_phone"];
                     }
 
                     if (!empty($usertmp["skype"])) {
-                        $skype = $usertmp["skype"];
+                        $skype[] = $usertmp["skype"];
                     }
                     if (!empty($usertmp["city"])) {
                         $city = $usertmp["city"]["title"];
@@ -944,15 +944,14 @@ class VK {
 
                         $vkuser = new SearchQueries;
                         $vkuser->link = $user->link;
-                        $vkuser->mails = '';
-                        $vkuser->phones = $phones;
-                        $vkuser->skypes = $skype;
                         $vkuser->task_id = $user->task_id;
                         $vkuser->vk_id = $user->vkuser_id;
-                        $vkuser->vk_name = $usertmp["first_name"] . " " . $usertmp["last_name"];
-                        $vkuser->vk_city = $city;
+                        $vkuser->name = $usertmp["first_name"] . " " . $usertmp["last_name"];
+                        $vkuser->city = $city;
 
                         $vkuser->save();
+
+                        $this->saveContactsInfo([], $skype, $phones, $vkuser->id);
                     }
                     // echo("parse user complete - id ".$vkuser->vkuser_id."\n");
                     // $user->delete();
@@ -979,6 +978,49 @@ class VK {
                 }
             }
         }
+    }
+
+    public function saveContactsInfo($mails, $skypes, $phones, $search_q_id)
+    {
+        $contacts = [];
+
+        if (!empty($mails)) {
+
+            foreach ($mails as $ml) {
+                $contacts[] = [
+                    "value" => $ml,
+                    "search_queries_id" => $search_q_id,
+                    "type" => Contacts::MAILS
+                ];
+            }
+        }
+
+        if (!empty($skypes)) {
+
+            foreach ($skypes as $sk) {
+                $contacts[] = [
+                    "value" => $sk,
+                    "search_queries_id" => $search_q_id,
+                    "type" => Contacts::SKYPES
+                ];
+            }
+        }
+
+        if (!empty($phones)) {
+
+            foreach ($phones as $ph) {
+                $contacts[] = [
+                    "value" => $ph,
+                    "search_queries_id" => $search_q_id,
+                    "type" => Contacts::PHONES
+                ];
+            }
+        }
+
+        if(count($contacts) > 0){
+            Contacts::insert($contacts);
+        }
+
     }
 
     public function registrateUser() {

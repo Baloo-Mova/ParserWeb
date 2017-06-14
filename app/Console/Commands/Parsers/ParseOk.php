@@ -218,6 +218,7 @@ class ParseOk extends Command
 
                     $task->ok_offset = $page_numb;
                     $task->save();
+                    $page_numb++;
 
                     sleep(random_int(2, 7));
                     $from->increment('count_request');
@@ -233,7 +234,10 @@ class ParseOk extends Command
                         break;
                     }
                 } while (strlen($html_doc) > 200);
-                $from->reserved=0;
+                $from->reserved = 0;
+
+                $task->ok_reserved = 2;
+                $task->save();
 
                 $from->ok_user_tkn = $this->tkn;
                 $from->save();

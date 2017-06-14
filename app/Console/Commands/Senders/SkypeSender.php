@@ -10,6 +10,7 @@ use App\Models\Parser\ErrorLog;
 use Illuminate\Support\Facades\DB;
 use App\Models\SkypeLogins;
 use App\Helpers\Macros;
+use App\Models\Contacts;
 
 class SkypeSender extends Command
 {
@@ -87,28 +88,33 @@ class SkypeSender extends Command
 //                }
 
                 DB::transaction(function () {
-                    $this->task = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
-                        ['search_queries.skypes', '<>', ''],
-                        ['search_queries.sk_sended', '=', 0],
-                        ['search_queries.sk_recevied', '=', 0],
-                        ['tasks.need_send', '=', 1],
-                    ])->select('search_queries.*')->lockForUpdate()->first();
-
-                    if (isset($this->task)) {
-                        $this->task->sk_recevied = 1;
-                        $this->task->save();
+                    $this->task = Contacts::join('search_queries', 'search_queries.id', '=', 'contacts.search_queries_id')
+                        ->join('tasks', 'tasks.id', '=', 'search_queries.task_id')
+                        ->where([
+                            ['contacts.type', '=', 3],
+                            ['contacts.sended', '=', 0],
+                            ['contacts.reserved', '=', 0],
+                            ['tasks.need_send', '=', 1],
+                            ['tasks.active_type', '=', 1],
+                        ])
+                        ->lockForUpdate()->limit(10)->get(['contacts.*', 'search_queries.task_id']);
+                    if (isset($this->task) && count($this->task) > 0) {
+                        foreach ($this->task as $contact_item){
+                            $contact_item->reserved = 1;
+                            $contact_item->save();
+                        }
                     }
                 });
 
-                if ( ! isset($this->task)) {
+                if ( ! isset($this->task) || count($this->task) == 0) {
                     $this->sender->reserved = 0;
                     $this->sender->save();
                     sleep(10);
                     continue;
                 }
 
-                $skypes  = array_filter(explode(",", trim($this->task->skypes)));
-                $message = TemplateDeliverySkypes::where('task_id', '=', $this->task->task_id)->first();
+                //$skypes  = array_filter(explode(",", trim($this->task->skypes)));
+                $message = TemplateDeliverySkypes::where('task_id', '=', $this->task[0]->task_id)->first();
 
                 if ( ! isset($message)) {
                     $this->sender->reserved = 0;
@@ -116,7 +122,7 @@ class SkypeSender extends Command
 
                     $log          = new ErrorLog();
                     $log->message = ErrorLog::SKYPE_NO_MESSAGE;
-                    $log->task_id = $this->task->id;
+                    $log->task_id = $this->task[0]->task_id;
                     $log->save();
                     sleep(10);
                     continue;
@@ -130,28 +136,31 @@ class SkypeSender extends Command
 
                     $log          = new ErrorLog();
                     $log->message = ErrorLog::SKYPE_MESSAGE_TEXT_ERROR;
-                    $log->task_id = $this->task->id;
+                    $log->task_id = $this->task[0]->id;
                     sleep(10);
                     continue;
                 }
 
                 $sendedCounter = 0;
-                foreach ($skypes as $skype) {
+                foreach ($this->task as $skype) {
                     if (empty($skype)) {
                         continue;
                     }
 
-                    $is_friend = $this->skype->isMyFrined($skype);
+                    $is_friend = $this->skype->isMyFrined($skype->value);
 
                     if ($is_friend) {
-                        if ($this->skype->sendMessage($skype, $str_mes)) {
+                        if ($this->skype->sendMessage($skype->value, $str_mes)) {
                             $sendedCounter++;
                         }
                     } else {
-                        if ($this->skype->addFriend($skype, $str_mes)) {
+                        if ($this->skype->addFriend($skype->value, $str_mes)) {
                             $sendedCounter++;
                         }
                     }
+
+                    $skype->sended = 1;
+                    $skype->save();
 
                     sleep(random_int(1, 5));
                 }
@@ -159,13 +168,13 @@ class SkypeSender extends Command
                 $this->sender->reserved = 0;
                 $this->sender->save();
 
-                $this->task->sk_sended = $sendedCounter;
-                $this->task->save();
+                SearchQueries::where('id', $skype->search_queries_id)->update(["sk_sended" => $sendedCounter]);
+
                 sleep(random_int(10, 15));
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
                 $log->message = "SKYPE sender" . $ex->getMessage() . " " . $ex->getLine();
-                $log->task_id = $this->task->id;
+                $log->task_id = 0;
                 $log->save();
             }
         }

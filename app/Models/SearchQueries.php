@@ -15,8 +15,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $phones_reserved_viber
  * @property string $skypes
  * @property string $vk_id
- * @property string $vk_city
- * @property string $vk_name
+ * @property string $city
+ * @property string $name
  * @property int $vk_sended
  * @property int $vk_reserved
  * @property int $task_id
@@ -31,7 +31,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $tw_sended
  * @property int $tw_reserved
  * @property string $fb_id
- * @property string $fb_name
  * @property int $fb_sended
  * @property int $fb_reserved
  * @property string $ins_user_id
@@ -84,15 +83,15 @@ class SearchQueries extends Model
         'query',
         'task_id',
         'vk_id',
-        'vk_city',
-        'vk_name',
+        'city',
+        'name',
         'vk_reserved',
         'vk_sended',
         'sk_recevied',
         'sk_sended',
         'fb_sended',
         'fb_reserved',
-        'fb_name',
+        'ok_user_id',
     ];
 
 
@@ -104,4 +103,5 @@ class SearchQueries extends Model
     public function getSkypeTemplate(){
         return TemplateDeliverySkypes::where('task_id', '=', $this->task_id)->first();
     }
+
 }
