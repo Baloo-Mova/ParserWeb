@@ -327,6 +327,7 @@
     <script>
         $(document).ready(function () {
             window.number = 1;
+            needCheck = true;
 
             getNewInfo();
 
@@ -418,7 +419,15 @@
 
             }
 
-            setInterval(getNewInfo,5000);
+            function newPage(){
+                getNewInfo();
+            }
+
+            setInterval(function() {
+                if(needCheck) {
+                    getNewInfo();
+                }
+            },5000);
 
             function pagination(c, m) {
                 var current = c,
@@ -480,7 +489,15 @@
                 }
                 var page = $(this).text() == 0 ? 1 : $(this).text();
                 window.location.hash = "page="+page;
-                getNewInfo();
+                if(page > 1){
+                    needCheck = false;
+                    newPage();
+                }else{
+                    needCheck = true;
+                    getNewInfo();
+                }
+
+
             });
 
             $('#file-upload').change(function() {
