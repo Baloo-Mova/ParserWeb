@@ -30,7 +30,6 @@ class APIController extends Controller
                                     (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=3) as skypes 
                                     FROM search_queries where task_id='.$taskId.' order by id desc limit '.$skip.',10'));
 
-
         if (count($results) > 0) {
             $maxId = $results[0]->id;
         }
@@ -48,14 +47,27 @@ class APIController extends Controller
             ->select('contacts.id')
             ->count();
 
-        return json_encode([
-            'success' => true,
-            'count_parsed' => $count,
-            'count_queue' => $countQueue,
-            'count_sended' => $countSended,
-            'max_id' => $maxId,
-            'result' => $results
-        ]);
+
+        if($lastId == $maxId){
+            return json_encode([
+                'success' => true,
+                'count_parsed' => $count,
+                'count_queue' => $countQueue,
+                'count_sended' => $countSended,
+                'max_id' => $maxId,
+                'result' => null
+            ]);
+        }else{
+            return json_encode([
+                'success' => true,
+                'count_parsed' => $count,
+                'count_queue' => $countQueue,
+                'count_sended' => $countSended,
+                'max_id' => $maxId,
+                'result' => $results
+            ]);
+        }
+
     }
 
     public function getSelectEmailTemplate(Request $request, $id)

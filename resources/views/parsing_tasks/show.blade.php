@@ -418,7 +418,7 @@
 
             }
 
-            setInterval(getNewInfo, 3000);
+            setInterval(getNewInfo,5000);
 
             function pagination(c, m) {
                 var current = c,
