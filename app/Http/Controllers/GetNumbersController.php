@@ -34,7 +34,6 @@ class GetNumbersController extends Controller {
                 ['contacts.type', '=', 2],
                 ['contacts.reserved_whatsapp', '=', 0],
                 ['tasks.need_send', '=', 1],
-                ['tasks.active_type', '=', 1],
             ])
             ->lockForUpdate()->limit(10)->get(['contacts.*', 'search_queries.task_id']);
 
@@ -150,7 +149,6 @@ class GetNumbersController extends Controller {
                 ['contacts.type', '=', 2],
                 ['contacts.reserved_viber', '=', 0],
                 ['tasks.need_send', '=', 1],
-                ['tasks.active_type', '=', 1],
             ])
             ->lockForUpdate()->limit(10)->get(['contacts.*', 'search_queries.task_id']);
 

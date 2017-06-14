@@ -400,14 +400,22 @@
                                         socn = "Инстаграм "+item.ins_user_id;
                                     }
 
+                                    var
+                                        link = item.link === null ? "" : item.link,
+                                        name = item.name === null ? "" : item.name,
+                                        city = item.city === null ? "" : item.city,
+                                        mails = item.mails === null ? "" : item.mails,
+                                        phones = item.phones === null ? "" : item.phones,
+                                        skypes = item.skypes === null ? "" : item.skypes;
+
                                     $(".task_result_table").append("<tr>" +
                                         "<td  data-id='" + item.id + "' data-task-id='" + item.task_id + "' data-list-number='"+ ((data.count_parsed - page_number * 10) + 10 - i ) +"'>" + ((data.count_parsed - page_number * 10) + 10 - i ) + "</td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.link+"\">" + item.link + "</div></td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.name + "</div></td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.city+"\">" + item.city + "</div></td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.mails+"\">" + item.mails + "</div></td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.phones+"\">" + item.phones + "</div></td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.skypes+"\">" + item.skypes + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ link+"\">" + link + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + name + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ city+"\">" + city + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ mails+"\">" + mails + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ phones+"\">" + phones + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ skypes+"\">" + skypes + "</div></td>" +
                                         "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + socn + "</div></td>" +
                                         "</tr>");
                                 });
