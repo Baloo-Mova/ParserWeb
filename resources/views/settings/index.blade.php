@@ -79,7 +79,7 @@
                             </thead>
                             <tbody class='text-center'>
                                 @foreach($configs as $conf)
-                                    @if($conf->name == "TWSend" || $conf->name == "TWParse" || $conf->name == "TWGetGroups" || $conf->name == "InsParse" || $conf->name == "InsGetGroups")
+                                    @if($conf->name == "TWSend" || $conf->name == "TWParse" || $conf->name == "TWGetGroups" || $conf->name == "InsParse" || $conf->name == "InsGetGroups" || $conf->name == "EmailSend")
                                     @else
                                         <tr>
                                             <td>{{$conf->id}}</td>
