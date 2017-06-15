@@ -89,10 +89,10 @@
                                                     {{ csrf_field() }}
 
                                                     <div class="form-group">
-                                                       <input {{ $windows ? "disabled" : ""}} type="number" class="form-control" placeholder="" name="numprocs" id="numprocs" value="{{$conf->numprocs}}"/>
+                                                       <input type="number" class="form-control" placeholder="" name="numprocs" id="numprocs" value="{{$conf->numprocs}}"/>
                                                     </div>
 
-                                                        <button {{ $windows ? "disabled" : ""}} type="submit" class="btn btn-primary btn-flat"><span class="glyphicon glyphicon-floppy-disk"></span></button>
+                                                        <button type="submit" class="btn btn-primary btn-flat"><span class="glyphicon glyphicon-floppy-disk"></span></button>
 
                                                 </form></td>
                                             <td>{{$counters[$conf->name]}}</td>
