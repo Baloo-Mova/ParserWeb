@@ -66,26 +66,6 @@ class Tester extends Command
 
     public function handle()
     {
-//        $task = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')
-//            ->join('contacts', 'contacts.search_queries_id', '=', 'search_queries.id')
-//            ->where([
-//                ['contacts.type', '=', 3],
-//                ['contacts.sended', '=', 0],
-//                ['contacts.reserved', '=', 0],
-//                ['tasks.need_send', '=', 1],
-//            ])->get();
-
-        $skypes = Contacts::join('search_queries', 'search_queries.id', '=', 'contacts.search_queries_id')
-            ->join('tasks', 'tasks.id', '=', 'search_queries.task_id')
-            ->where([
-                    ['contacts.type', '=', 3],
-                    ['contacts.sended', '=', 0],
-                    ['contacts.reserved', '=', 0],
-                    ['tasks.need_send', '=', 1],
-                ])
-            ->limit(10)->get(['contacts.*']);
-
-
     }
 
 }

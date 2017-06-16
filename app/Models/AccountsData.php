@@ -97,6 +97,10 @@ class AccountsData extends Model
 
     }
 
+    public function proxy(){
+        return $this->belongsTo(ProxyItem::class, 'proxy_id');
+    }
+
     static function scopeVk($query)
     {
         $query->where('type_id', '=', 1)->orderBy('id', 'desc');

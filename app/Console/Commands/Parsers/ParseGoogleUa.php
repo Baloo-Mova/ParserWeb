@@ -74,7 +74,7 @@ class ParseGoogleUa extends Command
                     continue;
                 }
             } catch (Exception $exception) {
-                dd($exception->getLine());
+
             }
             $ignore = IgnoreDomains::all();
             try {
@@ -114,19 +114,18 @@ class ParseGoogleUa extends Command
                     $sitesCountWas = $sitesCountNow;
                     $crawler->clear();
                     $crawler->load($data);
-                    $listLinks = [];
                     foreach ($crawler->find('.r') as $item) {
                         $link = $item->find('a', 0);
                         if (isset($link) && ! empty($link->href)) {
                             if ($this->validate($link->href, $ignore)) {
                                 $data = parse_url($link->href, PHP_URL_HOST);
                                 $tmp  = SiteLinks::where([
-                                    ['task_id', '=', $this->content['task']->id],
+                                    ['task_id', '=', trim($this->content['task']->id)],
                                     ['link', 'like', '%' . $data . '%']
                                 ])->first();
-
-                                if (is_null($tmp)) {
-                                    array_push($listLinks, [
+                                if ( ! isset($tmp)) {
+                                    SiteLinks::insert([
+                                        'link'     => $link->href,
                                         'link'     => $link->href,
                                         'task_id'  => $this->content['task']->id,
                                         'reserved' => 0
@@ -136,18 +135,9 @@ class ParseGoogleUa extends Command
                             $sitesCountNow++;
                         }
                     }
-                    try {
 
-                        SiteLinks::insert($listLinks);
-                    } catch (\Exception $ex) {
-                        $log          = new ErrorLog();
-                        $log->message = $ex->getMessage() . " line:" . __LINE__;
-                        $log->task_id = $this->content['task']->id;
-                        $log->save();
-                    }
                     $i++;
-                    $listLinks = [];
-                    $task      = Tasks::where('id', '=', $this->content['task']->id)->first();
+                    $task = Tasks::where('id', '=', $this->content['task']->id)->first();
                     if (isset($task)) {
                         $task->google_ua_offset = $i;
                         $task->save();

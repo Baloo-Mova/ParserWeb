@@ -19,4 +19,5 @@ Route::get('/getProxy/{type}',["uses"=> "APIController@getRandomProxy", "as"=>"g
 Route::post('/addAccs/{type}',["uses"=> "APIController@addAccs", "as"=>"add.accs"]);
 
 Route::get('/getEmailSendData',['uses'=>'APIController@getEmailSendData','as'=>'send.email-data']);
+Route::post('/getEmailSendResult',['uses'=>'APIController@getEmailSendResult','as'=>'get.email-data']);
 
