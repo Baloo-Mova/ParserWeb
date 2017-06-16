@@ -16,6 +16,7 @@ use App\Models\EmailTemplates;
 use App\Models\AccountsData;
 use App\Models\Proxy;
 use App\Models\SkypeLogins;
+use App\Helpers\Macros;
 
 class APIController extends Controller
 {
@@ -80,13 +81,23 @@ class APIController extends Controller
         }
 
         DB::transaction(function () {
-            $this->data = Contacts::join('search_queries', 'search_queries.id', '=',
-                'contacts.search_queries_id')->join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
-                ['contacts.type', '=', Contacts::MAILS],
-                ['contacts.sended', '=', 0],
-                ['contacts.reserved', '=', 0],
-                ['tasks.need_send', '=', 1],
-            ])->lockForUpdate()->limit(3)->get(['contacts.*','tasks.id']);
+            $this->data = Contacts::join('search_queries', 'search_queries.id', '=', 'contacts.search_queries_id')
+                ->join('tasks', 'tasks.id', '=', 'search_queries.task_id')
+                ->join('template_delivery_mails', 'template_delivery_mails.task_id', '=', 'search_queries.task_id')
+                ->where([
+                    ['contacts.type', '=', Contacts::MAILS],
+                    ['contacts.sended', '=', 0],
+                    ['contacts.reserved', '=', 0],
+                    ['tasks.need_send', '=', 1],
+                ])
+                ->lockForUpdate()
+                ->limit(3)
+                ->get([
+                    'contacts.*',
+                    'search_queries.task_id',
+                    'template_delivery_mails.subject',
+                    'template_delivery_mails.text',
+                ]);
 
             if (isset($this->data) && count($this->data) > 0) {
                 Contacts::whereIn('id', array_column($this->data->toArray(), 'id'))->update([
@@ -95,7 +106,25 @@ class APIController extends Controller
             }
         });
 
-        $emails = array_column($this->data->toArray(), 'value');
+        $emails = [];
+
+        foreach ($this->data as $item){
+
+            if (substr_count($item->subject, "{") == substr_count($item->subject, "}")) {
+                $subject = Macros::convertMacro($item->subject);
+            }
+
+            if (substr_count($item->text, "{") == substr_count($item->text, "}")) {
+                $text = Macros::convertMacro($item->text);
+            }
+
+            $emails[] = [
+                "subj" => $subject,
+                "mess" => $text,
+                "mail" => $item->value,
+                "ishtml" => $this->is_html($text),
+            ];
+        }
 
         if (count($emails) > 0) {
 
@@ -106,6 +135,11 @@ class APIController extends Controller
 
             return 0;
         }
+    }
+
+    public function is_html($string)
+    {
+        return preg_match("/<[^<]+>/",$string,$m) != 0;
     }
 
      public function getTaskParsedInfo($taskId, $lastId, $page_number)
