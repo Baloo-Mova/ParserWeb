@@ -172,9 +172,24 @@ class APIController extends Controller
             + FBLinks::where('task_id', '=', $taskId)->count();
 
         $countSended = Contacts::join('search_queries', 'contacts.search_queries_id', '=', 'search_queries.id')
-            ->where(['search_queries.task_id' => $taskId, 'contacts.sended' => 1])
+            ->where([
+                'search_queries.task_id' => $taskId,
+                'contacts.sended' => 1
+            ])
             ->select('contacts.id')
             ->count();
+
+        $whSended = Contacts::join('search_queries', 'contacts.search_queries_id', '=', 'search_queries.id')
+            ->where([
+                'contacts.type' => 2,
+                'search_queries.task_id' => $taskId,
+                'contacts.reserved_whatsapp' => 1
+            ])
+            ->count();
+
+        if(isset($whSended) && $whSended > 0){
+            $countSended += $whSended;
+        }
 
 
         if($lastId == $maxId){

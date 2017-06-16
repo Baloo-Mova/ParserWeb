@@ -790,9 +790,6 @@ class ParsingTasksController extends Controller {
             foreach ($oks as $item) {
                 $search_query = new SearchQueries;
                 $search_query->link = "Тестовая рассылка";
-                $search_query->mails = " ";
-                $search_query->phones = " ";
-                $search_query->skypes = "";
                 $search_query->vk_id = null;
                 $search_query->ok_user_id = $item;
                 $search_query->task_id = $task_id;
