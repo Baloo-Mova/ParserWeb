@@ -35,9 +35,14 @@ class APIController extends Controller
                 Contacts::where(['value' => $email])->update(['sended' => $resEmail]);
             }
 
-            AccountsData::where(['login' => $result['account'], 'reserved' => 1])->update([
+            AccountsData::where([
+                'login' => $result['account'],
+                'reserved' => 1
+            ])
+            ->update([
                 'reserved' => 0,
-                'valid'    => $result['AccountStatus']
+                'valid'    => $result['AccountStatus'],
+                'count_request'=>DB::raw('count_request + 1')
             ]);
         }
     }
