@@ -185,7 +185,15 @@ class APIController extends Controller
                 'search_queries.task_id' => $taskId,
                 'contacts.reserved_whatsapp' => 1
             ])
-            ->count();
+            ->count()
+            + SearchQueries::where([
+                ['task_id', '=', $taskId],
+                ['ok_sended', '=', '1']
+            ])->count()
+            + SearchQueries::where([
+                ['task_id', '=', $taskId],
+                ['vk_sended', '=', '1']
+            ])->count();
 
         if(isset($whSended) && $whSended > 0){
             $countSended += $whSended;
