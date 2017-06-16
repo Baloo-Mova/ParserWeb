@@ -82,20 +82,24 @@ class Tester extends Command
                     }
                 });
 
+                $this->sender = SkypeLogins::find(19);
                 $this->skype = new Skype($this->sender);
+                //$is_friend = $this->skype->isMyFrined("live:petlyakssphone");
+                dd($this->skype);
 
-//                if ( ! $this->skype->checkLogin()) {
-//                    $this->sender->valid = 0;
-//                    $this->sender->save();
-//
-//                    $log          = new ErrorLog();
-//                    $log->message = ErrorLog::SKYPE_NOT_VALID_USER . " user id = " . $this->sender->id;
-//                    $log->task_id = 0;
-//                    $log->save();
-//
-//                    sleep(10);
-//                    continue;
-//                }
+                if ( ! $this->skype->checkLogin()) {
+
+                    $this->sender->valid = 0;
+                    $this->sender->save();
+
+                    $log          = new ErrorLog();
+                    $log->message = ErrorLog::SKYPE_NOT_VALID_USER . " user id = " . $this->sender->id;
+                    $log->task_id = 0;
+                    $log->save();
+
+                    sleep(10);
+                    continue;
+                }
 
                 DB::transaction(function () {
                     $this->task = Contacts::join('search_queries', 'search_queries.id', '=', 'contacts.search_queries_id')

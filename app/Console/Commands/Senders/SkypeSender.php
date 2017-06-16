@@ -76,7 +76,7 @@ class SkypeSender extends Command
 
                 $this->skype = new Skype($this->sender);
 
-                if ( ! $this->skype->checkLogin()) {
+                /*if ( ! $this->skype->checkLogin()) {
                     $this->sender->valid = 0;
                     $this->sender->save();
 
@@ -87,7 +87,7 @@ class SkypeSender extends Command
 
                     sleep(10);
                     continue;
-                }
+                }*/
 
                 DB::transaction(function () {
                     $this->task = Contacts::join('search_queries', 'search_queries.id', '=', 'contacts.search_queries_id')
@@ -149,6 +149,21 @@ class SkypeSender extends Command
                     }
 
                     $is_friend = $this->skype->isMyFrined($skype->value);
+
+                    if($is_friend == 10 || $is_friend == 20){
+
+                        $this->sender->valid = 0;
+                        $this->sender->save();
+
+                        Contacts::whereIn('id', array_column($this->task->toArray(),'id'))->update([
+                            'reserved' => 0
+                        ]);
+
+
+                        sleep(random_int(1, 10));
+                        break;
+                    }
+
 
                     if ($is_friend) {
                         if ($this->skype->sendMessage($skype->value, $str_mes)) {
