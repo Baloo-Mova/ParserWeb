@@ -63,8 +63,10 @@ class SkypeSender extends Command
                 $this->sender = null;
 
                 DB::transaction(function () {
-                    $this->sender = SkypeLogins::
-                    where('reserved', '=', '0')->orderBy('count_request', 'asc')->lockForUpdate()->first();
+                    $this->sender = SkypeLogins::where([
+                            ['reserved', '=', '0'],
+                            ['valid', '=', '1']
+                        ])->orderBy('count_request', 'asc')->lockForUpdate()->first();
 
                     if (isset($this->sender)) {
                         $this->sender->reserved = 1;
