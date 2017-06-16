@@ -7,6 +7,7 @@ use App\Models\Settings;
 //for create Programms configs 
 use App\Models\ProcessConfigs;
 use App\Models\Processes;
+use Mockery\Exception;
 use Supervisor\Configuration\Configuration;
 //use Supervisor\Configuration\Section\Supervisord;
 use Supervisor\Configuration\Section\Program;
@@ -25,39 +26,52 @@ class SettingsController extends Controller {
 		
        //$processes = Processes::orderBy('id', 'desc')->get();
         //for supervisors
-        $supervisor = new \Supervisor\Api('127.0.0.1', 9001, 'admin', 'admin');
-        $processestmp = $supervisor->getAllProcessInfo();
-        Processes::truncate();
-		foreach($processestmp as $proc){
-			//dd($proc);
-        $dbproc = Processes::where(["name" => $proc["name"]])->orderBy('id', 'desc')->first();
-		
-		if($dbproc==null){
-		$dbproc = new Processes();
-		
-		//
-		}
-		$dbproc->fill($proc);
-		$dbproc->groupname = 	$proc["group"];
-		$dbproc->errorlog = 	$proc["stderr_logfile"];
-        $dbproc->outlog = 	$proc["stdout_logfile"];
-		//$dbproc->created_at = date("Y-m-d H:i:s", $proc["start"]);
-		$dbproc->updated_at = date("Y-m-d H:i:s", $proc["now"]);
-		//dd($dbproc);
-		$dbproc->save();
-		
+        try {
+            $supervisor = new \Supervisor\Api('127.0.0.1', 9001, 'admin', 'admin');
+            $processestmp = $supervisor->getAllProcessInfo();
+            Processes::truncate();
+            foreach ($processestmp as $proc) {
+                //dd($proc);
+                $dbproc = Processes::where(["name" => $proc["name"]])->orderBy('id', 'desc')->first();
+
+                if ($dbproc == null) {
+                    $dbproc = new Processes();
+
+                    //
+                }
+                $dbproc->fill($proc);
+                $dbproc->groupname = $proc["group"];
+                $dbproc->errorlog = $proc["stderr_logfile"];
+                $dbproc->outlog = $proc["stdout_logfile"];
+                //$dbproc->created_at = date("Y-m-d H:i:s", $proc["start"]);
+                $dbproc->updated_at = date("Y-m-d H:i:s", $proc["now"]);
+                //dd($dbproc);
+                $dbproc->save();
+
+            }
+            // dd($processes);
+            $processes = Processes::where(['statename' => 'RUNNING'])->orwhere(['statename' => 'STARTING'])->orderBy('id', 'desc')->get();
+
+
+            $windows = false;
+        }catch(\Exception $ex){
+            $processes = [];
+            $windows = true;
         }
-               // dd($processes);
-        $processes = Processes::where(['statename' => 'RUNNING'])->orwhere(['statename'=> 'STARTING'])->orderBy('id','desc')->get();
+
+        $counters = array();
+        foreach ($configs as $conf) {
+            $counters += [$conf->name => Processes::where(['groupname' => $conf->name])->where(['statename' => 'RUNNING'])->groupBy('groupname')->count()];
+
+        }
 		
-         $counters= array(); 
-		 foreach($configs as $conf){
-			 $counters+=[$conf->name => Processes::where(['groupname'=>$conf->name])->where(['statename' => 'RUNNING'])->groupBy('groupname')->count()];
-			 
-			 }
-		          
-		
-        return view("settings.index", ["data" => $settings, "configs" => $configs, "processes" => $processes, "counters" =>$counters]);
+        return view("settings.index", [
+            "data" => $settings,
+            "windows" => $windows,
+            "configs" => $configs,
+            "processes" => $processes,
+            "counters" =>$counters
+        ]);
     }
 
     public function store(Request $request) {

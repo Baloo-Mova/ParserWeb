@@ -6,7 +6,7 @@
 
 @section('main-content')
 <div class="container-fluid spark-screen">
-    <div class="row">
+    <!--<div class="row">
         <div class="col-md-8 col-md-offset-2">
             <div class="box box-primary">
                 <div class="box-body">
@@ -21,11 +21,11 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div>-->
 
     <!--begin Process settings -->
     <div class="row">
-        <div class="col-md-8 col-md-offset-2">
+        <div class="col-md-12">
             <div class="box box-primary">
                 <div class="box-body">
                     <label for="best_proxies" class="control-labe">Настройка потоков</label>
@@ -51,10 +51,10 @@
                     </form>--}}
                     
                     <div>
-                        <a href="{{route('settings.process.start.all')}}" class="btn btn-success btn-flat" title="Startall" aria-label="View" data-pjax="0">
+                        <a {{ $windows ? "disabled" : ""}} href="{{route('settings.process.start.all')}}" class="btn btn-success btn-flat" title="Startall" aria-label="View" data-pjax="0">
                             Запустить все потоки
                         </a>
-                        <a href="{{route('settings.process.stop.all')}}" class="btn btn-danger btn-flat" title="Stopall" aria-label="View" data-pjax="0">
+                        <a {{ $windows ? "disabled" : ""}} href="{{route('settings.process.stop.all')}}" class="btn btn-danger btn-flat" title="Stopall" aria-label="View" data-pjax="0">
                             Отсановить все потоки
                         </a>
                     </div>
@@ -79,34 +79,35 @@
                             </thead>
                             <tbody class='text-center'>
                                 @foreach($configs as $conf)
-                                <tr>
-                                    <td>{{$conf->id}}</td>
-                                    <td>{{$conf->name}}</td>
-                                    <td>
-                                        <form action="{{route('settings.config.edit', [$conf->id])}}" method="post" class="form-inline">
-                                            {{ csrf_field() }}
+                                    @if($conf->name == "TWSend" || $conf->name == "TWParse" || $conf->name == "TWGetGroups" || $conf->name == "InsParse" || $conf->name == "InsGetGroups" || $conf->name == "EmailSend")
+                                    @else
+                                        <tr>
+                                            <td>{{$conf->id}}</td>
+                                            <td>{{$conf->name}}</td>
+                                            <td>
+                                                <form action="{{route('settings.config.edit', [$conf->id])}}" method="post" class="form-inline">
+                                                    {{ csrf_field() }}
 
-                                            <div class="form-group">
-                                               <input type="number" class="form-control" placeholder="" name="numprocs" id="numprocs" value="{{$conf->numprocs}}"/>
-                                            </div>
-                                       
-                                                <button type="submit" class="btn btn-primary btn-flat"><span class="glyphicon glyphicon-floppy-disk"></span></button>
-                                            
-                                        </form></td>
-                                    <td>{{$counters[$conf->name]}}</td>
-                                    
-                                    <td>
-                                        <a href="{{route('settings.process.start', [$conf->id])}}" title="Start" aria-label="View" data-pjax="0">
-                                            <span class="glyphicon glyphicon-play"></span>
-                                        </a>
+                                                    <div class="form-group">
+                                                       <input type="number" class="form-control" placeholder="" name="numprocs" id="numprocs" value="{{$conf->numprocs}}"/>
+                                                    </div>
 
-                                        <a href="{{route('settings.process.stop', [$conf->id])}}" title="Stop" aria-label="Update" data-pjax="0">
-                                            <span class="glyphicon glyphicon-stop"></span></a>
+                                                        <button type="submit" class="btn btn-primary btn-flat"><span class="glyphicon glyphicon-floppy-disk"></span></button>
 
+                                                </form></td>
+                                            <td>{{$counters[$conf->name]}}</td>
 
+                                            <td>
+                                                <a href="{{route('settings.process.start', [$conf->id])}}" title="Start" class="btn" style="width: 0px !important;" aria-label="View" data-pjax="0" {!! $windows ? "disabled" : "" !!}>
+                                                    <span class="glyphicon glyphicon-play"></span>
+                                                </a>
 
-                                    </td>
-                                </tr>
+                                                <a href="{{route('settings.process.stop', [$conf->id])}}" title="Stop" class="btn" style="width: 0px !important;" aria-label="Update" data-pjax="0" {!! $windows ? "disabled" : "" !!}>
+                                                    <span class="glyphicon glyphicon-stop"></span>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endif
                                 @endforeach
                             </tbody>
 

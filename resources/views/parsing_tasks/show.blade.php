@@ -225,7 +225,7 @@
                         </div>
                     </div>
                     <div class="box-footer text-center">
-                        <input type="hidden" class="last_task_id" value="0">
+                        <span class="last_task_id hidden" data-value="0"></span>
                     </div>
                 </div>
             </div>
@@ -327,12 +327,13 @@
     <script>
         $(document).ready(function () {
             window.number = 1;
+            needCheck = true;
 
             getNewInfo();
 
             function getNewInfo() {
                 var
-                    lastId      = $(".last_task_id").val(),
+                    lastId      = $(".last_task_id").data("value"),
                     taskId      = $(".reserve_task_id").data("taskId"),
                     page_number = Number(window.location.hash.replace(/\D+/g,"")) == 0 ? 1 : Number(window.location.hash.replace(/\D+/g,""));
                 window.number = $(".task_result_table td:first").data("listNumber") == null ? 0 : $(".task_result_table td:first").data("listNumber");
@@ -371,7 +372,7 @@
                                 $(".task_result_span_parsed").text(data.count_parsed);
                                 $(".task_result_span_queue").text(data.count_queue);
                                 $(".task_result_span_sended").text(data.count_sended);
-                                $(".last_task_id").val(data.max_id);
+                                $(".last_task_id").data("value", data.max_id);
 
                                 if (Object.keys(data.result).length > 0) {
                                     $('.no_results_class').remove();
@@ -399,14 +400,22 @@
                                         socn = "Инстаграм "+item.ins_user_id;
                                     }
 
+                                    var
+                                        link = item.link === null ? "" : item.link,
+                                        name = item.name === null ? "" : item.name,
+                                        city = item.city === null ? "" : item.city,
+                                        mails = item.mails === null ? "" : item.mails,
+                                        phones = item.phones === null ? "" : item.phones,
+                                        skypes = item.skypes === null ? "" : item.skypes;
+
                                     $(".task_result_table").append("<tr>" +
                                         "<td  data-id='" + item.id + "' data-task-id='" + item.task_id + "' data-list-number='"+ ((data.count_parsed - page_number * 10) + 10 - i ) +"'>" + ((data.count_parsed - page_number * 10) + 10 - i ) + "</td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.link+"\">" + item.link + "</div></td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + item.name + "</div></td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.city+"\">" + item.city + "</div></td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.mails+"\">" + item.mails + "</div></td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.phones+"\">" + item.phones + "</div></td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ item.skypes+"\">" + item.skypes + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ link+"\">" + link + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + name + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ city+"\">" + city + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ mails+"\">" + mails + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ phones+"\">" + phones + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ skypes+"\">" + skypes + "</div></td>" +
                                         "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + socn + "</div></td>" +
                                         "</tr>");
                                 });
@@ -418,7 +427,15 @@
 
             }
 
-            setInterval(getNewInfo, 3000);
+            function newPage(){
+                getNewInfo();
+            }
+
+            setInterval(function() {
+                if(needCheck) {
+                    getNewInfo();
+                }
+            },5000);
 
             function pagination(c, m) {
                 var current = c,
@@ -480,7 +497,15 @@
                 }
                 var page = $(this).text() == 0 ? 1 : $(this).text();
                 window.location.hash = "page="+page;
-                getNewInfo();
+                if(page > 1){
+                    needCheck = false;
+                    newPage();
+                }else{
+                    needCheck = true;
+                    getNewInfo();
+                }
+
+
             });
 
             $('#file-upload').change(function() {
