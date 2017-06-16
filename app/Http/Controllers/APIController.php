@@ -20,10 +20,93 @@ use App\Models\SkypeLogins;
 class APIController extends Controller
 {
 
-    public function getEmailSendData(){
-        echo 1;
+    public $data    = null;
+    public $account = null;
+
+    public function getEmailSendResult(Request $request)
+    {
+        $data = $request->getContent();
+        if (strlen($data) > 0) {
+            $result = json_decode($data, true);
+            foreach ($result['results'] as $key => $item) {
+                $email    = key($item);
+                $resEmail = $item[$email];
+                Contacts::where(['value' => $email])->update(['sended' => $resEmail]);
+            }
+
+            AccountsData::where(['login' => $result['account'], 'reserved' => 1])->update([
+                'reserved' => 0,
+                'valid'    => $result['AccountStatus']
+            ]);
+        }
     }
 
+    public function getEmailSendData()
+    {
+        DB::transaction(function () {
+            $this->account = AccountsData::where([
+                ['reserved', '=', '0'],
+                ['type_id', '=', 3],
+                ['valid', '=', 1]
+            ])->orderBy('count_request', 'asc')->with('proxy')->lockForUpdate()->first();
+
+            if (isset($this->account)) {
+                $this->account->reserved = 1;
+                $this->account->save();
+            }
+        });
+
+        if ( ! isset($this->account)) {
+            return 0;
+        }
+
+        $acc = null;
+
+        try {
+            $url_arr = parse_url($this->account->proxy->proxy);
+            $acc     = [
+                'smtp'          => $this->account->smtp_address,
+                'port'          => $this->account->smtp_port,
+                'login'         => $this->account->login,
+                'password'      => $this->account->password,
+                'proxyType'     => $url_arr['scheme'],
+                'proxyHost'     => $url_arr['host'],
+                'proxyPort'     => $url_arr['port'],
+                'proxyLogin'    => $this->account->proxy->login,
+                'proxyPassword' => $this->account->proxy->password
+            ];
+        } catch (\Exception $ex) {
+            echo 0;
+        }
+
+        DB::transaction(function () {
+            $this->data = Contacts::join('search_queries', 'search_queries.id', '=',
+                'contacts.search_queries_id')->join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
+                ['contacts.type', '=', Contacts::MAILS],
+                ['contacts.sended', '=', 0],
+                ['contacts.reserved', '=', 0],
+                ['tasks.need_send', '=', 1],
+            ])->lockForUpdate()->limit(3)->get(['contacts.*','tasks.id']);
+
+            if (isset($this->data) && count($this->data) > 0) {
+                Contacts::whereIn('id', array_column($this->data->toArray(), 'id'))->update([
+                    'reserved' => 1
+                ]);
+            }
+        });
+
+        $emails = array_column($this->data->toArray(), 'value');
+
+        if (count($emails) > 0) {
+
+            return ['emails' => $emails, 'account' => $acc];
+        } else {
+            $this->account->reserved = 0;
+            $this->account->save();
+
+            return 0;
+        }
+    }
 
      public function getTaskParsedInfo($taskId, $lastId, $page_number)
     {
@@ -35,6 +118,7 @@ class APIController extends Controller
                                     (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=2) as phones,
                                     (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=3) as skypes 
                                     FROM search_queries where task_id='.$taskId.' order by id desc limit '.$skip.',10'));
+
 
         if (count($results) > 0) {
             $maxId = $results[0]->id;
