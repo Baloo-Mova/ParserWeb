@@ -32,7 +32,11 @@ class APIController extends Controller
             foreach ($result['results'] as $key => $item) {
                 $email    = key($item);
                 $resEmail = $item[$email];
-                Contacts::where(['value' => $email])->update(['sended' => $resEmail]);
+                if($result['AccountStatus']) {
+                    Contacts::where(['value' => $email])->update(['sended' => $resEmail]);
+                }else{
+                    Contacts::where(['value' => $email])->update(['reserved' => 0]);
+                }
             }
 
             AccountsData::where([
