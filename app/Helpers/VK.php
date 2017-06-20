@@ -166,6 +166,9 @@ class VK
                 ]);
 
                 $data = $request->getBody()->getContents();
+
+                $sender->increment('count_request');
+
                 if (strpos($data, 'error') === true) {
                     $sender->reserved = 0;
                     $sender->save();
