@@ -242,6 +242,8 @@ class APIController extends Controller
         $data   = $request->get('data');
         $taskId = $request->get('taskid');
 
+        file_put_contents(storage_path('app/file.txt'), $data. "   ".PHP_EOL.$taskId);
+
         $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
 
         $crawler->load($data);
