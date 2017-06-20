@@ -48,7 +48,7 @@ class VK
                             ['valid', '=', 1],
                             ['is_sender', '=', 1],
                             ['reserved', '=', 0],
-
+                            ['count_request', '<', 11]
                         ])->orderBy('count_request', 'asc')->first();
 
                         if ( ! isset($sender)) {
@@ -166,6 +166,9 @@ class VK
                 ]);
 
                 $data = $request->getBody()->getContents();
+
+                $sender->increment('count_request');
+
                 if (strpos($data, 'error') === true) {
                     $sender->reserved = 0;
                     $sender->save();
