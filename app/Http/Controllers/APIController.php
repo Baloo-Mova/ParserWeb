@@ -20,8 +20,6 @@ use App\Models\AccountsData;
 use App\Models\Proxy;
 use App\Models\SkypeLogins;
 use App\Helpers\Macros;
-use App\Models\Tasks;
-use App\Models\TasksType;
 
 class APIController extends Controller {
 
@@ -548,7 +546,32 @@ class APIController extends Controller {
     }
 
     public function updateTaskFB(Request $request) {
+         
+         $json = $request->getContent();
+
+        $json = json_decode($json, true);
+        if(!isset($json['task_id'])) return ['response'=>null];
         
+      
+            $task = Tasks::where(['id'=>$json['task_id']])->first();
+            if (!isset($task)) {
+                return;
+            }
+
+            //$task->fb_reserved = 1;
+            $task->save();
+          
+       
+        if (!isset($task)) {
+            return ['response' => null];
+        } else
+        {
+            if(isset($json['fb_reserved'])) $task->fb_reserved = $json['fb_reserved'];
+            if(isset($json['fb_complete'])) $task->fb_complete = $json['fb_complete'];
+            $task->save();
+            return ['response' => 'OK'];
+        }
+        return ['response' => null];
     }
 
     public function getFBLinks() {
