@@ -47,11 +47,8 @@ class VK
                             ['type_id', '=', 1],
                             ['valid', '=', 1],
                             ['is_sender', '=', 1],
-<<<<<<< HEAD
-                            ['reserved', '=', 0], 
-=======
                             ['reserved', '=', 0],
->>>>>>> b92881ed2782ee37a8caefdb633d727683a341ae
+
                         ])->orderBy('count_request', 'asc')->first();
 
                         if ( ! isset($sender)) {
@@ -152,11 +149,8 @@ class VK
                 }
 
                 preg_match_all("/   hash\: '(\w*)'/s", $data, $chas);
-<<<<<<< HEAD
-                $chas = $chas[1];
-=======
+
                 $chas    = $chas[1];
->>>>>>> b92881ed2782ee37a8caefdb633d727683a341ae
                 $request = $this->client->post("https://vk.com/al_im.php", [
 
                     'form_params' => [
@@ -170,29 +164,15 @@ class VK
                         'to_ids'  => $to_userId,
                     ],
                 ]);
-<<<<<<< HEAD
-//                $this->cur_proxy->inc();
-//                $sender->count_request += 1;
-//                $sender->save();
-                $data = $request->getBody()->getContents();
-                //echo"\r\n"."from: ".$sender->login."|".$data;;
-=======
-                $data    = $request->getBody()->getContents();
 
->>>>>>> b92881ed2782ee37a8caefdb633d727683a341ae
+                $data = $request->getBody()->getContents();
                 if (strpos($data, 'error') === true) {
                     $sender->reserved = 0;
                     $sender->save();
 
                     return false;
                 }
-<<<<<<< HEAD
                 $data = iconv('windows-1251','UTF-8',$data);
-                
-=======
-                $data = iconv('windows-1251', 'UTF-8', $data);
-                echo "\n" . $data;
->>>>>>> b92881ed2782ee37a8caefdb633d727683a341ae
 
                 if (strpos($data, "отправлено") !== false) {
                     $sender->reserved = 0;
