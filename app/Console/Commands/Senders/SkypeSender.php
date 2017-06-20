@@ -74,6 +74,11 @@ class SkypeSender extends Command
                     }
                 });
 
+                if(!isset($this->sender)){
+                    sleep(10);
+                    continue;
+                }
+
                 $this->skype = new Skype($this->sender);
 
 

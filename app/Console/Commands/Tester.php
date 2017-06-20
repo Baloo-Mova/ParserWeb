@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Proxy;
+use App\Models\SkypeLogins;
 use Illuminate\Console\Command;
 use App\Helpers\SimpleHtmlDom;
 use App\Models\Skypes;
@@ -46,8 +47,10 @@ class Tester extends Command
 
     public function handle()
     {
- 
- 
+
+        $data= SkypeLogins::find(50);
+
+        $test = $data->proxy;
     }
 
 }
