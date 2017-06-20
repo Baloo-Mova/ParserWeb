@@ -162,9 +162,9 @@ class ParseSite extends Command
 
                     $additionalLinks = $this->extractlinks($data, $baseData);
 
-                    if (count($additionalLinks) > 30) {
-                        array_splice($additionalLinks, 30, count($additionalLinks));
-                    }
+//                    if (count($additionalLinks) > 30) {
+//                        array_splice($additionalLinks, 30, count($additionalLinks));
+//                    }
 
                     foreach ($additionalLinks as $l) {
                         try {
@@ -188,7 +188,9 @@ class ParseSite extends Command
                                 $res->save();
 
                                 $this->saveContactsInfo($emails, $skypes, $phones, $res->id);
-                                break;
+                                $emails = [];
+                                $phones = [];
+                                $skypes = [];
                             }
                         } catch (\Exception $ex) {
                         }

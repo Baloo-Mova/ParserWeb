@@ -2,34 +2,13 @@
 
 namespace App\Console\Commands;
 
-use App\Helpers\PhoneNumber;
-use App\Helpers\Skype;
-use App\Jobs\GetProxies;
-use App\Jobs\TestProxies;
-use App\Models\Contacts;
 use App\Models\Proxy;
-use App\Models\SkypeLogins;
-use App\MyFacades\SkypeClass;
-use Hamcrest\Core\Set;
-use PHPMailer;
 use Illuminate\Console\Command;
-use App\MyFacades\SkypeClassFacade;
-use App\Helpers\VK;
-use App\Helpers\FB;
-use App\Models\AccountsData;
 use App\Helpers\SimpleHtmlDom;
-use GuzzleHttp\Client;
-use GuzzleHttp\Cookie\CookieJar;
-use GuzzleHttp\Cookie\SetCookie;
-use App\Models\GoodProxies;
-use App\Models\TemplateDeliveryVK;
-use App\Models\SearchQueries;
-use App\Models\Parser\VKLinks;
-use App\Models\Tasks;
-use App\Helpers\Macros;
-use Illuminate\Support\Facades\DB;
 use App\Models\Skypes;
-use App\Models\TemplateDeliverySkypes;
+use GuzzleHttp\Client;
+use App\Helpers\Web;
+use SebastianBergmann\CodeCoverage\Report\PHP;
 
 class Tester extends Command
 {
@@ -67,132 +46,76 @@ class Tester extends Command
 
     public function handle()
     {
+
+        $proxyIndex = 11;
+        $web     = new Web();
+        $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
+        $client  = new Client([
+            'headers'         => [
+                'User-Agent'      => 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 OPR/45.0.2552.898',
+                'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
+                'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+            ],
+            'verify'          => false,
+            'cookies'         => true,
+            'allow_redirects' => true,
+            'timeout'         => 10,
+        ]);
+        $proxy     = Proxy::find($proxyIndex);
+        $proxy_arr = parse_url($proxy->proxy);
+        $client->get('https://yandex.ru',[
+            'proxy' => $proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port'],
+        ]);
+        $client->get('https://kiks.yandex.ru/fu',[
+            'proxy' => $proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port'],
+        ]);
+
+        $array      = [];
+        $k          = 0;
         while (true) {
             try {
-                $this->task   = null;
-                $this->sender = null;
-
-                DB::transaction(function () {
-                    $this->sender = SkypeLogins::
-                    where([['reserved', '=', '0'],['valid', '=', '1']])->orderBy('count_request', 'asc')->lockForUpdate()->first();
-
-                    if (isset($this->sender)) {
-                        $this->sender->reserved = 1;
-                        $this->sender->save();
-                    }
-                });
-
-                $this->sender = SkypeLogins::find(19);
-                $this->skype = new Skype($this->sender);
-                //$is_friend = $this->skype->isMyFrined("live:petlyakssphone");
-                dd($this->skype);
-
-                if ( ! $this->skype->checkLogin()) {
-
-                    $this->sender->valid = 0;
-                    $this->sender->save();
-
-                    $log          = new ErrorLog();
-                    $log->message = ErrorLog::SKYPE_NOT_VALID_USER . " user id = " . $this->sender->id;
-                    $log->task_id = 0;
-                    $log->save();
-
-                    sleep(10);
+                echo $k . PHP_EOL;
+                sleep(rand(7,18));
+                $proxyIndex++;
+                if ($proxyIndex > 45) {
+                    $proxyIndex = 11;
+                }
+                $proxy     = Proxy::find($proxyIndex);
+                $proxy_arr = parse_url($proxy->proxy);
+                $request   = $client->request("GET",
+                    'https://yandex.ru/search/?text=здоровье%20вода&ncrnd=' . rand(90000, 99999) . '&lr=225&p=' . $k, [
+                        'proxy' => $proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port'],
+                    ]);
+        dd($client->getConfig('cookies'));
+                $data = $request->getBody()->getContents();
+    var_dump($data);
+                if(strpos('captchaSound',$data) !== null){
                     continue;
                 }
 
-                DB::transaction(function () {
-                    $this->task = Contacts::join('search_queries', 'search_queries.id', '=', 'contacts.search_queries_id')
-                        ->join('tasks', 'tasks.id', '=', 'search_queries.task_id')
-                        ->where([
-                            ['contacts.type', '=', 3],
-                            ['contacts.sended', '=', 0],
-                            ['contacts.reserved', '=', 0],
-                            ['tasks.need_send', '=', 1],
-                        ])
-                        ->lockForUpdate()->limit(10)->get(['contacts.*', 'search_queries.task_id']);
-                    if (isset($this->task) && count($this->task) > 0) {
-                        foreach ($this->task as $contact_item){
-                            $contact_item->reserved = 1;
-                            $contact_item->save();
-                        }
-                    }
-                });
-
-                if ( ! isset($this->task) || count($this->task) == 0) {
-                    $this->sender->reserved = 0;
-                    $this->sender->save();
-                    sleep(10);
-                    continue;
-                }
-
-                //$skypes  = array_filter(explode(",", trim($this->task->skypes)));
-                $message = TemplateDeliverySkypes::where('task_id', '=', $this->task[0]->task_id)->first();
-
-
-
-                if ( ! isset($message)) {
-                    $this->sender->reserved = 0;
-                    $this->sender->save();
-
-                    $log          = new ErrorLog();
-                    $log->message = ErrorLog::SKYPE_NO_MESSAGE;
-                    $log->task_id = $this->task[0]->task_id;
-                    $log->save();
-                    sleep(10);
-                    continue;
-                }
-
-                if (substr_count($message, "{") == substr_count($message, "}")) {
-                    $str_mes = Macros::convertMacro($message->text);
-                } else {
-                    $this->sender->reserved = 0;
-                    $this->sender->save();
-
-                    $log          = new ErrorLog();
-                    $log->message = ErrorLog::SKYPE_MESSAGE_TEXT_ERROR;
-                    $log->task_id = $this->task[0]->id;
-                    sleep(10);
-                    continue;
-                }
-
-                $sendedCounter = 0;
-                foreach ($this->task as $skype) {
-                    if (empty($skype)) {
+                $crawler->load($data);
+                $test = $crawler->find('.link_cropped_no');
+                $k++;
+                for ($i = 0; $i < count($test); $i++) {
+                    $link = $test[$i]->href;
+                    if (strpos($link, 'yandex') !== false) {
                         continue;
                     }
 
-                    $is_friend = $this->skype->isMyFrined($skype->value);
-
-                    if ($is_friend) {
-                        if ($this->skype->sendMessage($skype->value, $str_mes)) {
-                            $sendedCounter++;
-                        }
-                    } else {
-                        if ($this->skype->addFriend($skype->value, $str_mes)) {
-                            $sendedCounter++;
-                        }
+                    if ( ! in_array($link, $array)) {
+                        echo $link . PHP_EOL;
+                        $array[] = $link;
                     }
-
-                    $skype->sended = 1;
-                    $skype->save();
-
-                    sleep(random_int(1, 5));
                 }
 
-                $this->sender->reserved = 0;
-                $this->sender->save();
-
-                SearchQueries::where('id', $skype->search_queries_id)->update(["sk_sended" => $sendedCounter]);
-
-                sleep(random_int(10, 15));
             } catch (\Exception $ex) {
-                $log          = new ErrorLog();
-                $log->message = "SKYPE sender" . $ex->getMessage() . " " . $ex->getLine();
-                $log->task_id = 0;
-                $log->save();
+                echo $ex->getMessage();
+                break;
             }
         }
+
+        echo PHP_EOL . count($array);
     }
 
 }
