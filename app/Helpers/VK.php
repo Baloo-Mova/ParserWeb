@@ -45,8 +45,7 @@ class VK {
                             ['type_id', '=', 1],
                             ['valid', '=', 1],
                             ['is_sender', '=', 1],
-                            ['reserved', '=', 0],
-                            ['count_request', '<', 401]
+                            ['reserved', '=', 0], 
                         ])->orderBy('count_request', 'asc')->first();
 
                         if (!isset($sender)) {
@@ -161,17 +160,17 @@ class VK {
 
                 preg_match_all("/   hash\: '(\w*)'/s", $data, $chas);
                 $chas = $chas[1];
-                $request = $this->client->post("https://vk.com/al_mail.php", [
+                $request = $this->client->post("https://vk.com/al_im.php", [
 
                     'form_params' => [
-                        'act' => 'a_send',
-                        'al' => 1,
-                        'chas' => $chas[0],
-                        'from' => 'box',
-                        'media' => '',
+                        'act'     => 'a_send_box',
+                        'al'      => 1,
+                        'chas'    => $chas[0],
+                        'from'    => 'box',
+                        'media'   => '',
                         'message' => $messages,
-                        'title' => '',
-                        'to_ids' => $to_userId,
+                        'title'   => '',
+                        'to_ids'  => $to_userId,
                     ],
                 ]);
 //                $this->cur_proxy->inc();
@@ -179,7 +178,6 @@ class VK {
 //                $sender->save();
                 $data = $request->getBody()->getContents();
                 //echo"\r\n"."from: ".$sender->login."|".$data;;
-
                 if (strpos($data, 'error') === true) {
                     $sender->reserved = 0;
                     $sender->save();
@@ -189,7 +187,7 @@ class VK {
                     return false;
                 }
                 $data = iconv('windows-1251','UTF-8',$data);
-                echo "\n".$data;
+                
 
                 if (strpos($data, "Сообщение отправлено") !== false) {
                     //$sender->count_sended_messages += 1;

@@ -32,7 +32,11 @@ class APIController extends Controller
             foreach ($result['results'] as $key => $item) {
                 $email    = key($item);
                 $resEmail = $item[$email];
-                Contacts::where(['value' => $email])->update(['sended' => $resEmail]);
+                if($result['AccountStatus']) {
+                    Contacts::where(['value' => $email])->update(['sended' => $resEmail]);
+                }else{
+                    Contacts::where(['value' => $email])->update(['reserved' => 0]);
+                }
             }
 
             AccountsData::where([
@@ -248,7 +252,7 @@ class APIController extends Controller
 
     public function getRandomProxy($type)
     {
-        $counter = 3;
+        $counter = 2;
         $res = [];
         if ($type == "skype") {
             $proxyInfo = SkypeLogins::select(DB::raw('count(proxy_id) as count, proxy_id'))

@@ -433,7 +433,7 @@ class ParsingTasksController extends Controller {
     }
 
     public function getCsv($id) {
-
+set_time_limit(0);
         $table = DB::select( DB::raw('SELECT search_queries.link, search_queries.city, search_queries.name,
                                     (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=1) as mails,
                                     (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=2) as phones,
