@@ -36,9 +36,9 @@ class APIController extends Controller
                 $email    = key($item);
                 $resEmail = $item[$email];
 
-                if($result['AccountStatus']) {
+                if ($result['AccountStatus']) {
                     Contacts::where(['value' => $email])->update(['sended' => $resEmail]);
-                }else{
+                } else {
                     Contacts::where(['value' => $email])->update(['reserved' => 0]);
                 }
             }
@@ -239,32 +239,22 @@ class APIController extends Controller
 
     public function setYandexContext(Request $request)
     {
-        $data   = $request->get('data');
-        $taskId = $request->get('taskid');
-
-        file_put_contents(storage_path('app/file.txt'), $data. "   ".PHP_EOL.$taskId);
-
-        $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
-
-        $crawler->load($data);
-        $test  = $crawler->find('.link_cropped_no');
+        $text = $request->getContent();
+        $data  = json_decode($text, true);
         $array = [];
-
-        for ($i = 0; $i < count($test); $i++) {
-            $link = $test[$i]->href;
-            if (strpos($link, 'yandex') !== false) {
-                continue;
-            }
-
-            if ( ! in_array($link, $array)) {
-                $array[] = ['task_id' => $taskId, 'link' => $link];
-            }
+        foreach ($data['data'] as $item) {
+            $array [] = [
+                'task_id' => $data['taskId'],
+                'link'    => $item
+            ];
         }
 
         try {
             SiteLinks::insert($array);
         } catch (\Exception $ex) {
         }
+
+        echo count($array);
     }
 
     public function getYandexTask()
