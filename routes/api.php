@@ -32,3 +32,5 @@ Route::get('/getQueryFB',['uses'=>'APIController@getQueryFB', 'as'=>'get.query.f
 Route::get('/updateQueryFB',['uses'=>'APIController@updateQueryFB', 'as'=>'update.query.fb']);
 
 
+Route::post('/setYandexContext', ['uses'=>'APIController@setYandexContext']);
+Route::get('/getYandexTask', ['uses'=>'APIController@getYandexTask']);

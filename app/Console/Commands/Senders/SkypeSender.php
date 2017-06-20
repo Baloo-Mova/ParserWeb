@@ -74,20 +74,13 @@ class SkypeSender extends Command
                     }
                 });
 
-                $this->skype = new Skype($this->sender);
-
-                /*if ( ! $this->skype->checkLogin()) {
-                    $this->sender->valid = 0;
-                    $this->sender->save();
-
-                    $log          = new ErrorLog();
-                    $log->message = ErrorLog::SKYPE_NOT_VALID_USER . " user id = " . $this->sender->id;
-                    $log->task_id = 0;
-                    $log->save();
-
+                if(!isset($this->sender)){
                     sleep(10);
                     continue;
-                }*/
+                }
+
+                $this->skype = new Skype($this->sender);
+
 
                 DB::transaction(function () {
                     $this->task = Contacts::join('search_queries', 'search_queries.id', '=', 'contacts.search_queries_id')
@@ -189,7 +182,7 @@ class SkypeSender extends Command
                 sleep(random_int(10, 15));
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->message = "SKYPE sender" . $ex->getMessage() . " " . $ex->getLine();
+                $log->message = "SKYPE sender " . $ex->getMessage() . " " . $ex->getTraceAsString();
                 $log->task_id = 0;
                 $log->save();
             }
