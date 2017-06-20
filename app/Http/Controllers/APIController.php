@@ -265,7 +265,7 @@ class APIController extends Controller
         }
     }
 
-    public function getYandex()
+    public function getYandexTask()
     {
         DB::transaction(function () {
             $task = Tasks::where([
