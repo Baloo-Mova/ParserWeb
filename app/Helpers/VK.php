@@ -48,7 +48,7 @@ class VK
                             ['valid', '=', 1],
                             ['is_sender', '=', 1],
                             ['reserved', '=', 0],
-
+                            ['count_request', '<', 11]
                         ])->orderBy('count_request', 'asc')->first();
 
                         if ( ! isset($sender)) {

@@ -123,7 +123,8 @@ class OkSender extends Command
                             ['type_id', '=', 2],
                             ['is_sender', '=', 1],
                             ['valid', '=', 1],
-                            ['reserved', '=', 0]
+                            ['reserved', '=', 0],
+                            ['count_request','<',40]
                         ])->orderBy('count_request', 'asc')->first(); // Получаем случайный логин и пас
                         if ( ! isset($from)) {
                             return;
