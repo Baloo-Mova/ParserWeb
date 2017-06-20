@@ -2,34 +2,13 @@
 
 namespace App\Console\Commands;
 
-use App\Helpers\PhoneNumber;
-use App\Helpers\Skype;
-use App\Jobs\GetProxies;
-use App\Jobs\TestProxies;
-use App\Models\Contacts;
 use App\Models\Proxy;
-use App\Models\SkypeLogins;
-use App\MyFacades\SkypeClass;
-use Hamcrest\Core\Set;
-use PHPMailer;
 use Illuminate\Console\Command;
-use App\MyFacades\SkypeClassFacade;
-use App\Helpers\VK;
-use App\Helpers\FB;
-use App\Models\AccountsData;
 use App\Helpers\SimpleHtmlDom;
-use GuzzleHttp\Client;
-use GuzzleHttp\Cookie\CookieJar;
-use GuzzleHttp\Cookie\SetCookie;
-use App\Models\GoodProxies;
-use App\Models\TemplateDeliveryVK;
-use App\Models\SearchQueries;
-use App\Models\Parser\VKLinks;
-use App\Models\Tasks;
-use App\Helpers\Macros;
-use Illuminate\Support\Facades\DB;
 use App\Models\Skypes;
-use App\Models\TemplateDeliverySkypes;
+use GuzzleHttp\Client;
+use App\Helpers\Web;
+use SebastianBergmann\CodeCoverage\Report\PHP;
 
 class Tester extends Command
 {
@@ -67,14 +46,8 @@ class Tester extends Command
 
     public function handle()
     {
-        $id = 33;
-        $table = DB::select( DB::raw('SELECT search_queries.link, search_queries.city, search_queries.name,
-                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=1) as mails,
-                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=2) as phones,
-                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=3) as skypes 
-                                    FROM search_queries where task_id='.$id));
-                                    
-        dd(count($table));
+ 
+ 
     }
 
 }
