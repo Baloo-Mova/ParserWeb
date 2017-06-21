@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\SkypeLogins;
 use App\Helpers\Macros;
 use App\Models\Contacts;
+use League\Flysystem\Exception;
 
 class SkypeSender extends Command
 {
@@ -64,9 +65,9 @@ class SkypeSender extends Command
 
                 DB::transaction(function () {
                     $this->sender = SkypeLogins::where([
-                            ['reserved', '=', '0'],
-                            ['valid', '=', '1']
-                        ])->orderBy('count_request', 'asc')->lockForUpdate()->first();
+                        ['reserved', '=', '0'],
+                        ['valid', '=', '1']
+                    ])->orderBy('count_request', 'asc')->lockForUpdate()->first();
 
                     if (isset($this->sender)) {
                         $this->sender->reserved = 1;
@@ -74,29 +75,29 @@ class SkypeSender extends Command
                     }
                 });
 
-                if(!isset($this->sender)){
+                if ( ! isset($this->sender)) {
                     sleep(10);
                     continue;
                 }
 
                 $this->skype = new Skype($this->sender);
 
-
                 DB::transaction(function () {
-                    $this->task = Contacts::join('search_queries', 'search_queries.id', '=', 'contacts.search_queries_id')
-                        ->join('tasks', 'tasks.id', '=', 'search_queries.task_id')
-                        ->where([
+                    try {
+                        $this->task = Contacts::join('search_queries', 'search_queries.id', '=',
+                            'contacts.search_queries_id')->join('tasks', 'tasks.id', '=',
+                            'search_queries.task_id')->where([
                             ['contacts.type', '=', 3],
                             ['contacts.sended', '=', 0],
                             ['contacts.reserved', '=', 0],
                             ['tasks.need_send', '=', 1],
-                        ])
-                        ->lockForUpdate()->limit(10)->get(['contacts.*', 'search_queries.task_id']);
-                    if (isset($this->task) && count($this->task) > 0) {
-                        foreach ($this->task as $contact_item){
-                            $contact_item->reserved = 1;
-                            $contact_item->save();
+                        ])->lockForUpdate()->limit(10)->get(['contacts.*', 'search_queries.task_id']);
+                        if (isset($this->task) && count($this->task) > 0) {
+                            Contacts::whereIn('id', array_column($this->task, 'id'))->update(['reserved' => 1]);
                         }
+                    } catch (\Exception $ex) {
+                        Contacts::whereIn('id', array_column($this->task, 'id'))->update(['reserved' => 0]);
+                        $this->task = null;
                     }
                 });
 
@@ -143,20 +144,18 @@ class SkypeSender extends Command
 
                     $is_friend = $this->skype->isMyFrined($skype->value);
 
-                    if($is_friend == 10 || $is_friend == 20){
+                    if ($is_friend == 10 || $is_friend == 20) {
 
                         $this->sender->valid = 0;
                         $this->sender->save();
 
-                        Contacts::whereIn('id', array_column($this->task->toArray(),'id'))->update([
+                        Contacts::whereIn('id', array_column($this->task->toArray(), 'id'))->update([
                             'reserved' => 0
                         ]);
-
 
                         sleep(random_int(1, 10));
                         break;
                     }
-
 
                     if ($is_friend) {
                         if ($this->skype->sendMessage($skype->value, $str_mes)) {
