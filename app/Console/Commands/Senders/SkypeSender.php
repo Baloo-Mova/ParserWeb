@@ -93,10 +93,13 @@ class SkypeSender extends Command
                             ['tasks.need_send', '=', 1],
                         ])->lockForUpdate()->limit(10)->get(['contacts.*', 'search_queries.task_id']);
                         if (isset($this->task) && count($this->task) > 0) {
-                            Contacts::whereIn('id', array_column($this->task, 'id'))->update(['reserved' => 1]);
+                            Contacts::whereIn('id', array_column($this->task->toArray(), 'id'))->update(['reserved' => 1]);
                         }
                     } catch (\Exception $ex) {
-                        Contacts::whereIn('id', array_column($this->task, 'id'))->update(['reserved' => 0]);
+                        if(isset($this->task)) {
+                            Contacts::whereIn('id',
+                                array_column($this->task->toArray(), 'id'))->update(['reserved' => 0]);
+                        }
                         $this->task = null;
                     }
                 });
