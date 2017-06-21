@@ -21,5 +21,16 @@ Route::post('/addAccs/{type}',["uses"=> "APIController@addAccs", "as"=>"add.accs
 Route::get('/getEmailSendData',['uses'=>'APIController@getEmailSendData','as'=>'send.email-data']);
 Route::post('/getEmailSendResult',['uses'=>'APIController@getEmailSendResult','as'=>'get.email-data']);
 
+/*fb*/
+Route::post('/updateFB',['uses'=>'APIController@updateFBAcc','as'=>'update.acc.fb']);
+Route::get('/getAccFB/{type}',['uses'=>'APIController@getFBAcc', 'as'=>'get.acc.fb']);
+Route::get('/getTaskFB',['uses'=>'APIController@getTaskFB', 'as'=>'get.task.fb']);
+Route::post('/updateTaskFB',['uses'=>'APIController@updateTaskFB', 'as'=>'update.task.fb']);
+Route::get('/getFBLinks',['uses'=>'APIController@getFBLinks', 'as'=>'get.links.fb']);
+Route::post('/setFBLinks',['uses'=>'APIController@setFBLinks', 'as'=>'set.links.fb']);
+Route::get('/getQueryFB',['uses'=>'APIController@getQueryFB', 'as'=>'get.query.fb']);
+Route::get('/updateQueryFB',['uses'=>'APIController@updateQueryFB', 'as'=>'update.query.fb']);
+
+
 Route::post('/setYandexContext', ['uses'=>'APIController@setYandexContext']);
 Route::get('/getYandexTask', ['uses'=>'APIController@getYandexTask']);

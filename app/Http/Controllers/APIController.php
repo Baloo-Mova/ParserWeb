@@ -21,19 +21,17 @@ use App\Models\Proxy;
 use App\Models\SkypeLogins;
 use App\Helpers\Macros;
 
-class APIController extends Controller
-{
+class APIController extends Controller {
 
-    public $data    = null;
+    public $data = null;
     public $account = null;
 
-    public function getEmailSendResult(Request $request)
-    {
+    public function getEmailSendResult(Request $request) {
         $data = $request->getContent();
         if (strlen($data) > 0) {
             $result = json_decode($data, true);
             foreach ($result['results'] as $key => $item) {
-                $email    = key($item);
+                $email = key($item);
                 $resEmail = $item[$email];
 
                 if ($result['AccountStatus']) {
@@ -54,14 +52,13 @@ class APIController extends Controller
         }
     }
 
-    public function getEmailSendData()
-    {
+    public function getEmailSendData() {
         DB::transaction(function () {
             $this->account = AccountsData::where([
-                ['reserved', '=', '0'],
-                ['type_id', '=', 3],
-                ['valid', '=', 1]
-            ])->orderBy('count_request', 'asc')->with('proxy')->lockForUpdate()->first();
+                        ['reserved', '=', '0'],
+                        ['type_id', '=', 3],
+                        ['valid', '=', 1]
+                    ])->orderBy('count_request', 'asc')->with('proxy')->lockForUpdate()->first();
 
             if (isset($this->account)) {
                 $this->account->reserved = 1;
@@ -69,7 +66,7 @@ class APIController extends Controller
             }
         });
 
-        if ( ! isset($this->account)) {
+        if (!isset($this->account)) {
             return 0;
         }
 
@@ -77,15 +74,15 @@ class APIController extends Controller
 
         try {
             $url_arr = parse_url($this->account->proxy->proxy);
-            $acc     = [
-                'smtp'          => $this->account->smtp_address,
-                'port'          => $this->account->smtp_port,
-                'login'         => $this->account->login,
-                'password'      => $this->account->password,
-                'proxyType'     => $url_arr['scheme'],
-                'proxyHost'     => $url_arr['host'],
-                'proxyPort'     => $url_arr['port'],
-                'proxyLogin'    => $this->account->proxy->login,
+            $acc = [
+                'smtp' => $this->account->smtp_address,
+                'port' => $this->account->smtp_port,
+                'login' => $this->account->login,
+                'password' => $this->account->password,
+                'proxyType' => $url_arr['scheme'],
+                'proxyHost' => $url_arr['host'],
+                'proxyPort' => $url_arr['port'],
+                'proxyLogin' => $this->account->proxy->login,
                 'proxyPassword' => $this->account->proxy->password
             ];
         } catch (\Exception $ex) {
@@ -214,8 +211,7 @@ class APIController extends Controller
         }
     }
 
-    public function getSelectEmailTemplate(Request $request, $id)
-    {
+    public function getSelectEmailTemplate(Request $request, $id) {
 
         $results = EmailTemplates::where('id', '=', $id)->first();
 
@@ -223,7 +219,6 @@ class APIController extends Controller
             json_encode([
                 'success' => false,
                 'message' => "template not found",
-
                 'result' => "null"
             ]);
         }
@@ -312,7 +307,7 @@ class APIController extends Controller
                 $proxyInAcc  = SkypeLogins::distinct('proxy_id')->count('proxy_id');
 
                 if ($proxyInAcc == $proxyNumber) { // если все прокси уже заняты по 3 раза, то увеличиваем счетчик
-                    return $this->findProxyId(++$counter);
+                    return $this->findProxyId( ++$counter);
                 }
 
                 $max_proxy = SkypeLogins::max('proxy_id'); // иначе ищем макс. номер прокси в таблице
@@ -374,8 +369,7 @@ class APIController extends Controller
         }
     }
 
-    public function addAccs($type, Request $request)
-    {
+    public function addAccs($type, Request $request) {
         if ($type == "skype") {
             $json = $request->getContent();
             $json = json_decode($json, true);
@@ -418,9 +412,176 @@ class APIController extends Controller
 
             return [
                 'login' => $json["login"],
-
             ];
         }
+    }
+
+    
+    
+    
+    /* section for fb parse */
+
+    public function updateFBAcc(Request $request) {
+
+        //if($type =="facebook"){
+        $json = $request->getContent();
+
+        $json = json_decode($json, true);
+
+        $acc = AccountsData::where(['id' => $json["id"]])->first();
+
+        if (isset($json["cookie"])) {
+            $acc->fb_cookie = $json["cookie"];
+        }
+
+        if (isset($json["user_id"])) {
+            $acc->fb_user_id = $json["user_id"];
+        }
+
+        if (isset($json["valid"])) {
+            $acc->valid = $json["valid"];
+        }
+
+        if (isset($json["count_requests"])) {
+            $acc->count_request = $json["count_requests"];
+        }
+
+        if (isset($json["reserved"])) {
+            $acc->reserved = $json["reserved"];
+        }
+
+        $acc->save();
+
+        return ['response' => $json["cookie"]];
+        // }
+    }
+
+
+    public $acc;
+    public $cur_type_acc = 0;
+
+    public function getFBAcc($type) {
+        $this->acc = null;
+        $this->cur_type_acc = intval($type, 10);
+
+        DB::transaction(function () {
+
+            $sender = AccountsData::where([
+                        ['type_id', '=', 6],
+                        ['valid', '=', 1],
+                        ['is_sender', '=', $this->cur_type_acc],
+                        ['reserved', '=', 0],
+                        ['count_request', '<', 401]
+                    ])->orderBy('count_request', 'asc')->first();
+
+            if (!isset($sender)) {
+                return;
+            }
+
+            // $sender->reserved = 1;
+            $sender->save();
+
+            $this->acc = $sender;
+        });
+        // dd($this->acc);
+        if (isset($this->acc)) {
+            $proxy = $this->acc->getProxy; //ProxyItem::find($sender->proxy_id);
+            //dd($proxy);
+
+            if (!isset($proxy)) {
+                $this->acc->reserved = 0;
+                $this->acc->save();
+                return ['response' => null];
+            }
+
+            return [
+                'response' => 'OK',
+                "proxy_id" => $proxy->id,
+                "proxy" => $proxy->proxy,
+                "proxy_login" => $proxy->login,
+                "proxy_password" => $proxy->password,
+                "user_id" => $this->acc->id,
+                "user_login" => $this->acc->login,
+                "user_pass" => $this->acc->password,
+            ];
+        } else {
+            return ['response' => null];
+        }
+    }
+
+    public $content;
+
+//Route::get('/getTask',['uses'=>'APIController@getTask', 'as'=>'get.task.fb']);
+    public function getTaskFB() {
+        $this->content['fb_task'] = null;
+        DB::transaction(function () {
+            $task = Tasks::where(['task_type_id' => 1, 'fb_reserved' => 0, 'fb_complete' => 0, 'active_type' => 1])->lockForUpdate()->first();
+            if (!isset($task)) {
+                return;
+            }
+
+            //$task->fb_reserved = 1;
+            $task->save();
+            $this->content['fb_task'] = $task;
+        });
+        //dd($this->content['task']);
+        if (!isset($this->content['fb_task'])) {
+            return ['response' => null];
+        } else
+            return [
+                'response' => 'OK',
+                'task_id' => $this->content['fb_task']->id,
+                'task_query' => $this->content['fb_task']->task_query
+                ];
+    }
+
+    public function updateTaskFB(Request $request) {
+         
+         $json = $request->getContent();
+
+        $json = json_decode($json, true);
+        if(!isset($json['task_id'])) return ['response'=>null];
+        
+      
+            $task = Tasks::where(['id'=>$json['task_id']])->first();
+            if (!isset($task)) {
+                return;
+            }
+
+            //$task->fb_reserved = 1;
+            $task->save();
+          
+       
+        if (!isset($task)) {
+            return ['response' => null];
+        } else
+        {
+            if(isset($json['fb_reserved'])) $task->fb_reserved = $json['fb_reserved'];
+            if(isset($json['fb_complete'])) $task->fb_complete = $json['fb_complete'];
+            $task->save();
+            return ['response' => 'OK'];
+        }
+        return ['response' => null];
+    }
+
+    public function getFBLinks() {
+        
+    }
+
+    public function setFBLinks(Request $request) {
+        
+    }
+
+    public function updateFBLinks(Request $request) {
+        
+    }
+
+    public function getQueryFB() {
+        
+    }
+
+    public function updatetQueryFB(Request $request) {
+        
     }
 
 }
