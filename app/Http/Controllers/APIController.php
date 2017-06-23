@@ -20,6 +20,8 @@ use App\Models\AccountsData;
 use App\Models\Proxy;
 use App\Models\SkypeLogins;
 use App\Helpers\Macros;
+use App\Models\Parser\ErrorLog;
+use App\Models\TemplateDeliveryFB;
 
 class APIController extends Controller {
 
@@ -296,7 +298,7 @@ class APIController extends Controller {
                 $proxyInAcc = SkypeLogins::distinct('proxy_id')->count('proxy_id');
 
                 if ($proxyInAcc == $proxyNumber) { // если все прокси уже заняты по 3 раза, то увеличиваем счетчик
-                    return $this->findProxyId( ++$counter);
+                    return $this->findProxyId(++$counter);
                 }
 
                 $max_proxy = SkypeLogins::max('proxy_id'); // иначе ищем макс. номер прокси в таблице
@@ -572,7 +574,7 @@ class APIController extends Controller {
                     'response' => 'OK',
                     'id' => $group->id,
                     'task_id' => $group->task_id,
-                    'group_link' => $group->link,
+                    'link' => $group->link,
                 ];
         }
         if ($type == 'ParseGroup') {
@@ -596,7 +598,7 @@ class APIController extends Controller {
                     'response' => 'OK',
                     'id' => $group->id,
                     'task_id' => $group->task_id,
-                    'group_link' => $group->link,
+                    'link' => $group->link,
                 ];
         }
         if ($type == 'ParseUsers') {
@@ -620,11 +622,14 @@ class APIController extends Controller {
             } else {
                 $array = [];
                 foreach ($users as $user) {
+                    $fb_id = explode("=", $user->link);
+
                     $array [] = [
                         'id' => $user->id,
                         'task_id' => $user->task_id,
                         'link' => $user->link,
                         'type' => $user->type,
+                        'fb_id' => $fb_id[1],
                     ];
                 }
                 return [
@@ -663,7 +668,7 @@ class APIController extends Controller {
 
             $json = json_decode($json, true);
 
-            if (isset($json["del"])){
+            if (isset($json["del"])) {
                 $delete = true;
             }
 
@@ -673,40 +678,174 @@ class APIController extends Controller {
                 foreach ($json["links"] as $item) {
                     $array [] = $item["id"];
                 }
-                
             }
-            if($delete){
+            $array_update = [];
+            if (isset($json["reserved"]))
+                $array_update ["reserved"] = $json["reserved"];
+            if (isset($json["parsed"]))
+                $array_update ["parsed"] = $json["parsed"];
+            if (isset($json["getusers_reserved"]))
+                $array_update ["getusers_reserved"] = $json["getusers_reserved"];
+            if (isset($json["getusers_status"]))
+                $array_update ["getusers_status"] = $json["getusers_status"];
+
+            if ($delete) {
                 FBLinks::whereIn('id', $array)->delete();
-            }
-            else{
-            FBLinks::whereIn('id', $array)->update([
-                    'reserved' => $json["reserved"],
-                'parsed' => $json["parsed"],
-                'getusers_reserved' => $json["getusers_reserved"],
-                'getusers_status' => $json["getusers_status"],
-                
-                ]);
+            } else {
+                FBLinks::whereIn('id', $array)->update($array_update);
             }
             FBLinks::where(['parsed' => 1,
-               'type'=>0,
+                'type' => 0,
                 'getusers_status' => 1])->delete();
-            
+
             return ['response' => 'OK'];
         } catch (\Exception $ex) {
-            return ['response' => $ex->getMessage()."++++".$ex->getLine()];
+            return ['response' => $ex->getMessage() . "++++" . $ex->getLine()];
         }
     }
 
     public function getQueryFB() {
+        $this->content['fb_queries'] = null;
+        try {
+            DB::transaction(function () {
+                $fb_queries = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
+                            ['search_queries.fb_id', '<>', ''],
+                            'search_queries.fb_sended' => 0,
+                            'search_queries.fb_reserved' => 0,
+                            'tasks.need_send' => 1,
+                            'tasks.active_type' => 1,
+                        ])->select('search_queries.*')->lockForUpdate()->limit(10)->get();
+                if (!isset($fb_queries)) {
+                    return;
+                }
+                SearchQueries::whereIn('id', array_column($fb_queries->toArray(), 'id'))->update(['fb_reserved' => 1]);
+                $this->content['fb_queries'] = $fb_queries;
+            });
+            if ($this->content['fb_queries']->count() == 0) {
+                sleep(10);
+
+                return ["respone" => null, "description" => "no queries"];
+            }
+
+
+            // $sk_query->fb_reserved = 1;
+            // $sk_query->save();
+
+
+            $messages = TemplateDeliveryFB::whereIn('task_id', array_column($this->content['fb_queries']->toArray(), 'task_id'))->get();
+            // dd($message);
+
+            if ($messages->count() == 0) {
+                sleep(10);
+                SearchQueries::whereIn('id', array_column($this->content['fb_queries']->toArray(), 'id'))->update(['fb_reserved' => 0]);
+                return ['response' => null, 'description' => 'no messages'];
+            }
+            $result = [];
+            foreach ($messages as $message) {
+                foreach ($this->content['fb_queries']->whereIn('task_id', $message->task_id) as $query) {
+                    if (substr_count($message, "{") == substr_count($message, "}")) {
+                        if ((substr_count($message, "{") == 0 && substr_count($message, "}") == 0)) {
+                            $str_mes = $message->text;
+                        } else {
+                            $str_mes = Macros::convertMacro($message->text);
+                        }
+                    } else {
+
+                        $log = new ErrorLog();
+                        $log->message = "FB_SEND: MESSAGE " . $message->id . " NOT CORRECT - update and try again";
+                        $log->task_id = $this->content['query']->task_id;
+                        $log->save();
+                        SearchQueries::whereIn('id', array_column($this->content['fb_queries']->toArray(), 'id'))->update(['fb_reserved' => 0]);
+                        sleep(random_int(2, 3));
+                        return ['response' => null, 'description' => 'message id:' . $message->id . ' not valid'];
+                    }
+
+
+
+                    $result[] = ['id'=>$query->id,'fb_id' => $query->fb_id, 'message' => $str_mes];
+                }
+            }
+            return ['response' => 'OK', 'users' => $result];
+        } catch (\Exception $ex) {
+            SearchQueries::whereIn('id', array_column($this->content['fb_queries']->toArray(), 'id'))->update(['fb_reserved' => 0]);
         
+            return ['response'=>null];
+        }
     }
 
-    public function updatetQueryFB(Request $request) {
-        
+    public function updateQueryFB(Request $request) {
+        //try{
+            $json = $request->getContent();
+
+            $json = json_decode($json, true);
+            
+            if (isset($json["queries"])) {
+                
+            foreach ($json["queries"] as $query) {
+                
+                $arr =[];
+              if(isset($query["fb_reserved"])){
+                  $arr['fb_reserved']=$query["fb_reserved"];
+              }  
+              if(isset($query["fb_sended"])){
+                  $arr['fb_sended']=$query["fb_sended"];
+              }
+              SearchQueries::where(['id'=>$query["id"]])->update($arr);
+            }
+            return ['response'=>'OK'];
+              }
+            return ['response'=>null];
+        //}catch(\Exception $ex){return ['response'=>null];}
     }
 
     public function addQueryFB(Request $request) {
-        
+        try {
+            $json = $request->getContent();
+
+            $json = json_decode($json, true);
+            $array = [];
+            if (isset($json["queries"])) {
+                foreach ($json["queries"] as $query) {
+                    //dd($query);
+                    $array[] = SearchQueries::insertGetId(['task_id' => $query["task_id"], 'link' => $query["link"], 'fb_id' => (isset($query["fb_id"]) ? $query["fb_id"] : null)]);
+                }
+            }
+
+            //SearchQueries::insert($array);
+            return ['response' => $array];
+        } catch (\Exception $ex) {
+            return ['response' => null];
+        }
+    }
+
+    public function addContactsFB(Request $request) {
+        try {
+            $json = $request->getContent();
+
+            $json = json_decode($json, true);
+            $contacts_array = [];
+            if (isset($json["phones"])) {
+                foreach ($json["phones"] as $phone) {
+
+                    $contacts_array[] = ['value' => $phone, 'type' => Contacts::PHONES, 'search_queries_id' => $json['search_queries_id']];
+                }
+            }
+            if (isset($json["mails"])) {
+                foreach ($json["mails"] as $mail) {
+                    $contacts_array[] = ['value' => $mail, 'type' => Contacts::MAILS, 'search_queries_id' => $json['search_queries_id']];
+                }
+            }
+            if (isset($json["skypes"])) {
+                foreach ($json["skypes"] as $skype) {
+                    $contacts_array[] = ['value' => $skype, 'type' => Contacts::SKYPES, 'search_queries_id' => $json['search_queries_id']];
+                }
+            }
+            Contacts::insert($contacts_array);
+
+            return ['response' => 'OK'];
+        } catch (\Exception $ex) {
+            return ['response' => null];
+        }
     }
 
 }

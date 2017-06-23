@@ -30,9 +30,10 @@ Route::get('/getFBLinks/{type}',['uses'=>'APIController@getFBLinks', 'as'=>'get.
 Route::post('/addFBLinks',['uses'=>'APIController@addFBLinks', 'as'=>'add.links.fb']);
 Route::post('/updateFBLinks',['uses'=>'APIController@updateFBLinks', 'as'=>'update.links.fb']);
 Route::get('/getQueryFB',['uses'=>'APIController@getQueryFB', 'as'=>'get.query.fb']);
-Route::get('/updateQueryFB',['uses'=>'APIController@updateQueryFB', 'as'=>'update.query.fb']);
+Route::post('/updateQueryFB',['uses'=>'APIController@updateQueryFB', 'as'=>'update.query.fb']);
 Route::post('/addQueryFB',['uses'=>'APIController@addQueryFB', 'as'=>'add.query.fb']);
-
+Route::post('/addContactsFB',['uses'=>'APIController@addContactsFB', 'as'=>'add.contacts.fb']);
+/*fb end*/
 
 Route::post('/setYandexContext', ['uses'=>'APIController@setYandexContext']);
 Route::get('/getYandexTask', ['uses'=>'APIController@getYandexTask']);
