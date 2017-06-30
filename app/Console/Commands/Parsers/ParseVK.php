@@ -61,21 +61,15 @@ class ParseVK extends Command {
             });
         if (!isset($this->content['vklink'])) {
             sleep(random_int(5,10));
-            
             continue;
         }
 
-       // $vklink->reserved= 1;
-      //  $vklink->save();
         try {
             $web = new VK();
-
-           // $proxy = ProxyItem::orderBy('id', 'desc')->first();
             $i = 0;
 
             if ($this->content['vklink']->type == 0) {
                $web->parseGroup($this->content['vklink']);
-               // $this->content['vklink']->reserved= 0;
                 $this->content['vklink']->parsed= 1;
                 $this->content['vklink']->save();
 
@@ -95,14 +89,6 @@ class ParseVK extends Command {
 
             });
 
-            if ($this->content['vklink']->type == 1) {
-                $web->parseUser($this->content['vklink']) ;
-                $this->content['vklink']->delete();
-            }
-
-
-           sleep(random_int(1, 5));
-
            
         } catch (\Exception $ex) {
             $log = new ErrorLog();
@@ -118,8 +104,6 @@ class ParseVK extends Command {
                     return;
                 }
                 $vklink->delete();
-
-
             });
         }
         }

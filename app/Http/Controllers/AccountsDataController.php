@@ -198,6 +198,7 @@ class AccountsDataController extends Controller {
                 $proxy = Proxy::where([['proxy', 'like', 'socks%'],['id', '>', $max_proxy]])->first(); // находим следующий прокси
             }else{
                 $proxy = Proxy::where([
+                    ['proxy', 'not like', 'socks%'],
                     ['id', '>', $max_proxy]
                 ])->first(); // находим следующий прокси
             }

@@ -14,6 +14,7 @@ use App\Console\Commands\Parsers\ParseTw;
 use App\Console\Commands\Parsers\ParseIns;
 use App\Console\Commands\Parsers\ParseTwGroups;
 use App\Console\Commands\Parsers\ParseInsGroups;
+use App\Console\Commands\Parsers\ParseVKUsers;
 use App\Console\Commands\Senders\VKSender;
 use App\Console\Commands\Senders\TwitterSender;
 use App\Console\Commands\Parsers\ParseFB;
@@ -57,6 +58,7 @@ class Kernel extends ConsoleKernel
          ParseTwGroups::class,
          ParseInsGroups::class,
          ParseVK::class,
+         ParseVKUsers::class,
          ParseTw::class,
          ParseIns::class,
          VKSender::class,

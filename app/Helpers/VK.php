@@ -918,95 +918,98 @@ class VK
         ]);
     }
 
-    public function parseUser(VKLinks $user)
+    public function parseUser($user)
     {
-
-        while (true) {
             try {
+                $ids_arr = array_column($user, "vkuser_id");
+
                 $this->cur_proxy = ProxyItem::where([
                     ['vk', '>', -1],
                     ['valid', '=', 1]
                 ])->inRandomOrder()->first();
-                //dd($this->cur_proxy);
+
                 if ( ! isset($this->cur_proxy)) {
+                    VKLinks::whereIn('vkuser_id', $ids_arr)->update(['reserved' => 0]);
                     sleep(random_int(5, 10));
-                    continue;
+                    return false;
                 }
 
                 $this->proxy_arr = parse_url($this->cur_proxy->proxy);
                 $this->setProxyClient();
+                $request = $this->client->post("https://api.vk.com/method/users.get", [
+                    'form_params' => [
+                        'v'     => '5.60',
+                        'fields'   => 'can_write_private_message,connections,contacts,city,deactivated',
+                        'user_ids' => implode(",", $ids_arr)
+                    ]
+                ]);
 
-                $request = $this->client->request("GET",
-                    "https://api.vk.com/method/users.get?v=5.60&&fields=can_write_private_message,connections,contacts,city,deactivated&user_ids=" . $user->vkuser_id);
+
                 $query   = $request->getBody()->getContents();
-                //$this->cur_proxy->inc();
 
-                // $query = file_get_contents("https://api.vk.com/method/users.get?v=5.60&&fields=can_write_private_message,connections,contacts,city,deactivated&user_ids=" . $user->vkuser_id);
                 $usertmp = json_decode($query, true);
-                $usertmp = $usertmp["response"][0];
-                //print_r($usertmp);
-                if (empty($usertmp["deactivated"])) {
+
+                if(count($usertmp["response"]) == 0){
+                    VKLinks::whereIn('vkuser_id', $ids_arr)->update(['reserved' => 0]);
+                    return false;
+                }
+
+                $counter = 0;
+
+                foreach ($usertmp["response"] as $item){
+                    if(!empty($item["deactivated"])){
+                        VKLinks::where(['vkuser_id' => $user[$counter]["vkuser_id"]])->delete();
+                        unset($user[$counter]);
+                        ++$counter;
+                        continue;
+                    }
 
                     $phones = [];
                     $skype  = [];
                     $city   = "";
-                    if ( ! empty($usertmp["home_phone"])) {
-                        $phones[] = $usertmp["home_phone"];
+                    if ( ! empty($item["home_phone"])) {
+                        $phones[] = $item["home_phone"];
                     }
-                    if ( ! empty($usertmp["mobile_phone"])) {
-                        $phones[] = $usertmp["mobile_phone"];
-                    }
-
-                    if ( ! empty($usertmp["skype"])) {
-                        $skype[] = $usertmp["skype"];
-                    }
-                    if ( ! empty($usertmp["city"])) {
-                        $city = $usertmp["city"]["title"];
+                    if ( ! empty($item["mobile_phone"])) {
+                        $phones[] = $item["mobile_phone"];
                     }
 
-                    // sleep(random_int(1, 3));
-                    $search = $search = SearchQueries::where([
-                        'link'    => $user->link,
-                        'task_id' => $user->task_id
+                    if ( ! empty($item["skype"])) {
+                        $skype[] = $item["skype"];
+                    }
+                    if ( ! empty($item["city"])) {
+                        $city = $item["city"]["title"];
+                    }
+
+                    $search = SearchQueries::where([
+                        'link'    => $user[$counter]["link"],
+                        'task_id' => $user[$counter]["task_id"]
                     ])->first();
-//dd($user->link);
-
-                    if (empty($search) && $usertmp["can_write_private_message"] == "1") {
-
-                        $vkuser          = new SearchQueries;
-                        $vkuser->link    = $user->link;
-                        $vkuser->task_id = $user->task_id;
-                        $vkuser->vk_id   = $user->vkuser_id;
-                        $vkuser->name    = $usertmp["first_name"] . " " . $usertmp["last_name"];
+                    if (empty($search) && $item["can_write_private_message"] == "1") {
+                        $vkuser          = new SearchQueries();
+                        $vkuser->link    = $user[$counter]["link"];
+                        $vkuser->task_id = $user[$counter]["task_id"];
+                        $vkuser->vk_id   = $user[$counter]["vkuser_id"];
+                        $vkuser->name    = $item["first_name"] . " " . $item["last_name"];
                         $vkuser->city    = $city;
-
                         $vkuser->save();
-
                         $this->saveContactsInfo([], $skype, $phones, $vkuser->id);
                     }
-                    // echo("parse user complete - id ".$vkuser->vkuser_id."\n");
-                    // $user->delete();
-
-                    return true;
-                } else {
-                    //$user->delete();
-                    // echo("parse user complete - id ".$vkuser->vkuser_id."\n");
-
-                    return false;
+                    VKLinks::where(['vkuser_id' => $user[$counter]["vkuser_id"]])->delete();
+                    unset($user[$counter]);
+                    ++$counter;
                 }
+
             } catch (\Exception $ex) {
-
+                VKLinks::whereIn('vkuser_id', array_column($user, "vkuser_id"))->update(['reserved' => 0]);
                 if (strpos($ex->getMessage(), 'cURL') !== false) {
-
-                    // $this->cur_proxy->vk = -1;
-                    // $this->cur_proxy->save();
                     $error          = new ErrorLog();
                     $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
                     $error->task_id = 8888;
                     $error->save();
                 }
+                return false;
             }
-        }
     }
 
     public function registrateUser()
