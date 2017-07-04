@@ -272,6 +272,7 @@ class OkSender extends Command
 
                     $from->reserved = 0;
                     $from->save();
+                    sleep(random_int(20,30));
                     continue;
                 }
 
@@ -279,7 +280,7 @@ class OkSender extends Command
                 $this->content['query']->save();
                 $from->reserved = 0;
                 $from->save();
-
+                sleep(random_int(25,35));
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
                 $log->message = $ex->getTraceAsString();

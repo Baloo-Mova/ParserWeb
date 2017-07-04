@@ -51,6 +51,7 @@ class ParseGoogleUa extends Command
 
         while (true) {
             try {
+                sleep(random_int(20,30));
                 $proxy                 = null;
                 $this->content['task'] = null;
                 DB::transaction(function () {

@@ -28,6 +28,7 @@ use App\Console\Commands\AndroidBotManager;
 use App\Console\Commands\Senders\SkypeSender;
 use App\Console\Commands\Senders\OkSender;
 use App\Console\Commands\Cleaner\NotValidMailsCleaner;
+use App\Console\Commands\Cleaner\RefreshSenders;
 
 use App\Console\Commands\Reg\RegFB;
 use App\Console\Commands\Reg\RegVK;
@@ -89,6 +90,7 @@ class Kernel extends ConsoleKernel
         RegMailru::class,
         RegSkype::class,
 
+        RefreshSenders::class,
     ];
 
     /**

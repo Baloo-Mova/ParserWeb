@@ -95,7 +95,7 @@ class VKSender extends Command
                         $this->content['vkquery']->vk_reserved = 2;
                         $this->content['vkquery']->save();
                     }
-                    sleep(random_int(10, 20));
+                    sleep(random_int(25, 35));
                 }else{
                     $log          = new ErrorLog();
                     $log->message = "VK_SEND: MESSAGE NOT CORRECT - update and try again";
@@ -103,7 +103,7 @@ class VKSender extends Command
                     $log->save();
                     $this->content['vkquery']->vk_reserved=0;
                     $this->content['vkquery']->save();
-                    sleep(random_int(2,3));
+                    sleep(random_int(25,35));
                     continue;
                 }
 

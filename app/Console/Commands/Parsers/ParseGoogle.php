@@ -48,6 +48,7 @@ class ParseGoogle extends Command
     public function handle()
     {
         while (true) {
+            sleep(random_int(20,30));
             $proxy                 = null;
             $this->content['task'] = null;
             DB::transaction(function () {
