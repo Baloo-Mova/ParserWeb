@@ -71,7 +71,7 @@ class ParseVKUsers extends Command
             try{
                 $web = new VK();
                 $web->parseUser($this->content);
-                sleep(random_int(60, 80));
+                sleep(random_int(30, 40));
 
             }catch (\Exception $ex){
                 $log = new ErrorLog();
