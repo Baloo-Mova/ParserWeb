@@ -12,7 +12,7 @@ use Illuminate\Console\Command;
 use App\Models\Parser\VKLinks;
 use Illuminate\Support\Facades\DB;
 
-class ParseVKGetGroups extends Command
+class VKGroupsSearch extends Command
 {
     public $content;
     /**

@@ -12,7 +12,7 @@ use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\Parser\VKLinks;
 use Illuminate\Support\Facades\DB;
-class ParseVKGetUsers extends Command
+class VKGroupsFindUsers extends Command
 {
     public $content;
     /**

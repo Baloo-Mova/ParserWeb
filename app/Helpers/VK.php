@@ -347,7 +347,7 @@ class VK
                     if ( ! isset($sender)) {
                         return;
                     }
-                    $sender->reserved = 1;
+                    $sender->reserved = 0;
                     $sender->save();
 
                     $this->accountData = $sender;
@@ -449,7 +449,6 @@ class VK
                             'al_ad'      => 0,
                             'c[q]'       => $find,
                             'c[section]' => 'communities',
-                            'c[type]'    => 1,
                             'offset'     => $counter,
                         ]
                     ]);
@@ -457,13 +456,22 @@ class VK
 
                 $data = $request->getBody()->getContents();
 
-                file_put_contents($counter . '.txt', $data);
+                $this->crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
+                $this->crawler->clear();
+                $this->crawler->load($data);
+                $groups_links = $this->crawler->find(".info a");
 
-                preg_match_all("/\/(\w*)\?from\=top/s", $data, $groups);
-                $groups = array_unique($groups[1]);
-                var_dump($groups);
-                var_dump(count($groups));
-                if (count($groups) == 0) {
+
+                foreach ($groups_links as $l){
+                    $group_tmp = $l->href;
+                    $groups[] = str_replace(["/","?from=top"], "", trim($group_tmp));
+                }
+
+                //preg_match_all("/\/(\w*)\?from\=top/s", $data, $groups);
+                $groups = array_unique($groups);
+
+                $groups_number = count($groups);
+                if ($groups_number == 0) {
                     break;
                 }
 
@@ -502,7 +510,7 @@ class VK
                 }
 
                 sleep(random_int(5, 10));
-                $counter += 40;
+                $counter += $groups_number;
             }
 
             $sender->reserved = 0;

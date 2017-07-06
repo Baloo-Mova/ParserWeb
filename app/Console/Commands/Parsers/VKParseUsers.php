@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
 use App\Models\Parser\VKLinks;
 use Illuminate\Support\Facades\DB;
 
-class ParseVKUsers extends Command
+class VKParseUsers extends Command
 {
     public $content;
     /**

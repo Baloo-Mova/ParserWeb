@@ -7,14 +7,14 @@ use App\Console\Commands\Parsers\ParseSite;
 use App\Console\Commands\Parsers\ParseOk;
 use App\Console\Commands\Parsers\ParseOkGroups;
 use App\Console\Commands\Parsers\Proxy;
-use App\Console\Commands\Parsers\ParseVKGetGroups;
-use App\Console\Commands\Parsers\ParseVKGetUsers;
+use App\Console\Commands\Parsers\VKGroupsSearch;
+use App\Console\Commands\Parsers\VKGroupsFindUsers;
 use App\Console\Commands\Parsers\ParseVK;
 use App\Console\Commands\Parsers\ParseTw;
 use App\Console\Commands\Parsers\ParseIns;
 use App\Console\Commands\Parsers\ParseTwGroups;
 use App\Console\Commands\Parsers\ParseInsGroups;
-use App\Console\Commands\Parsers\ParseVKUsers;
+use App\Console\Commands\Parsers\VKParseUsers;
 use App\Console\Commands\Senders\VKSender;
 use App\Console\Commands\Senders\TwitterSender;
 use App\Console\Commands\Parsers\ParseFB;
@@ -54,12 +54,12 @@ class Kernel extends ConsoleKernel
     protected $commands = [
          ParseGoogle::class,
          ParseSite::class,
-         ParseVKGetGroups::class,
-         ParseVKGetUsers::class,
+         VKGroupsSearch::class,
+         VKGroupsFindUsers::class,
          ParseTwGroups::class,
          ParseInsGroups::class,
          ParseVK::class,
-         ParseVKUsers::class,
+         VKParseUsers::class,
          ParseTw::class,
          ParseIns::class,
          VKSender::class,
