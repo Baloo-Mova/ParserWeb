@@ -22,6 +22,9 @@ use App\Models\Contacts;
 class VK
 {
 
+    const VK_ACCOUNT_ERROR = 140001;
+    const VK_API_ERROR     = 140002;
+
     public  $cur_proxy;
     public  $proxy_arr;
     public  $proxy_string;
@@ -62,7 +65,7 @@ class VK
                     } catch (\Exception $ex) {
                         $error          = new ErrorLog();
                         $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
-                        $error->task_id = 8888;
+                        $error->task_id = self::VK_ACCOUNT_ERROR;
                         $error->save();
                     }
                 });
@@ -70,7 +73,7 @@ class VK
                 $sender = $this->accountData;
 
                 if ( ! isset($sender)) {
-                    sleep(1);
+                    sleep(5);
                     continue;
                 }
 
@@ -175,7 +178,7 @@ class VK
 
                     return false;
                 }
-                $data = iconv('windows-1251','UTF-8',$data);
+                $data = iconv('windows-1251', 'UTF-8', $data);
 
                 if (strpos($data, "отправлено") !== false) {
                     $sender->reserved = 0;
@@ -329,236 +332,182 @@ class VK
 
     public function getGroups($find, $task_id)
     {
-
         while (true) {
-            try {
-                //while (true) {
+            $proxy = null;
 
-                DB::transaction(function () {
-                    try {
-                        $sender = AccountsData::where([
-                            ['type_id', '=', 1],
-                            ['valid', '=', 1],
-                            ['is_sender', '=', 0],
-                            ['reserved', '=', 0],
-                            ['count_request', '<', 401]
-                        ])->orderBy('count_request', 'asc')->first();
+            DB::transaction(function () {
+                try {
+                    $sender = AccountsData::where([
+                        ['type_id', '=', 1],
+                        ['valid', '=', 1],
+                        ['is_sender', '=', 0],
+                        ['reserved', '=', 0],
+                    ])->orderBy('count_request', 'asc')->first();
 
-                        if ( ! isset($sender)) {
-                            return;
-                        }
-
-                        $sender->reserved = 1;
-                        $sender->save();
-
-                        $this->accountData = $sender;
-                    } catch (\Exception $ex) {
-                        $error          = new ErrorLog();
-                        $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
-                        $error->task_id = 8888;
-                        $error->save();
+                    if ( ! isset($sender)) {
+                        return;
                     }
-                });
-
-                $sender = $this->accountData;
-                if ( ! isset($sender)) {
-                    sleep(random_int(5, 10));
-                    continue;
-                }
-                $sender->reserved = 1;
-                $sender->save();
-
-//                    $this->cur_proxy = ProxyItem::join('accounts_data', 'accounts_data.proxy_id', '!=', 'proxy.id')->
-//                    where(['proxy.valid' => 1, 'accounts_data.type_id' => $sender->type_id, 'accounts_data.is_sender' => 0])->where([['proxy.vk', '<', 1000],['proxy.vk', '>',-1 ], ])
-//                        ->select('proxy.*')->first(); //ProxyTemp::whereIn('country', ["ua", "ru", "ua,ru", "ru,ua"])->where('mail', '<>', 1)->first();
-                $this->cur_proxy = $sender->getProxy;
-                if ( ! isset($this->cur_proxy)) {
-                    $sender->reserved = 0;
-                    $sender->save();
-                    sleep(random_int(5, 10));
-                    continue;
-                }
-                //$sender->proxy_id = $this->cur_proxy->id;
-                // $sender->vk_cookie = null;
-                // $sender->save();
-
-                $cookies = json_decode($sender->vk_cookie);
-                $array   = new CookieJar();
-
-                if (isset($cookies)) {
-
-                    foreach ($cookies as $cookie) {
-                        $set = new SetCookie();
-                        $set->setDomain($cookie->Domain);
-                        $set->setExpires($cookie->Expires);
-                        $set->setName($cookie->Name);
-                        $set->setValue($cookie->Value);
-                        $set->setPath($cookie->Path);
-                        $array->setCookie($set);
-                    }
-                }
-
-                $this->proxy_arr = parse_url($this->cur_proxy->proxy);
-
-//
-                //$cookiejar = new CookieJar($cookie);
-                // echo("\n ".$array->count());
-
-                $this->client = new Client([
-                    'headers'         => [
-                        'User-Agent'      => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
-                        'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
-                        'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
-                    ],
-                    ///'debug' => true,
-                    'verify'          => false,
-                    'cookies'         => $array->count() > 0 ? $array : true,
-                    'allow_redirects' => true,
-                    'timeout'         => 10,
-                    'proxy'           => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
-                ]);
-
-                if ($array->count() < 1) {
-                    // echo "no coikie logining\n";
-                    if ($this->login($sender->login, $sender->password)) {
-                        // $sender = AccountsData::where(['id' => $sender->id])->first();
-                        echo "\login good";
-                        //dd($sender->vk_cookie);
-                    } else {
-                        $sender->valid    = -1;
-                        $sender->reserved = 0;
-                        $sender->save();
-                        //$sender->delete();
-                        //  echo "account not valid\n";
-                        $this->cur_proxy->release();
-
-                        continue;
-                    }
-                }
-
-                // $this->login($sender->login, $sender->password);
-                $request = $this->client->request("GET", "https://vk.com/feed", [// 'proxy' => '127.0.0.1:8888',
-                ]);
-
-                $sender->count_request += 1;
-                $sender->save();
-
-                $data = $request->getBody()->getContents();
-
-                if (strpos($data, "login_button")) {
-                    sleep(1);
-                    $sender->reserved = 0;
+                    $sender->reserved = 1;
                     $sender->save();
 
-                    //$sender->delete();
-                    //  echo "account not valid\n";
-
-                    continue;
-                }
-                sleep(random_int(1, 3));
-
-                //break;
-                //}
-                //$this->login($sender->login, $sender->password);
-                $request = $this->client->request("POST", "https://vk.com/groups?act=catalog", [
-                    //'proxy' => '127.0.0.1:8888',
-                    'form_params' => [
-                        'al'         => 1,
-                        'c[q]'       => $find,
-                        'c[section]' => 'commutities',
-                        'c[type]'    => 1,
-                        'change'     => 1,
-                        'search_loc' => "groups?act=catalog",
-                    ]
-                ]);
-                // $data = $request->getBody()->getContents();
-
-                sleep(random_int(1, 3));
-                $counter = 0;
-                while (true) {
-
-                    // if($counter>=$summary) break;
-                    if ($counter != 0) {
-                        $request = $this->client->request("POST", "https://vk.com/al_search.php", [
-                            //  'proxy' => '127.0.0.1:8888',
-                            'form_params' => [
-                                'al'         => 1,
-                                'al_ad'      => 0,
-                                'c[q]'       => $find,
-                                'c[section]' => 'communities',
-                                'c[type]'    => 1,
-                                'offset'     => $counter,
-                            ]
-                        ]);
-                    }
-                    $data = $request->getBody()->getContents();
-
-                    preg_match_all("/\/(\w*)\?from\=top/s", $data, $groups);
-                    $groups = array_unique($groups[1]);
-
-                    //print_r($groups);
-                    if (count($groups) == 0) {
-                        break;
-                    }
-
-                    foreach ($groups as $value) {
-                        //echo $value." \n";
-                        // $query = file_get_contents("https://api.vk.com/method/groups.getById?v=5.60&group_ids=" . $value);
-                        $request  = $this->client->request("GET",
-                            "https://api.vk.com/method/groups.getById?v=5.60&group_ids=" . $value);
-                        $query    = $request->getBody()->getContents();
-                        $grouptmp = json_decode($query, true);
-                        //print_r($grouptmp);
-                        $vkuser_id = $grouptmp["response"][0]["id"];
-                        //echo $vkuser_id."\n";
-                        $search = VKLinks::where([
-                            'vkuser_id' => $vkuser_id,
-                            'task_id'   => $task_id,
-                            'type'      => 0
-                        ])->first();
-
-                        //dd(empty($search));
-                        if ( ! empty($search)) {
-                            continue;
-                        }
-                        $vklink            = new VKLinks;
-                        $vklink->link      = "https://vk.com/" . $value;
-                        $vklink->task_id   = $task_id;
-                        $vklink->vkuser_id = $vkuser_id;
-                        $vklink->type      = 0; //0=groups
-                        //$vklink->save();
-                        //echo "vklink ".$vklink->vkuser_id." saved\n";
-                        $vklink->save();
-                        // echo $vklink->vkiser_id."\n";
-                    }
-                    sleep(random_int(1, 5));
-                    $counter += 20;
-                }
-                $sender->reserved = 0;
-                $sender->save();
-            } catch (\Exception $ex) {
-
-                $sender->reserved = 0;
-                $sender->save();
-                // dd($ex->getMessage());
-                if (strpos($ex->getMessage(), 'cURL') !== false) {
-                    //$sender->proxy_id = 0;
-                    $sender->vk_cookie = null;
-                    $sender->save();
-                    // $this->cur_proxy->vk = -1;
-                    //$this->cur_proxy->save();
+                    $this->accountData = $sender;
+                } catch (\Exception $ex) {
                     $error          = new ErrorLog();
                     $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
-                    $error->task_id = 8888;
+                    $error->task_id = self::VK_ACCOUNT_ERROR;
                     $error->save();
                 }
-                //$this->cur_proxy->reportBad();
-                sleep(random_int(1, 5));
+            });
+
+            $sender = $this->accountData;
+            if ( ! isset($sender)) {
+                sleep(random_int(5, 10));
                 continue;
             }
 
-            //dd();
+            $proxy = $sender->proxy;
+            if ( ! isset($proxy)) {
+                $sender->reserved = 0;
+                $sender->save();
+                sleep(random_int(5, 10));
+                continue;
+            }
+
+            $cookies = json_decode($sender->vk_cookie);
+            $array   = new CookieJar();
+
+            if (isset($cookies)) {
+                foreach ($cookies as $cookie) {
+                    $set = new SetCookie();
+                    $set->setDomain($cookie->Domain);
+                    $set->setExpires($cookie->Expires);
+                    $set->setName($cookie->Name);
+                    $set->setValue($cookie->Value);
+                    $set->setPath($cookie->Path);
+                    $array->setCookie($set);
+                }
+            }
+
+            $this->proxy_arr = parse_url($proxy->proxy);
+            $this->client    = new Client([
+                'headers'         => [
+                    'User-Agent'      => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                    'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
+                    'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+                ],
+                'verify'          => false,
+                'cookies'         => $array->count() > 0 ? $array : true,
+                'allow_redirects' => true,
+                'timeout'         => 10,
+                'proxy'           => $this->proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
+            ]);
+
+            if ($array->count() < 1) {
+                if ( ! $this->login($sender->login, $sender->password)) {
+                    $sender->valid    = -1;
+                    $sender->reserved = 0;
+                    $sender->save();
+                    continue;
+                }
+            }
+
+            $request = $this->client->request("GET", "https://vk.com/feed");
+
+            $sender->count_request += 1;
+            $sender->save();
+
+            $data = $request->getBody()->getContents();
+
+            if (strpos($data, "login_button") !== false) {
+                $sender->valid    = -1;
+                $sender->reserved = 0;
+                $sender->save();
+                continue;
+            }
+
+            sleep(random_int(1, 3));
+
+            $request = $this->client->request("POST", "https://vk.com/groups?act=catalog", [
+                'form_params' => [
+                    'al'         => 1,
+                    'c[q]'       => $find,
+                    'c[section]' => 'commutities',
+                    'c[type]'    => 1,
+                    'change'     => 1,
+                    'search_loc' => "groups?act=catalog",
+                ]
+            ]);
+            sleep(random_int(1, 3));
+
+            $counter = 0;
+            while (true) {
+                if ($counter != 0) {
+                    $request = $this->client->request("POST", "https://vk.com/al_search.php", [
+                        'form_params' => [
+                            'al'         => 1,
+                            'al_ad'      => 0,
+                            'c[q]'       => $find,
+                            'c[section]' => 'communities',
+                            'c[type]'    => 1,
+                            'offset'     => $counter,
+                        ]
+                    ]);
+                }
+
+                $data = $request->getBody()->getContents();
+
+                file_put_contents($counter . '.txt', $data);
+
+                preg_match_all("/\/(\w*)\?from\=top/s", $data, $groups);
+                $groups = array_unique($groups[1]);
+                var_dump($groups);
+                var_dump(count($groups));
+                if (count($groups) == 0) {
+                    break;
+                }
+
+                echo "https://api.vk.com/method/groups.getById?v=5.60&group_ids=" . implode(',', $groups);
+                $grouptmp = [];
+                try {
+                    $request  = $this->client->request("GET",
+                        "https://api.vk.com/method/groups.getById?v=5.60&group_ids=" . implode(',', $groups));
+                    $query    = $request->getBody()->getContents();
+                    $grouptmp = json_decode($query, true)['response'];
+                } catch (\Exception $ex) {
+                    $error          = new ErrorLog();
+                    $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                    $error->task_id = self::VK_API_ERROR;
+                    $error->save();
+                }
+
+                foreach ($grouptmp as $groupItem) {
+                    $vkuser_id = $groupItem["id"];
+                    $search    = VKLinks::where([
+                        'vkuser_id' => $vkuser_id,
+                        'task_id'   => $task_id,
+                        'type'      => 0
+                    ])->first();
+
+                    if (isset($search)) {
+                        continue;
+                    }
+
+                    $vklink            = new VKLinks();
+                    $vklink->link      = "https://vk.com/" . $vkuser_id;
+                    $vklink->task_id   = $task_id;
+                    $vklink->vkuser_id = $vkuser_id;
+                    $vklink->type      = 0;
+                    $vklink->save();
+                }
+
+                sleep(random_int(5, 10));
+                $counter += 40;
+            }
+
+            $sender->reserved = 0;
+            $sender->save();
+
             return true;
         }
     }
@@ -920,96 +869,97 @@ class VK
 
     public function parseUser($user)
     {
-            try {
-                $ids_arr = array_column($user, "vkuser_id");
+        try {
+            $ids_arr = array_column($user, "vkuser_id");
 
-                $this->cur_proxy = ProxyItem::where([
-                    ['vk', '>', -1],
-                    ['valid', '=', 1]
-                ])->inRandomOrder()->first();
+            $this->cur_proxy = ProxyItem::where([
+                ['vk', '>', -1],
+                ['valid', '=', 1]
+            ])->inRandomOrder()->first();
 
-                if ( ! isset($this->cur_proxy)) {
-                    VKLinks::whereIn('vkuser_id', $ids_arr)->update(['reserved' => 0]);
-                    sleep(random_int(5, 10));
-                    return false;
-                }
+            if ( ! isset($this->cur_proxy)) {
+                VKLinks::whereIn('vkuser_id', $ids_arr)->update(['reserved' => 0]);
+                sleep(random_int(5, 10));
 
-                $this->proxy_arr = parse_url($this->cur_proxy->proxy);
-                $this->setProxyClient();
-                $request = $this->client->post("https://api.vk.com/method/users.get", [
-                    'form_params' => [
-                        'v'     => '5.60',
-                        'fields'   => 'can_write_private_message,connections,contacts,city,deactivated',
-                        'user_ids' => implode(",", $ids_arr)
-                    ]
-                ]);
+                return false;
+            }
 
+            $this->proxy_arr = parse_url($this->cur_proxy->proxy);
+            $this->setProxyClient();
+            $request = $this->client->post("https://api.vk.com/method/users.get", [
+                'form_params' => [
+                    'v'        => '5.60',
+                    'fields'   => 'can_write_private_message,connections,contacts,city,deactivated',
+                    'user_ids' => implode(",", $ids_arr)
+                ]
+            ]);
 
-                $query   = $request->getBody()->getContents();
+            $query = $request->getBody()->getContents();
 
-                $usertmp = json_decode($query, true);
+            $usertmp = json_decode($query, true);
 
-                if(count($usertmp["response"]) == 0){
-                    VKLinks::whereIn('vkuser_id', $ids_arr)->update(['reserved' => 0]);
-                    return false;
-                }
+            if (count($usertmp["response"]) == 0) {
+                VKLinks::whereIn('vkuser_id', $ids_arr)->update(['reserved' => 0]);
 
-                $counter = 0;
+                return false;
+            }
 
-                foreach ($usertmp["response"] as $item){
-                    if(!empty($item["deactivated"])){
-                        VKLinks::where(['vkuser_id' => $user[$counter]["vkuser_id"]])->delete();
-                        unset($user[$counter]);
-                        ++$counter;
-                        continue;
-                    }
+            $counter = 0;
 
-                    $phones = [];
-                    $skype  = [];
-                    $city   = "";
-                    if ( ! empty($item["home_phone"])) {
-                        $phones[] = $item["home_phone"];
-                    }
-                    if ( ! empty($item["mobile_phone"])) {
-                        $phones[] = $item["mobile_phone"];
-                    }
-
-                    if ( ! empty($item["skype"])) {
-                        $skype[] = $item["skype"];
-                    }
-                    if ( ! empty($item["city"])) {
-                        $city = $item["city"]["title"];
-                    }
-
-                    $search = SearchQueries::where([
-                        'link'    => $user[$counter]["link"],
-                        'task_id' => $user[$counter]["task_id"]
-                    ])->first();
-                    if (empty($search) && $item["can_write_private_message"] == "1") {
-                        $vkuser          = new SearchQueries();
-                        $vkuser->link    = $user[$counter]["link"];
-                        $vkuser->task_id = $user[$counter]["task_id"];
-                        $vkuser->vk_id   = $user[$counter]["vkuser_id"];
-                        $vkuser->name    = $item["first_name"] . " " . $item["last_name"];
-                        $vkuser->city    = $city;
-                        $vkuser->save();
-                        $this->saveContactsInfo([], $skype, $phones, $vkuser->id);
-                    }
+            foreach ($usertmp["response"] as $item) {
+                if ( ! empty($item["deactivated"])) {
                     VKLinks::where(['vkuser_id' => $user[$counter]["vkuser_id"]])->delete();
                     unset($user[$counter]);
                     ++$counter;
+                    continue;
                 }
 
-            } catch (\Exception $ex) {
-                VKLinks::whereIn('vkuser_id', array_column($user, "vkuser_id"))->update(['reserved' => 0]);
-                if (strpos($ex->getMessage(), 'cURL') !== false) {
-                    $error          = new ErrorLog();
-                    $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
-                    $error->task_id = 8888;
-                    $error->save();
+                $phones = [];
+                $skype  = [];
+                $city   = "";
+                if ( ! empty($item["home_phone"])) {
+                    $phones[] = $item["home_phone"];
                 }
-                return false;
+                if ( ! empty($item["mobile_phone"])) {
+                    $phones[] = $item["mobile_phone"];
+                }
+
+                if ( ! empty($item["skype"])) {
+                    $skype[] = $item["skype"];
+                }
+                if ( ! empty($item["city"])) {
+                    $city = $item["city"]["title"];
+                }
+
+                $search = SearchQueries::where([
+                    'link'    => $user[$counter]["link"],
+                    'task_id' => $user[$counter]["task_id"]
+                ])->first();
+                if (empty($search) && $item["can_write_private_message"] == "1") {
+                    $vkuser          = new SearchQueries();
+                    $vkuser->link    = $user[$counter]["link"];
+                    $vkuser->task_id = $user[$counter]["task_id"];
+                    $vkuser->vk_id   = $user[$counter]["vkuser_id"];
+                    $vkuser->name    = $item["first_name"] . " " . $item["last_name"];
+                    $vkuser->city    = $city;
+                    $vkuser->save();
+                    $this->saveContactsInfo([], $skype, $phones, $vkuser->id);
+                }
+                VKLinks::where(['vkuser_id' => $user[$counter]["vkuser_id"]])->delete();
+                unset($user[$counter]);
+                ++$counter;
             }
+        } catch (\Exception $ex) {
+            VKLinks::whereIn('vkuser_id', array_column($user, "vkuser_id"))->update(['reserved' => 0]);
+            if (strpos($ex->getMessage(), 'cURL') !== false) {
+                $error          = new ErrorLog();
+                $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                $error->task_id = 8888;
+                $error->save();
+            }
+
+            return false;
+        }
     }
 
     public function registrateUser()
@@ -1199,5 +1149,4 @@ class VK
             dd($ex->getMessage());
         }
     }
-
 }

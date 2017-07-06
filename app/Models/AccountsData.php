@@ -92,11 +92,6 @@ class AccountsData extends Model
         return $this->belongsTo(AccountsDataTypes::class, 'type_id');
     }
 
-    public function getProxy(){
-        return $this->belongsTo(ProxyItem::class,'proxy_id');
-
-    }
-
     public function proxy(){
         return $this->belongsTo(ProxyItem::class, 'proxy_id');
     }
