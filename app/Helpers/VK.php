@@ -484,6 +484,19 @@ class VK
                 }
 
                 $this->proxy_arr = parse_url($this->cur_proxy->proxy);
+                $this->client    = new Client([
+                    'headers'         => [
+                        'User-Agent'      => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                        'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
+                        'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+                    ],
+                    'verify'          => false,
+                    'cookies'         => true,
+                    'allow_redirects' => true,
+                    'timeout'         => 10,
+                    'proxy'           => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
+                ]);
 
                 $request  = $this->client->request("GET",
                     "https://api.vk.com/method/groups.getMembers?v=5.60&group_id=" . $group->vkuser_id);
