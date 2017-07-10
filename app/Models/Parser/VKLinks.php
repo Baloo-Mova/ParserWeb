@@ -34,6 +34,7 @@ use Illuminate\Database\Eloquent\Model;
 class VKLinks extends Model
 {
     public $table = 'vk_links';
+    public $timestamps = false;
     public $fillable = [
         'link',
         'task_id',
