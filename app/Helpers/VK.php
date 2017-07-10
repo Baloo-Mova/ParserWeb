@@ -484,7 +484,6 @@ class VK
                 }
 
                 $this->proxy_arr = parse_url($this->cur_proxy->proxy);
-                $this->setProxyClient();
 
                 $request  = $this->client->request("GET",
                     "https://api.vk.com/method/groups.getMembers?v=5.60&group_id=" . $group->vkuser_id);
@@ -561,7 +560,6 @@ class VK
     public function setProxyClient()
     {
         if ($this->is_sender == 0) {
-
             $this->proxy_string = $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'];
         }
 
@@ -583,7 +581,9 @@ class VK
     public function parseUser($user)
     {
         try {
-            $ids_arr = array_column($user, "vkuser_id");
+            $ids_arr  = array_column($user, "vkuser_id");
+            $task_id  = array_column($user, 'task_id');
+            $infoData = array_combine($ids_arr, $task_id);
 
             $this->cur_proxy = ProxyItem::where([
                 ['vk', '>', -1],
@@ -598,7 +598,20 @@ class VK
             }
 
             $this->proxy_arr = parse_url($this->cur_proxy->proxy);
-            $this->setProxyClient();
+            $this->client    = new Client([
+                'headers'         => [
+                    'User-Agent'      => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                    'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
+                    'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+                ],
+                'verify'          => false,
+                'cookies'         => true,
+                'allow_redirects' => true,
+                'timeout'         => 10,
+                'proxy'           => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
+            ]);
+
             $request = $this->client->post("https://api.vk.com/method/users.get", [
                 'form_params' => [
                     'v'        => '5.60',
@@ -607,8 +620,7 @@ class VK
                 ]
             ]);
 
-            $query = $request->getBody()->getContents();
-
+            $query   = $request->getBody()->getContents();
             $usertmp = json_decode($query, true);
 
             if (count($usertmp["response"]) == 0) {
@@ -616,46 +628,69 @@ class VK
 
                 return false;
             }
+            $toDelete = [];
+            $items    = $usertmp["response"];
 
-            foreach ($usertmp["response"] as $item) {
+            foreach ($items as $item) {
+                if (isset($item["deactivated"])) {
+                    $toDelete[] = $item["id"];
+                    continue;
+                }
+            }
+
+            VKLinks::whereIn('vkuser_id', $toDelete)->delete();
+            $toDelete = [];
+            foreach ($items as $item) {
                 usleep(500000);
                 if (isset($item["deactivated"])) {
-                    VKLinks::where(['vkuser_id' => $item["vkuser_id"]])->delete();
                     continue;
                 }
 
-                $phones[] = $item["home_phone"];
-                $phones[] = $item["mobile_phone"];
-                $skype[]  = $item["skype"];
-                $city     = $item["city"]["title"];
-                if ($item["can_write_private_message"] == "1") {
+                $skype  = [];
+                $phones = [];
+                $city   = "";
+
+                if (isset($item["home_phone"])) {
+                    $phones[] = $item["home_phone"];
+                }
+                if (isset($item["mobile_phone"])) {
+                    $phones[] = $item["mobile_phone"];
+                }
+                if (isset($item["mobile_phone"])) {
+                    $skype[] = $item["skype"];
+                }
+                if (isset($item["city"])) {
+                    $city = $item["city"]["title"];
+                }
+
+                if ($item["can_write_private_message"] == 1) {
+
                     $search = SearchQueries::where([
-                        'link'    => $item["link"],
-                        'task_id' => $item["task_id"]
+                        'vk_id'   => $item["id"],
+                        'task_id' => $infoData[$item["id"]]
                     ])->first();
 
-                    if (empty($search)) {
+                    if ( ! isset($search)) {
                         $vkuser          = new SearchQueries();
-                        $vkuser->link    = $item["link"];
-                        $vkuser->task_id = $item["task_id"];
-                        $vkuser->vk_id   = $item["vkuser_id"];
+                        $vkuser->link    = "http://vk.com/id" . $item["id"];
+                        $vkuser->task_id = $infoData[$item["id"]];
+                        $vkuser->vk_id   = $item["id"];
                         $vkuser->name    = $item["first_name"] . " " . $item["last_name"];
                         $vkuser->city    = $city;
                         $vkuser->save();
                         $this->saveContactsInfo([], $skype, $phones, $vkuser->id);
                     }
-
-                    VKLinks::where(['vkuser_id' => $item["vkuser_id"]])->delete();
                 }
+                $toDelete[] = $item['id'];
             }
+
+            VKLinks::whereIn('vkuser_id', $toDelete)->delete();
         } catch (\Exception $ex) {
             VKLinks::whereIn('vkuser_id', array_column($user, "vkuser_id"))->update(['reserved' => 0]);
-            if (strpos($ex->getMessage(), 'cURL') !== false) {
-                $error          = new ErrorLog();
-                $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
-                $error->task_id = self::VK_USER_ERROR;
-                $error->save();
-            }
+            $error          = new ErrorLog();
+            $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+            $error->task_id = self::VK_USER_ERROR;
+            $error->save();
 
             return false;
         }

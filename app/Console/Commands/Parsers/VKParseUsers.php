@@ -7,6 +7,7 @@ use App\Models\Parser\ErrorLog;
 use Illuminate\Console\Command;
 use App\Models\Parser\VKLinks;
 use Illuminate\Support\Facades\DB;
+use malkusch\lock\mutex\FlockMutex;
 
 class VKParseUsers extends Command
 {
@@ -43,14 +44,13 @@ class VKParseUsers extends Command
     public function handle()
     {
         while (true) {
-            DB::transaction(function () {
-                $links = VKLinks::join('tasks', 'tasks.id', '=', 'vk_links.task_id')
-                    ->where([
-                        'vk_links.reserved' => 0,
-                        'vk_links.type' => 1,
-                        'tasks.active_type' => 1
-                    ])
-                    ->select('vk_links.*')->lockForUpdate()->limit(999)->get()->toArray();
+            $mutex = new FlockMutex(fopen(__FILE__, "r"));
+            $mutex->synchronized(function () {
+                $links = VKLinks::join('tasks', 'tasks.id', '=', 'vk_links.task_id')->where([
+                    'vk_links.reserved' => 0,
+                    'vk_links.type'     => 1,
+                    'tasks.active_type' => 1
+                ])->select('vk_links.*')->limit(999)->get()->toArray();
 
                 if (count($links) == 0) {
                     return;
@@ -62,18 +62,17 @@ class VKParseUsers extends Command
                 $this->content = $links;
             });
 
-            if (!isset($this->content)) {
+            if ( ! isset($this->content)) {
                 sleep(random_int(5, 10));
                 continue;
             }
 
-            try{
+            try {
                 $web = new VK();
                 $web->parseUser($this->content);
                 sleep(random_int(30, 40));
-
-            }catch (\Exception $ex){
-                $log = new ErrorLog();
+            } catch (\Exception $ex) {
+                $log          = new ErrorLog();
                 $log->task_id = 0;
                 $log->message = $ex->getMessage() . " line:" . __LINE__;
                 $log->save();

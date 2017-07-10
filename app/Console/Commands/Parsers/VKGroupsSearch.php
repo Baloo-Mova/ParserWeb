@@ -11,6 +11,7 @@ use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\Parser\VKLinks;
 use Illuminate\Support\Facades\DB;
+use malkusch\lock\mutex\FlockMutex;
 
 class VKGroupsSearch extends Command
 {
@@ -48,12 +49,14 @@ class VKGroupsSearch extends Command
     {
         while (true) {
             $this->content['task'] = null;
-            DB::transaction(function () {
+
+            $mutex = new FlockMutex(fopen(__FILE__, "r"));
+            $mutex->synchronized(function () {
                 $task = Tasks::where([
                     ['task_type_id', '=', 1],
                     ['vk_reserved', '=', 0],
                     ['active_type', '=', 1],
-                ])->lockForUpdate()->first();
+                ])->first();
                 if ( ! isset($task)) {
                     return;
                 }
@@ -74,7 +77,7 @@ class VKGroupsSearch extends Command
                     $this->content['task']->vk_reserved = 2;
                     $this->content['task']->save();
                 }
-                sleep(random_int(30, 55));
+                sleep(random_int(10, 20));
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
                 $log->task_id = $this->content['task']->id;

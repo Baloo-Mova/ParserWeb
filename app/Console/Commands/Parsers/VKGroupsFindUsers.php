@@ -11,6 +11,7 @@ use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\Parser\VKLinks;
 use Illuminate\Support\Facades\DB;
+use malkusch\lock\mutex\FlockMutex;
 
 class VKGroupsFindUsers extends Command
 {
@@ -48,12 +49,13 @@ class VKGroupsFindUsers extends Command
     {
         while (true) {
             $this->content['vklink'] = null;
-            DB::transaction(function () {
+            $mutex                   = new FlockMutex(fopen(__FILE__, "r"));
+            $mutex->synchronized(function () {
                 $group = VKLinks::join('tasks', 'tasks.id', '=', 'vk_links.task_id')->where([
                     'vk_links.reserved' => 0,
                     'vk_links.type'     => 0,
                     'tasks.active_type' => 1,
-                ])->select('vk_links.*')->lockForUpdate()->first();
+                ])->select('vk_links.*')->first();
                 if ( ! isset($group)) {
                     return;
                 }
@@ -73,7 +75,7 @@ class VKGroupsFindUsers extends Command
                 if ($vk->getUsersOfGroup($this->content['vklink'])) {
                     $this->content['vklink']->delete();
                 }
-                sleep(rand(20, 60));
+                sleep(rand(15, 40));
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
                 $log->task_id = $this->content['vklink']->task_id;

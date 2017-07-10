@@ -50,15 +50,9 @@ class Tester extends Command
 
     public function handle()
     {
-        DB::enableQueryLog();
-        $links = VKLinks::join('tasks', 'tasks.id', '=', 'vk_links.task_id')
-            ->where([
-                'vk_links.reserved' => 0,
-                'tasks.active_type' => 1,
-                'vk_links.type' => 1
-            ])
-            ->select('vk_links.*')->lockForUpdate()->limit(999)->get()->toArray();
-        dd(DB::getQueryLog());
+        $vklinks = VKLinks::limit(10)->get()->toArray();
+        $vk = new VK();
+        $vk->parseUser($vklinks);
     }
 
 }
