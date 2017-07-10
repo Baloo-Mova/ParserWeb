@@ -20,7 +20,7 @@ class VKGroupsSearch extends Command
      *
      * @var string
      */
-    protected $signature = 'parse:vk:getgroups';
+    protected $signature = 'parse:vk:groups:search';
 
     /**
      * The console command description.
@@ -46,14 +46,13 @@ class VKGroupsSearch extends Command
      */
     public function handle()
     {
-        // sleep(random_int(1,3));
         while (true) {
             $this->content['task'] = null;
             DB::transaction(function () {
                 $task = Tasks::where([
-                    'task_type_id' => 1,
-                    'vk_reserved'  => 0,
-                    'active_type'  => 1
+                    ['task_type_id', '=', 1],
+                    ['vk_reserved', '=', 0],
+                    ['active_type', '=', 1],
                 ])->lockForUpdate()->first();
                 if ( ! isset($task)) {
                     return;
@@ -75,9 +74,9 @@ class VKGroupsSearch extends Command
                     $this->content['task']->vk_reserved = 2;
                     $this->content['task']->save();
                 }
-                sleep(random_int(1, 3));
+                sleep(random_int(30, 55));
             } catch (\Exception $ex) {
-                $log = new ErrorLog();
+                $log          = new ErrorLog();
                 $log->task_id = $this->content['task']->id;
                 $log->message = $ex->getMessage() . " line:" . $ex->getLine();
                 $log->save();

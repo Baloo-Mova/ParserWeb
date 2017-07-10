@@ -43,7 +43,6 @@ class VKParseUsers extends Command
     public function handle()
     {
         while (true) {
-
             DB::transaction(function () {
                 $links = VKLinks::join('tasks', 'tasks.id', '=', 'vk_links.task_id')
                     ->where([
@@ -80,7 +79,6 @@ class VKParseUsers extends Command
                 $log->message = $ex->getMessage() . " line:" . __LINE__;
                 $log->save();
             }
-
         }
     }
 }

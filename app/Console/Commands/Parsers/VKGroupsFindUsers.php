@@ -5,13 +5,13 @@ namespace App\Console\Commands\Parsers;
 use App\Helpers\VK;
 use App\Models\Parser\ErrorLog;
 
-
 use App\Models\Tasks;
 use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\Parser\VKLinks;
 use Illuminate\Support\Facades\DB;
+
 class VKGroupsFindUsers extends Command
 {
     public $content;
@@ -20,7 +20,7 @@ class VKGroupsFindUsers extends Command
      *
      * @var string
      */
-    protected $signature = 'parse:vk:getusers';
+    protected $signature = 'parse:vk:users:from:groups';
 
     /**
      * The console command description.
@@ -46,14 +46,16 @@ class VKGroupsFindUsers extends Command
      */
     public function handle()
     {
-        sleep(random_int(1, 3));
         while (true) {
             $this->content['vklink'] = null;
             DB::transaction(function () {
-                $group = VKLinks::join('tasks', 'tasks.id', '=', 'vk_links.task_id')->
-                where(['vk_links.type' => 0, 'vk_links.getusers_reserved' => 0, 'vk_links.getusers_status' => 0, 'tasks.active_type' => 1,])
-                    ->select('vk_links.*')->lockForUpdate()->first();
-                if ( !isset($group)) {
+                $group = VKLinks::join('tasks', 'tasks.id', '=', 'vk_links.task_id')->where([
+                    'vk_links.type'              => 0,
+                    'vk_links.getusers_reserved' => 0,
+                    'vk_links.getusers_status'   => 0,
+                    'tasks.active_type'          => 1,
+                ])->select('vk_links.*')->lockForUpdate()->first();
+                if ( ! isset($group)) {
                     return;
                 }
 
@@ -62,56 +64,25 @@ class VKGroupsFindUsers extends Command
                 $this->content['vklink'] = $group;
             });
 
-            if ( !isset($this->content['vklink'])) {
-            sleep(10);
+            if ( ! isset($this->content['vklink'])) {
+                sleep(10);
                 continue;
             }
 
-
             try {
-                $web           = new VK();
-                               
-
-                $i             = 0;
-                
-                if($web->getUsersOfGroup($this->content['vklink'])){
+                $vk = new VK();
+                if ($vk->getUsersOfGroup($this->content['vklink'])) {
                     $this->content['vklink']->getusers_reserved = 0;
-                    $this->content['vklink']->getusers_status = 1;
+                    $this->content['vklink']->getusers_status   = 1;
                     $this->content['vklink']->save();
-                 sleep(random_int(1,5));
-                    
                 }
-                DB::transaction(function () {
-                    $vklink = VKLinks::
-                    where(['id'=>$this->content['vklink']->id,'parsed' => 1,'getusers_status'=>1])
-                        ->lockForUpdate()->first();
-
-                    if ( !isset($vklink)) {
-                        return;
-                    }
-                    $vklink->delete();
-
-
-                });
-                
-                
+                $this->content['vklink']->delete();
+                sleep(rand(20, 60));
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
                 $log->task_id = $this->content['vklink']->task_id;
-                $log->message = $ex->getMessage(). " line:".__LINE__ ;
+                $log->message = $ex->getMessage() . " line:" . $ex->getLine();
                 $log->save();
-                DB::transaction(function () {
-                    $vklink = VKLinks::
-                    where(['id'=>$this->content['vklink']->id,'parsed' => 1,'getusers_status'=>1])
-                        ->lockForUpdate()->first();
-
-                    if ( !isset($vklink)) {
-                        return;
-                    }
-                    $vklink->delete();
-
-
-                });
             }
         }
     }

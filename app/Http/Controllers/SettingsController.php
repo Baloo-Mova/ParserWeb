@@ -22,7 +22,7 @@ class SettingsController extends Controller {
 
     public function index() {
         $settings = Settings::whereId(1)->first();
-        $configs = ProcessConfigs::orderBy('id', 'desc')->get();
+        $configs = ProcessConfigs::orderBy('name', 'desc')->get();
 		
        //$processes = Processes::orderBy('id', 'desc')->get();
         //for supervisors

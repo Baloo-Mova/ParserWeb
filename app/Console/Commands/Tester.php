@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Helpers\VK;
 use App\Models\AccountsData;
+use App\Models\Parser\VKLinks;
 use App\Models\Proxy;
 use App\Models\SkypeLogins;
 use Illuminate\Console\Command;
@@ -48,9 +49,10 @@ class Tester extends Command
 
     public function handle()
     {
-        for ($i = 0; $i < 18; $i++) {
-            $vk = new VK();
-            $vk->sendRandomMessage('342644021', 'Привет, собственно вопросы все решены!');
+        $vklinks = VKLinks::all();
+        $vk      = new VK();
+        foreach ($vklinks as $item) {
+            $vk->getUsersOfGroup($item);
         }
     }
 

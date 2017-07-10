@@ -58,7 +58,6 @@ class Kernel extends ConsoleKernel
          VKGroupsFindUsers::class,
          ParseTwGroups::class,
          ParseInsGroups::class,
-         ParseVK::class,
          VKParseUsers::class,
          ParseTw::class,
          ParseIns::class,
