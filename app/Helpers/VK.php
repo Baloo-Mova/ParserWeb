@@ -417,6 +417,7 @@ class VK
 
             if ($result['response']['count'] > 0) {
                 foreach ($result['response']['items'] as $item) {
+                    usleep(500000);
                     try {
                         $search = VKLinks::where([
                             'vkuser_id' => $item['id'],
@@ -492,6 +493,7 @@ class VK
                 $count    = intval($userstmp["response"]["count"]);
                 $users    = $userstmp["response"]["items"];
                 foreach ($users as $value) {
+                    usleep(500000);
                     $search = VKLinks::where([
                         'vkuser_id' => $value,
                         'task_id'   => $group->task_id,
@@ -521,6 +523,7 @@ class VK
                         $users    = $userstmp["response"]["items"];
                         $users    = array_unique($users);
                         foreach ($users as $value) {
+                            usleep(500000);
                             $search = VKLinks::where([
                                 'vkuser_id' => $value,
                                 'task_id'   => $group->task_id,
@@ -615,6 +618,7 @@ class VK
             }
 
             foreach ($usertmp["response"] as $item) {
+                usleep(500000);
                 if (isset($item["deactivated"])) {
                     VKLinks::where(['vkuser_id' => $item["vkuser_id"]])->delete();
                     continue;
