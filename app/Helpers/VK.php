@@ -77,7 +77,7 @@ class VK
                     continue;
                 }
 
-                $this->cur_proxy = $sender->getProxy;//ProxyItem::find($sender->proxy_id);
+                $this->cur_proxy = $sender->proxy;//ProxyItem::find($sender->proxy_id);
                 //dd($this->cur_proxy->proxy);
 
                 if ( ! isset($this->cur_proxy)) {
@@ -128,6 +128,7 @@ class VK
 
                 $request = $this->client->request("GET", "https://vk.com/id" . $to_userId);
                 $data    = $request->getBody()->getContents();
+
                 if (strpos($data, "quick_login_button") !== false) {
                     $sender->vk_cookie = null;
                     $sender->reserved  = 0;
@@ -152,7 +153,7 @@ class VK
                 }
 
                 preg_match_all("/   hash\: '(\w*)'/s", $data, $chas);
-
+                var_dump($chas);
                 $chas    = $chas[1];
                 $request = $this->client->post("https://vk.com/al_im.php", [
 
@@ -205,6 +206,10 @@ class VK
                 }
             }
         }
+    }
+
+    public function setDataToLogin($acc){
+        $this->accountData = $acc;
     }
 
     public function login($vk_login, $pass)
