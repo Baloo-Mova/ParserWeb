@@ -29,6 +29,7 @@ class ParseOk extends Command
     public $proxy_arr;
     public $proxy_string;
     public $data    = [];
+    public $content = null;
     /**
      * The name and signature of the console command.
      *
@@ -70,7 +71,7 @@ class ParseOk extends Command
                         ['active_type', '=', 1]
                     ])->lockForUpdate()->first();
 
-                    if (!isset($task)) {
+                    if ( ! isset($task)) {
                         return;
                     }
                     $task->ok_reserved = 1;
@@ -87,52 +88,62 @@ class ParseOk extends Command
 
                 $page_numb = $task->ok_offset;
 
-                $from      = null;
-
-                while (true) {
-
+                $from            = null;
+                $needLogin       = false;
+                $needFindAccount = true;
+                while ($needFindAccount) {
                     $this->content['from'] = null;
                     DB::transaction(function () {
                         $from = AccountsData::where([
                             ['type_id', '=', 2],
                             ['is_sender', '=', 0],
                             ['valid', '=', 1],
-                            ['count_request', '<', config('config.total_requets_limit')],
                             ['reserved', '=', 0]
-
                         ])->orderBy('count_request', 'asc')->first(); // Получаем случайный логин и пас
-                        if (!isset($from)) {
+                        if ( ! isset($from)) {
                             return;
-
                         }
-                        $from->reserved=1;
+                        $from->reserved = 1;
                         $from->save();
                         $this->content['from'] = $from;
                     });
-
-                    $from =  $this->content['from'];  // Получаем случайный логин и пас
-
+                    $from = $this->content['from'];
 
                     if ( ! isset($from)) {
-                        //Artisan::call('reg:ok');
                         sleep(random_int(5, 10));
                         continue;
                     }
-                    $from->reserved=1;
+                    $from->reserved = 1;
                     $from->save();
-                    $this->cur_proxy=    $from->getProxy;//ProxyItem::getProxy(ProxyItem::OK, $from->proxy_id);
+
+                    $this->cur_proxy = $from->proxy;
+
                     if ( ! isset($this->cur_proxy)) {
-                        $from->reserved=0;
+                        $from->reserved = 0;
                         $from->save();
                         sleep(random_int(5, 10));
-
                         continue;
                     }
 
+                    if (isset($from->ok_cookie)) {
+                        $cookies = json_decode($from->ok_cookie);
+                        if (is_array($cookies)) {
+                            $array = new CookieJar();
+                            foreach ($cookies as $cookie) {
+                                $set = new SetCookie();
+                                $set->setDomain($cookie->Domain);
+                                $set->setExpires($cookie->Expires);
+                                $set->setName($cookie->Name);
+                                $set->setValue($cookie->Value);
+                                $set->setPath($cookie->Path);
+                                $array->setCookie($set);
+                            }
+                        }
+                    }
 
-                    $this->proxy_arr = parse_url($this->cur_proxy->proxy);
+                    $this->proxy_arr    = parse_url($this->cur_proxy->proxy);
                     $this->proxy_string = $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'];
-                    $this->client    = new Client([
+                    $this->client       = new Client([
                         'headers'         => [
                             'User-Agent'      => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
                             'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -140,30 +151,47 @@ class ParseOk extends Command
                             'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
                         ],
                         'verify'          => false,
-                        'cookies'         => true,
+                        'cookies'         => isset($from->ok_cookie) ? $array : true,
                         'allow_redirects' => true,
                         'timeout'         => 20,
                         'proxy'           => $this->proxy_string,
                     ]);
 
-                    if ($this->login($from->login, $from->password)) {
-                        $from->ok_user_gwt = $this->gwt;
-                        $from->ok_user_tkn = $this->tkn;
-                        $from->ok_cookie   = json_encode($this->client->getConfig('cookies')->toArray());
-                        $from->count_request+=1;
-                        $from->save();
-                        break;
-                    } else {
-                        $from->count_request+=1;
-                        $from->valid = -1;
-                        $from->ok_user_gwt=null;
-                        $from->ok_user_tkn=null;
-                        $from->ok_cookie=null;
-                        $from->reserved =0;
+                    $data = $this->client->request('GET', 'http://ok.ru')->getBody()->getContents();
+                    $from->count_request += 1;
+                    $from->save();
 
+                    if (strpos($data, "Ваш профиль заблокирован") !== false) {
+                        $from->valid    = -1;
+                        $from->reserved = 0;
                         $from->save();
-                       // $this->cur_proxy->release();
                         continue;
+                    }
+
+                    if (strpos($data, "anonym__rich anonym__feed") !== false) {
+                        $needLogin = true;
+                    }
+
+                    if ($needLogin) {
+                        if ($this->login($from->login, $from->password)) {
+                            $from->ok_user_gwt = $this->gwt;
+                            $from->ok_user_tkn = $this->tkn;
+                            $from->ok_cookie   = json_encode($this->client->getConfig('cookies')->toArray());
+                            $from->count_request += 1;
+                            $from->save();
+                            $needFindAccount = false;
+                            break;
+                        } else {
+                            $from->count_request += 1;
+                            $from->valid    = -1;
+                            $from->reserved = 0;
+                            $from->save();
+                            continue;
+                        }
+                    } else {
+                        $needFindAccount = false;
+                        $this->tkn       = $from->ok_user_tkn;
+                        $this->gwt       = $from->ok_user_gwt;
                     }
                 }
 
@@ -180,21 +208,20 @@ class ParseOk extends Command
                             "st.grmode"     => "Groups"
                         ]
                     ]);
-                $from->count_request+=1;
+                $from->count_request += 1;
                 $from->save();
-              //  $this->cur_proxy->inc();
-                //var_dump($groups_data);
 
                 if ( ! empty($groups_data->getHeaderLine('TKN'))) {
                     $this->tkn = $groups_data->getHeaderLine('TKN');
                 }
 
                 if ($page_numb == 1) {
-                    $this->parsePage($groups_data->getBody()->getContents(), $task->id);
+                    $data = $groups_data->getBody()->getContents();
+                    $this->parsePage($data, $task->id);
                 }
-                $page_numb+=1;
-                do { // Вытаскиваем линки групп на всех остальных страницах
 
+                $page_numb += 1;
+                do {
                     $groups_data = $this->client->request('POST',
                         'http://ok.ru/search?cmd=PortalSearchResults&gwt.requested=' . $this->gwt . '&st.cmd=searchResult&st.mode=Groups&st.query=' . $task->task_query . '&st.grmode=Groups&st.posted=set&',
                         [
@@ -207,7 +234,6 @@ class ParseOk extends Command
                                 "st.loaderid" => "PortalSearchResultsLoader"
                             ]
                         ]);
-
 
                     if ( ! empty($groups_data->getHeaderLine('TKN'))) {
                         $this->tkn = $groups_data->getHeaderLine('TKN');
@@ -222,51 +248,25 @@ class ParseOk extends Command
 
                     sleep(random_int(2, 7));
                     $from->increment('count_request');
-                    $from->save();
-                   // $this->cur_proxy->inc();
-                    $from = AccountsData::find($from->id);
-                    if ($from->count_request > config('config.total_requets_limit')) {
-                        $task              = $this->data['task'];
-                        $task->ok_reserved = 0;
-
-                        $task->save();
-
-                        break;
-                    }
                 } while (strlen($html_doc) > 200);
-                $from->reserved = 0;
 
                 $task->ok_reserved = 2;
                 $task->save();
 
+                $from->reserved    = 0;
                 $from->ok_user_tkn = $this->tkn;
+                $from->ok_user_gwt = $this->gwt;
                 $from->save();
-               // $this->cur_proxy->release();
             } catch (\Exception $ex) {
-
                 $err          = new ErrorLog();
-                $err->message = $ex->getTraceAsString();
-                $err->task_id = 0;
+                $err->message = $ex->getMessage() . " " . $ex->getLine();
+                $err->task_id = 150001;
                 $err->save();
                 if (isset($this->data['task'])) {
                     $task              = $this->data['task'];
                     $task->ok_reserved = 0;
                     $task->save();
                 }
-                $from->reserved=0;
-                $from->save();
-               // $this->cur_proxy->release();
-                if (strpos($ex->getMessage(), "cURL") !== false) {
-
-                    //$this->cur_proxy->ok=-1;
-                    //$this->cur_proxy->save();
-                    $error = new ErrorLog();
-                    $error->message = "OK_parse: ".$ex->getMessage() . " Line: " . $ex->getLine() . " ";
-                    $error->task_id = 7777;
-                    $error->save();
-
-                }
-
             }
         }
     }
@@ -288,8 +288,6 @@ class ParseOk extends Command
                 "st.password"       => $password,
                 "st.iscode"         => "false"
             ],
-            //'proxy' => $this->cur_proxy->proxy,
-            //'proxy' => '7zxShe:FhB871@127.0.0.1:8888'
             'proxy'       => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
         ]);
 
@@ -308,10 +306,10 @@ class ParseOk extends Command
             }
 
             //$this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
-            preg_match('/gwtHash\:("(.*?)(?:"|$)|([^"]+))/i',$html_doc, $this->gwt);
+            preg_match('/gwtHash\:("(.*?)(?:"|$)|([^"]+))/i', $html_doc, $this->gwt);
             $this->gwt = $this->gwt[2];
             // $this->tkn =substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
-            preg_match("/OK\.tkn\.set\(('(.*?)(?:'|$)|([^']+))\)/i",$html_doc, $this->tkn);
+            preg_match("/OK\.tkn\.set\(('(.*?)(?:'|$)|([^']+))\)/i", $html_doc, $this->tkn);
             $this->tkn = $this->tkn[2];
 
             return true;
@@ -328,13 +326,14 @@ class ParseOk extends Command
         foreach ($this->crawler->find("a") as $link) { // Вытаскиваем линки групп на 1 страницe
             if (strpos($link->href, 'st.redirect') > 0) {
                 $href = urldecode(substr($link->href, strripos($link->href, "st.redirect=") + 12));
-                echo $href . PHP_EOL;
-                $ok_group            = new OkGroups();
-                $ok_group->group_url = $href;
-                $ok_group->task_id   = $task_id;
-                $ok_group->type      = 1;
-                $ok_group->reserved  = 0;
-                $ok_group->save();
+                if (strpos($href, "market") === false) {
+                    $ok_group            = new OkGroups();
+                    $ok_group->group_url = $href;
+                    $ok_group->task_id   = $task_id;
+                    $ok_group->type      = 1;
+                    $ok_group->reserved  = 0;
+                    $ok_group->save();
+                }
             }
         }
     }

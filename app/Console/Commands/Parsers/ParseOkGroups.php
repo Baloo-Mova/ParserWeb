@@ -32,6 +32,7 @@ class ParseOkGroups extends Command
     public $proxy_string;
     public $userOrGroup = "";
     public $data        = [];
+    public $content;
     /**
      * The name and signature of the console command.
      *
@@ -137,7 +138,7 @@ class ParseOkGroups extends Command
                     $from->reserved = 1;
                     $from->save();
 
-                    $this->cur_proxy = $from->getProxy;
+                    $this->cur_proxy = $from->proxy;
 
                     if ( ! isset($this->cur_proxy)) {
                         $from->reserved = 0;
@@ -176,22 +177,20 @@ class ParseOkGroups extends Command
                         'allow_redirects' => true,
                         'timeout'         => 20,
                         'proxy'           => $this->proxy_string,
-                        // 'proxy' => '7zxShe:FhB871@127.0.0.1:8888'
                     ]);
 
                     $data = $this->client->request('GET', 'http://ok.ru')->getBody()->getContents();
-
                     $from->count_request += 1;
                     $from->save();
 
-                    if (strpos($data, "Ваш профиль заблокирован") > 0) {
+                    if (strpos($data, "Ваш профиль заблокирован") !== false) {
                         $from->valid    = -1;
                         $from->reserved = 0;
                         $from->save();
                         continue;
                     }
 
-                    if (strpos($data, "anonym__rich anonym__feed") > 0) {
+                    if (strpos($data, "anonym__rich anonym__feed") !== false) {
                         $needLogin = true;
                     }
 
@@ -213,13 +212,13 @@ class ParseOkGroups extends Command
                         }
                     } else {
                         $needFindAccount = false;
-                        $this->tkn       = $from->ok_user_gwt;
-                        $this->gwt       = $from->ok_user_tkn;
+                        $this->tkn       = $from->ok_user_tkn;
+                        $this->gwt       = $from->ok_user_gwt;
                     }
                 }
 
                 if ($this->userOrGroup != "user") { // Это группа, парсим данные, достаем всех пользователей
-                    echo("\nGroup");
+
                     $gr_url      = $query_data->group_url;
                     $page_numb   = $query_data->offset;
                     $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url);
@@ -362,18 +361,9 @@ class ParseOkGroups extends Command
 
                     Contacts::insert($contacts);
 
-                    $query_data->delete();    // Получили всех пользователей, удаляем группу
-//                    if ($from->count_request > 1000) {
-//
-//                        $from->reserved = 0;
-//                        $from->save();
-//
-//                        $query_data->reserved = 0;
-//                        $query_data->save();
-//                        break;
-//                    }
+                    $query_data->delete();
                 } else {                // Это человек, парсим данные
-                    echo("\nUsers");
+
                     $error = 1;
                     foreach ($query_data as $item) {
                         try {
@@ -447,45 +437,18 @@ class ParseOkGroups extends Command
 
                             $from->increment('count_request');
                             $from->save();
-//                            $from = AccountsData::find($from->id);
-//                            if ($from->count_request > 1000) {
-//                                $task              = $this->data['task'];
-//                                $task->ok_reserved = 0;
-//                                $task->save();
-//                                $from->reserved = 0;
-//                                $from->save();
-//
-//                                break;
-//                            }
-
                             sleep(rand(2, 8));
                         } catch (\Exception $ex) {
                         }
                     }
-
-//                    foreach ($query_data as $item) {
-//                        $item->reserved = 0;
-//                        $item->save();
-//                    }
                 }
-//                $from->increment('count_request');
-//
                 $from->reserved = 0;
                 $from->save();
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->task_id = 0;
+                $log->task_id = 140002;
                 $log->message = $ex->getMessage() . "\n" . $ex->getTraceAsString();
                 $log->save();
-                $from->reserved = 0;
-                $from->save();
-
-                if (strpos($ex->getMessage(), "cURL") !== false) {
-                    $error          = new ErrorLog();
-                    $error->message = "OK_parseGR: " . $ex->getMessage() . " Line: " . $ex->getLine() . " ";
-                    $error->task_id = 7777;
-                    $error->save();
-                }
             }
         }
     }

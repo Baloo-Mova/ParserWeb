@@ -57,7 +57,6 @@ class VKSender extends Command
                         'search_queries.vk_reserved' => 0,
                         'tasks.need_send'            => 1,
                         'tasks.active_type'          => 1,
-
                     ])->select('search_queries.*')->lockForUpdate()->first();
                     if ( ! isset($sk_query)) {
                         return;
