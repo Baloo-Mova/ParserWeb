@@ -12,6 +12,7 @@ use App\Helpers\SimpleHtmlDom;
 use App\Models\Skypes;
 use GuzzleHttp\Client;
 use App\Helpers\Web;
+use Illuminate\Support\Facades\DB;
 use SebastianBergmann\CodeCoverage\Report\PHP;
 
 class Tester extends Command
@@ -49,11 +50,15 @@ class Tester extends Command
 
     public function handle()
     {
-        $vklinks = VKLinks::all();
-        $vk      = new VK();
-        foreach ($vklinks as $item) {
-            $vk->getUsersOfGroup($item);
-        }
+        DB::enableQueryLog();
+        $links = VKLinks::join('tasks', 'tasks.id', '=', 'vk_links.task_id')
+            ->where([
+                'vk_links.reserved' => 0,
+                'tasks.active_type' => 1,
+                'vk_links.type' => 1
+            ])
+            ->select('vk_links.*')->lockForUpdate()->limit(999)->get()->toArray();
+        dd(DB::getQueryLog());
     }
 
 }

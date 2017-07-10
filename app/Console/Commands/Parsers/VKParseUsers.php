@@ -46,10 +46,9 @@ class VKParseUsers extends Command
             DB::transaction(function () {
                 $links = VKLinks::join('tasks', 'tasks.id', '=', 'vk_links.task_id')
                     ->where([
-                        'vk_links.parsed' => 0,
                         'vk_links.reserved' => 0,
-                        'tasks.active_type' => 1,
-                        'vk_links.type' => 1
+                        'vk_links.type' => 1,
+                        'tasks.active_type' => 1
                     ])
                     ->select('vk_links.*')->lockForUpdate()->limit(999)->get()->toArray();
 

@@ -50,16 +50,15 @@ class VKGroupsFindUsers extends Command
             $this->content['vklink'] = null;
             DB::transaction(function () {
                 $group = VKLinks::join('tasks', 'tasks.id', '=', 'vk_links.task_id')->where([
-                    'vk_links.type'              => 0,
-                    'vk_links.getusers_reserved' => 0,
-                    'vk_links.getusers_status'   => 0,
-                    'tasks.active_type'          => 1,
+                    'vk_links.reserved' => 0,
+                    'vk_links.type'     => 0,
+                    'tasks.active_type' => 1,
                 ])->select('vk_links.*')->lockForUpdate()->first();
                 if ( ! isset($group)) {
                     return;
                 }
 
-                $group->getusers_reserved = 1;
+                $group->reserved = 1;
                 $group->save();
                 $this->content['vklink'] = $group;
             });
@@ -72,11 +71,8 @@ class VKGroupsFindUsers extends Command
             try {
                 $vk = new VK();
                 if ($vk->getUsersOfGroup($this->content['vklink'])) {
-                    $this->content['vklink']->getusers_reserved = 0;
-                    $this->content['vklink']->getusers_status   = 1;
-                    $this->content['vklink']->save();
+                    $this->content['vklink']->delete();
                 }
-                $this->content['vklink']->delete();
                 sleep(rand(20, 60));
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
