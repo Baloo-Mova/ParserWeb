@@ -48,12 +48,9 @@ class Tester extends Command
 
     public function handle()
     {
-        $accs = AccountsData::where(['type_id'=>1])->get();
-
-        foreach ($accs as $item){
+        for ($i = 0; $i < 18; $i++) {
             $vk = new VK();
-            $vk->sendRandomMessage('342644021','Привет, собственно вопросы все решены!');
-            sleep(3);
+            $vk->sendRandomMessage('342644021', 'Привет, собственно вопросы все решены!');
         }
     }
 
