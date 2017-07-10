@@ -53,6 +53,7 @@ class Tester extends Command
         foreach ($accs as $item){
             $vk = new VK();
             $vk->sendRandomMessage('342644021','Привет, собственно вопросы все решены!');
+            sleep(3);
         }
     }
 
