@@ -56,9 +56,9 @@ class VKParseUsers extends Command
                     return;
                 }
 
-                $ids_arr = array_column($links, "vkuser_id");
+                $ids_arr = array_column($links, "id");
 
-                VKLinks::whereIn('vkuser_id', $ids_arr)->update(['reserved' => 1]);
+                VKLinks::whereIn('id', $ids_arr)->update(['reserved' => 1]);
                 $this->content = $links;
             });
 
