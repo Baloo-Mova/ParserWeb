@@ -676,17 +676,23 @@ class VK
                     $city = $item["city"]["title"];
                 }
 
+                if ( ! isset($infoData[$item["id"]])) {
+                    $currentTaskId = 0;
+                } else {
+                    $currentTaskId = $infoData[$item["id"]];
+                }
+
                 if ($item["can_write_private_message"] == 1) {
 
                     $search = SearchQueries::where([
                         'vk_id'   => $item["id"],
-                        'task_id' => $infoData[$item["id"]]
+                        'task_id' => $currentTaskId
                     ])->first();
 
                     if ( ! isset($search)) {
                         $vkuser          = new SearchQueries();
                         $vkuser->link    = "http://vk.com/id" . $item["id"];
-                        $vkuser->task_id = $infoData[$item["id"]];
+                        $vkuser->task_id = $currentTaskId;
                         $vkuser->vk_id   = $item["id"];
                         $vkuser->name    = $item["first_name"] . " " . $item["last_name"];
                         $vkuser->city    = $city;
