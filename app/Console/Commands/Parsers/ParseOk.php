@@ -17,6 +17,7 @@ use GuzzleHttp\Cookie\SetCookie;
 use App\Models\Proxy as ProxyItem;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use malkusch\lock\mutex\FlockMutex;
 
 class ParseOk extends Command
 {
@@ -64,12 +65,13 @@ class ParseOk extends Command
         while (true) {
             try {
                 $this->data['task'] = null;
-                DB::transaction(function () {
+                $mutex              = new FlockMutex(fopen(__FILE__, "r"));
+                $mutex->synchronized(function () {
                     $task = Tasks::where([
                         ['task_type_id', '=', TasksType::WORD],
                         ['ok_reserved', '=', 0],
                         ['active_type', '=', 1]
-                    ])->lockForUpdate()->first();
+                    ])->first();
 
                     if ( ! isset($task)) {
                         return;
