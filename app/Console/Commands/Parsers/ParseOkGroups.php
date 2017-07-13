@@ -19,6 +19,7 @@ use App\Models\Proxy as ProxyItem;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use App\Models\Contacts;
+use malkusch\lock\mutex\FlockMutex;
 
 class ParseOkGroups extends Command
 {
@@ -70,34 +71,43 @@ class ParseOkGroups extends Command
                 sleep(random_int(10, 15));
                 $this->data['task'] = null;
                 $this->userOrGroup  = "";
-                DB::transaction(function () {
-                    $query_data = OkGroups::join('tasks', 'tasks.id', '=', 'ok_groups.task_id')->where([
-                        ['ok_groups.offset', '<>', -1],
-                        ['ok_groups.reserved', '=', 0],
-                        ['ok_groups.type', '=', 2],
-                        ['tasks.active_type', '=', 1]
-                    ])->select('ok_groups.*')->lockForUpdate()->limit(10)->get(); // Забираем 100 users для этого таска
 
-                    if (count($query_data) > 0) {
-                        foreach ($query_data as $item) {
-                            $item->reserved = 1;
-                            $item->save();
-                        }
-                        $this->data['task'] = $query_data;
-                        $this->userOrGroup  = "user";
-                    } else {
+                $mutex              = new FlockMutex(fopen(__FILE__, "r"));
+                $mutex->synchronized(function () {
+                    try {
                         $query_data = OkGroups::join('tasks', 'tasks.id', '=', 'ok_groups.task_id')->where([
                             ['ok_groups.offset', '<>', -1],
                             ['ok_groups.reserved', '=', 0],
-                            ['ok_groups.type', '=', 1],
+                            ['ok_groups.type', '=', 2],
                             ['tasks.active_type', '=', 1]
-                        ])->select('ok_groups.*')->lockForUpdate()->first(); // Забираем 1 групп для этого таска
-                        if (isset($query_data)) {
-                            $query_data->reserved = 1;
-                            $query_data->save();
+                        ])->select('ok_groups.*')->lockForUpdate()->limit(10)->get(); // Забираем 100 users для этого таска
+
+                        if (count($query_data) > 0) {
+                            foreach ($query_data as $item) {
+                                $item->reserved = 1;
+                                $item->save();
+                            }
                             $this->data['task'] = $query_data;
-                            $this->userOrGroup  = "group";
+                            $this->userOrGroup  = "user";
+                        } else {
+                            $query_data = OkGroups::join('tasks', 'tasks.id', '=', 'ok_groups.task_id')->where([
+                                ['ok_groups.offset', '<>', -1],
+                                ['ok_groups.reserved', '=', 0],
+                                ['ok_groups.type', '=', 1],
+                                ['tasks.active_type', '=', 1]
+                            ])->select('ok_groups.*')->lockForUpdate()->first(); // Забираем 1 групп для этого таска
+                            if (isset($query_data)) {
+                                $query_data->reserved = 1;
+                                $query_data->save();
+                                $this->data['task'] = $query_data;
+                                $this->userOrGroup  = "group";
+                            }
                         }
+                    } catch (\Exception $ex) {
+                        $log          = new ErrorLog();
+                        $log->task_id = 140002;
+                        $log->message = $ex->getMessage() . "\n" . $ex->getTraceAsString();
+                        $log->save();
                     }
                 });
 
@@ -115,19 +125,27 @@ class ParseOkGroups extends Command
                 $needFindAccount = true;
                 while ($needFindAccount) {
                     $this->content['from'] = null;
-                    DB::transaction(function () {
-                        $from = AccountsData::where([
-                            ['type_id', '=', 2],
-                            ['is_sender', '=', 0],
-                            ['valid', '=', 1],
-                            ['reserved', '=', 0]
-                        ])->orderBy('count_request', 'asc')->first(); // Получаем случайный логин и пас
-                        if ( ! isset($from)) {
-                            return;
+                    $mutex              = new FlockMutex(fopen(__FILE__, "r"));
+                    $mutex->synchronized(function () {
+                        try {
+                            $from = AccountsData::where([
+                                ['type_id', '=', 2],
+                                ['is_sender', '=', 0],
+                                ['valid', '=', 1],
+                                ['reserved', '=', 0]
+                            ])->orderBy('count_request', 'asc')->first(); // Получаем случайный логин и пас
+                            if ( ! isset($from)) {
+                                return;
+                            }
+                            $from->reserved = 1;
+                            $from->save();
+                            $this->content['from'] = $from;
+                        } catch (\Exception $ex) {
+                            $log          = new ErrorLog();
+                            $log->task_id = 140002;
+                            $log->message = $ex->getMessage() . "\n" . $ex->getTraceAsString();
+                            $log->save();
                         }
-                        $from->reserved = 1;
-                        $from->save();
-                        $this->content['from'] = $from;
                     });
                     $from = $this->content['from'];
 
