@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Helpers\Skype;
 use App\Helpers\VK;
 use App\Models\AccountsData;
 use App\Models\Parser\VKLinks;
@@ -50,9 +51,11 @@ class Tester extends Command
 
     public function handle()
     {
-        $vklinks = VKLinks::limit(10)->get()->toArray();
-        $vk = new VK();
-        $vk->parseUser($vklinks);
+        $sk = SkypeLogins::all();
+        foreach ($sk as $s) {
+            $skype = new Skype($s);
+            $skype->login();
+        }
     }
 
 }
