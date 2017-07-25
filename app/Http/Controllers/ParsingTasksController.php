@@ -442,38 +442,62 @@ class ParsingTasksController extends Controller
     public function getCsv($id)
     {
         set_time_limit(0);
-        $table = DB::select(DB::raw('SELECT search_queries.link, search_queries.city, search_queries.name,
-                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=1) as mails,
-                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=2) as phones,
-                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=3) as skypes 
-                                    FROM search_queries where task_id=' . $id));
+        $table = SearchQueries::where(['task_id' => $id])->get();
 
         $cols = [];
         $res  = [];
         $i    = 0;
 
         if (count($table) > 0) {
-            $file = fopen("parse_result_" . $id . ".csv", 'w');
+            $file = fopen(storage_path('app/csv/')."parse_result_" . $id . ".csv", 'w');
 
-            foreach ($table[0] as $key => $row) {
-                $cols[] = $key;
-            }
+            $cols[0] = "link";
+            $cols[1] = "name";
+            $cols[2] = "city";
+            $cols[3] = "phones";
+            $cols[4] = "skypes";
+            $cols[5] = "emails";
+            $cols[6] = "vk_id";
+            $cols[7] = "fb_id";
+            $cols[8] = "ok_id";
 
             fputcsv($file, $cols, ";");
             foreach ($table as $row) {
                 $res = [];
-                foreach ($row as $item) {
+
+                $res[0] = $row->link === null ? null : $this->icv($row->link);
+                $res[1] = $row->name === null ? null : $this->icv($row->name);
+                $res[2] = $row->city === null ? null : $this->icv($row->city);
+
+                $cols[3] = "-";
+                $cols[4] = "-";
+                $cols[5] = "-";
+
+                $cols[6] = $row->vk_id === null ? null : $this->icv($row->vk_id);
+                $cols[7] = $row->fb_id === null ? null : $this->icv($row->fb_id);
+                $cols[8] = $row->ok_id === null ? null : $this->icv($row->ok_id);
+
+                /*foreach ($row as $item) {
+
+
+
                     $res[] = $item === null ? null : "=\"" . iconv("UTF-8", "Windows-1251//IGNORE", $item) . "\"";
                 }
-                $i++;
+                $i++;*/
                 fputcsv($file, $res, ';');
             }
             fclose($file);
 
-            return response()->download('parse_result_' . $id . '.csv');
+            return response()->download(storage_path('app/csv/').'parse_result_' . $id . '.csv');
         } else {
             return redirect()->back();
         }
+    }
+
+    private function icv($str)
+    {
+        $res = "=\"" . iconv("UTF-8", "Windows-1251//IGNORE", $str) . "\"";
+        return $res;
     }
 
     public function getFromCsv(Request $request)

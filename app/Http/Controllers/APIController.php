@@ -150,39 +150,16 @@ class APIController extends Controller {
         $maxId = \intval($lastId);
 
         $skip = ($page_number - 1) * 10;
-        $results = DB::select(DB::raw('SELECT search_queries.*, 
-                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=1) as mails,
-                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=2) as phones,
-                                    (SELECT GROUP_CONCAT(value SEPARATOR ", ") FROM contacts where search_queries_id=search_queries.id AND type=3) as skypes 
-                                    FROM search_queries where task_id=' . $taskId . ' order by id desc limit ' . $skip . ',10'));
+        $results = DB::select(DB::raw('SELECT search_queries.* FROM search_queries where task_id=' . $taskId . ' order by id desc limit ' . $skip . ',10'));
 
         if (count($results) > 0) {
             $maxId = $results[0]->id;
         }
 
         $count = SearchQueries::where('task_id', '=', $taskId)->count();
-        $countQueue = SiteLinks::where('task_id', '=', $taskId)->count() + VKLinks::where('task_id', '=', $taskId)->count() + OkGroups::where('task_id', '=', $taskId)->count() + TwLinks::where('task_id', '=', $taskId)->count() + InsLinks::where('task_id', '=', $taskId)->count() + FBLinks::where('task_id', '=', $taskId)->count();
+        $countQueue = SiteLinks::where('task_id', '=', $taskId)->count() + VKLinks::where('task_id', '=', $taskId)->count() + OkGroups::where('task_id', '=', $taskId)->count() + FBLinks::where('task_id', '=', $taskId)->count();
 
-        $countSended = Contacts::join('search_queries', 'contacts.search_queries_id', '=', 'search_queries.id')->where([
-                    'search_queries.task_id' => $taskId,
-                    'contacts.sended' => 1
-                ])->select('contacts.id')->count();
-
-        $whSended = Contacts::join('search_queries', 'contacts.search_queries_id', '=', 'search_queries.id')->where([
-                    'contacts.type' => 2,
-                    'search_queries.task_id' => $taskId,
-                    'contacts.reserved_whatsapp' => 1
-                ])->count() + SearchQueries::where([
-                    ['task_id', '=', $taskId],
-                    ['ok_sended', '=', '1']
-                ])->count() + SearchQueries::where([
-                    ['task_id', '=', $taskId],
-                    ['vk_sended', '=', '1']
-                ])->count();
-
-        if (isset($whSended) && $whSended > 0) {
-            $countSended += $whSended;
-        }
+        $countSended = Contacts::where(['task_id' => $taskId, 'sended' => 1])->count();
 
         if ($lastId == $maxId) {
             return json_encode([
