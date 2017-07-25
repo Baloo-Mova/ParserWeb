@@ -11,6 +11,7 @@ use App\Helpers\SimpleHtmlDom;
 use App\Models\IgnoreDomains;
 use Illuminate\Support\Facades\DB;
 use App\Models\Contacts;
+use malkusch\lock\mutex\FlockMutex;
 
 class ParseSite extends Command
 {
@@ -91,12 +92,12 @@ class ParseSite extends Command
             $crawler            = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' '); //TRANSLIT//IGNORE
             $this->data['link'] = null;
             try {
-
-                DB::transaction(function () {
+                $mutex = new FlockMutex(fopen(__FILE__, "r"));
+                $mutex->synchronized(function () {
                     $link = SiteLinks::join('tasks', 'tasks.id', '=', 'site_links.task_id')->where([
                         'site_links.reserved' => 0,
                         'tasks.active_type'   => 1
-                    ])->select('site_links.*')->lockForUpdate()->first();
+                    ])->select('site_links.*')->first();
                     if (isset($link)) {
                         $this->data['link'] = $link;
                         $link->reserved     = 1;
@@ -109,7 +110,6 @@ class ParseSite extends Command
                     continue;
                 }
 
-//                echo $link->link . PHP_EOL;
                 $search_queries = SearchQueries::where(['task_id' => $link->task_id, 'link' => $link->link])->first();
                 if (isset($search_queries)) {
                     $link->delete();
@@ -128,7 +128,7 @@ class ParseSite extends Command
                 if ( ! isset($data)) {
                     $link->delete();
                     continue;
-                };
+                }
                 try {
                     $ff = $data->innertext;
                 } catch (\Exception $ex) {
@@ -149,22 +149,23 @@ class ParseSite extends Command
 
                     if (count($emails) > 0 || count($phones) > 0 || count($skypes) > 0) {
                         try {
-                            $res          = new SearchQueries();
-                            $res->link    = $default_link;
-                            $res->task_id = $task_id;
+                            $res               = new SearchQueries();
+                            $res->link         = $default_link;
+                            $res->task_id      = $task_id;
+                            $res->contact_data = json_encode([
+                                "emails" => $emails,
+                                "phones" => $phones,
+                                "skypes" => $skypes
+                            ]);
                             $res->save();
                             $link->delete();
-                            $this->saveContactsInfo($emails, $skypes, $phones, $res->id);
+                            $this->saveContactsInfo($emails, $skypes, $phones, $task_id);
+                            continue;
                         } catch (\Exception $ex) {
                         }
-                        continue;
                     }
 
                     $additionalLinks = $this->extractlinks($data, $baseData);
-
-//                    if (count($additionalLinks) > 30) {
-//                        array_splice($additionalLinks, 30, count($additionalLinks));
-//                    }
 
                     foreach ($additionalLinks as $l) {
                         try {
@@ -182,12 +183,17 @@ class ParseSite extends Command
                             $skypes = $this->extractSkype($data, $skypes);
                             $phones = $this->extractPhones($data);
                             if (count($emails) > 0 || count($phones) > 0 || count($skypes) > 0) {
-                                $res          = new SearchQueries();
-                                $res->link    = $default_link;
-                                $res->task_id = $task_id;
+                                $res               = new SearchQueries();
+                                $res->link         = $default_link;
+                                $res->task_id      = $task_id;
+                                $res->contact_data = json_encode([
+                                    "emails" => $emails,
+                                    "phones" => $phones,
+                                    "skypes" => $skypes
+                                ]);
                                 $res->save();
 
-                                $this->saveContactsInfo($emails, $skypes, $phones, $res->id);
+                                $this->saveContactsInfo($emails, $skypes, $phones, $task_id);
                                 $emails = [];
                                 $phones = [];
                                 $skypes = [];
@@ -393,39 +399,37 @@ class ParseSite extends Command
         return $before;
     }
 
-    public function saveContactsInfo($mails, $skypes, $phones, $search_q_id)
+    public function saveContactsInfo($mails, $skypes, $phones, $task_id)
     {
         $contacts = [];
 
         if ( ! empty($mails)) {
-
             foreach ($mails as $ml) {
                 $contacts[] = [
-                    "value"             => $ml,
-                    "search_queries_id" => $search_q_id,
-                    "type"              => Contacts::MAILS
+                    "value"   => $ml,
+                    "task_id" => $task_id,
+                    "type"    => Contacts::MAILS
                 ];
             }
         }
 
         if ( ! empty($skypes)) {
-
             foreach ($skypes as $sk) {
                 $contacts[] = [
-                    "value"             => $sk,
-                    "search_queries_id" => $search_q_id,
-                    "type"              => Contacts::SKYPES
+                    "value"   => $sk,
+                    "task_id" => $task_id,
+                    "type"    => Contacts::SKYPES
                 ];
             }
         }
 
         if ( ! empty($phones)) {
-
+            $phones = $this->filterPhoneArray($phones);
             foreach ($phones as $ph) {
                 $contacts[] = [
-                    "value"             => $ph,
-                    "search_queries_id" => $search_q_id,
-                    "type"              => Contacts::PHONES
+                    "value"   => $ph,
+                    "task_id" => $task_id,
+                    "type"    => Contacts::PHONES
                 ];
             }
         }
@@ -433,6 +437,27 @@ class ParseSite extends Command
         if (count($contacts) > 0) {
             Contacts::insert($contacts);
         }
+    }
+
+    public function filterPhoneArray($array)
+    {
+        $result = [];
+        foreach ($array as $item) {
+            $item = str_replace([" ", "-", "(", ")"], "", $item);
+            if (empty($item)) {
+                continue;
+            }
+            if (preg_match("/[^0-9]/", $item) == false) {
+
+                if ($item[0] == "8") {
+                    $item[0] = "7";
+                }
+
+                $result [] = $item;
+            }
+        }
+
+        return $result;
     }
 
     public function extractlinks($data, $def_link, $before = [])
