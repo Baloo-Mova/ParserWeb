@@ -78,13 +78,13 @@ class VKGroupsFindUsers extends Command
                     sleep(rand(5, 10));
                 } catch (\Exception $ex) {
                     $log          = new ErrorLog();
-                    $log->task_id = 0;
+                    $log->task_id = 8888;
                     $log->message = $ex->getMessage() . " line:" . $ex->getLine();
                     $log->save();
                 }
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
-                $log->task_id = 0;
+                $log->task_id = 8888;
                 $log->message = $ex->getMessage() . " line:" . $ex->getLine();
                 $log->save();
             }
