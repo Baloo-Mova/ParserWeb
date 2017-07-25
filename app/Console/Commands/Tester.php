@@ -51,11 +51,27 @@ class Tester extends Command
 
     public function handle()
     {
-        $sk = SkypeLogins::all();
-        foreach ($sk as $s) {
-            $skype = new Skype($s);
-            $skype->login();
-        }
+        var_dump($this->filterPhoneArray(["8(952)-308-91-61","asdasd","12301823asd","..."]));
     }
 
+    public function filterPhoneArray($array)
+    {
+        $result = [];
+        foreach ($array as $item) {
+            $item = str_replace([" ", "-", "(", ")"], "", $item);
+            if (empty($item)) {
+                continue;
+            }
+            if (preg_match("/[^0-9]/", $item) == false) {
+
+                if ($item[0] == "8") {
+                    $item[0] = "7";
+                }
+
+                $result [] = $item;
+            }
+        }
+
+        return $result;
+    }
 }

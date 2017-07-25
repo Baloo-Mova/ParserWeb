@@ -21,7 +21,7 @@ class VKGroupsFindUsers extends Command
      *
      * @var string
      */
-    protected $signature = 'parse:vk:users:from:groups';
+    protected $signature = 'vk:parse:users';
 
     /**
      * The console command description.
@@ -60,7 +60,6 @@ class VKGroupsFindUsers extends Command
                     if ( ! isset($group)) {
                         return;
                     }
-
                     $group->reserved = 1;
                     $group->save();
                     $this->content['vklink'] = $group;
@@ -73,17 +72,17 @@ class VKGroupsFindUsers extends Command
 
                 try {
                     $vk = new VK();
-                    if ($vk->getUsersOfGroup($this->content['vklink'])) {
+                    if ($vk->parseUsers($this->content['vklink'])) {
                         $this->content['vklink']->delete();
                     }
-                    sleep(rand(15, 40));
+                    sleep(rand(5, 10));
                 } catch (\Exception $ex) {
                     $log          = new ErrorLog();
                     $log->task_id = 0;
                     $log->message = $ex->getMessage() . " line:" . $ex->getLine();
                     $log->save();
                 }
-            }catch (\Exception $ex){
+            } catch (\Exception $ex) {
                 $log          = new ErrorLog();
                 $log->task_id = 0;
                 $log->message = $ex->getMessage() . " line:" . $ex->getLine();

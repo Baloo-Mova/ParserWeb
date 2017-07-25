@@ -13,6 +13,7 @@ use App\Models\IgnoreDomains;
 use Illuminate\Support\Facades\DB;
 use App\Models\Proxy;
 use League\Flysystem\Exception;
+use malkusch\lock\mutex\FlockMutex;
 
 class ParseGoogleUa extends Command
 {
@@ -51,15 +52,16 @@ class ParseGoogleUa extends Command
 
         while (true) {
             try {
-                sleep(random_int(20,30));
+                sleep(random_int(10,15));
                 $proxy                 = null;
                 $this->content['task'] = null;
-                DB::transaction(function () {
+                $mutex                 = new FlockMutex(fopen(__FILE__, "r"));
+                $mutex->synchronized(function () {
                     $task = Tasks::where([
                         'task_type_id'       => TasksType::WORD,
                         'google_ua_reserved' => 0,
                         'active_type'        => 1
-                    ])->lockForUpdate()->first();
+                    ])->first();
 
                     if ( ! isset($task)) {
                         return;

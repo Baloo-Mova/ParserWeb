@@ -8,6 +8,7 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\DB;
+use malkusch\lock\mutex\FlockMutex;
 use SebastianBergmann\CodeCoverage\Report\PHP;
 use App\Models\AccountsData;
 use App\Models\Parser\VKLinks;
@@ -342,7 +343,9 @@ class VK
     {
         while (true) {
             $proxy = null;
-            DB::transaction(function () {
+
+            $mutex = new FlockMutex(fopen(__FILE__, "r"));
+            $mutex->synchronized(function () {
                 try {
                     $sender = AccountsData::where([
                         ['type_id', '=', 1],
@@ -414,33 +417,24 @@ class VK
 
                 return false;
             }
-
+            $data = [];
             if ($result['response']['count'] > 0) {
                 foreach ($result['response']['items'] as $item) {
-                    usleep(500000);
-                    try {
-                        $search = VKLinks::where([
-                            'vkuser_id' => $item['id'],
-                            'task_id'   => $task_id,
-                            'type'      => 0
-                        ])->first();
+                    $data[] = [
+                        'vkuser_id' => $item['id'],
+                        'task_id'   => $task_id,
+                        'type'      => 0,
+                        'link'      => "https://vk.com/club" . $item['id']
+                    ];
+                }
 
-                        if (isset($search)) {
-                            continue;
-                        }
-
-                        $vklink            = new VKLinks();
-                        $vklink->link      = "https://vk.com/" . $item['id'];
-                        $vklink->task_id   = $task_id;
-                        $vklink->vkuser_id = $item['id'];
-                        $vklink->type      = 0;
-                        $vklink->save();
-                    } catch (\Exception $ex) {
-                        $err          = new ErrorLog();
-                        $err->message = $ex->getMessage() . " line:" . $ex->getLine();
-                        $err->task_id = self::VK_PARSE_ERROR;
-                        $err->save();
-                    }
+                try {
+                    VKLinks::insert($data);
+                } catch (\Exception $ex) {
+                    $err          = new ErrorLog();
+                    $err->message = $ex->getMessage() . " line:" . $ex->getLine() . "  find_WORD: " . $find;
+                    $err->task_id = self::VK_PARSE_ERROR;
+                    $err->save();
                 }
             }
 
@@ -470,7 +464,7 @@ class VK
         }
     }
 
-    public function getUsersOfGroup(VKLinks $group)
+    public function parseUsers(VKLinks $group)
     {
         while (true) {
             try {
@@ -498,76 +492,128 @@ class VK
                     'proxy'           => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
                 ]);
 
-                $request  = $this->client->request("GET",
-                    "https://api.vk.com/method/groups.getMembers?v=5.60&group_id=" . $group->vkuser_id);
-                $query    = $request->getBody()->getContents();
-                $userstmp = json_decode($query, true);
-                $count    = intval($userstmp["response"]["count"]);
-                $users    = $userstmp["response"]["items"];
-                foreach ($users as $value) {
-                    usleep(500000);
-                    $search = VKLinks::where([
-                        'vkuser_id' => $value,
-                        'task_id'   => $group->task_id,
-                        'type'      => 1
-                    ])->first();
-                    if (isset($search)) {
-                        continue;
-                    }
-                    $vkuser            = new VKLinks;
-                    $vkuser->link      = "https://vk.com/id" . $value;
-                    $vkuser->task_id   = $group->task_id;
-                    $vkuser->vkuser_id = $value;
-                    $vkuser->type      = 1; //0=groups
-                    try {
-                        $vkuser->save();
-                    } catch (\Exception $e) {
-                    }
-                }
+                $canRun = true;
+                $offset = 0;
+                $count  = 0;
+                do {
+                    $request = $this->client->request("GET",
+                        "https://api.vk.com/method/groups.getMembers?v=5.60&count=1000&offset=" . $offset . "&fields=can_write_private_message,connections,contacts,city,deactivated&group_id=" . $group->vkuser_id);
 
-                if ($count > 1000) {
-                    $offset = 1000;
-                    for ($i = 0; $i <= intval($count / 1000); $i++) {
-                        $request  = $this->client->request("GET",
-                            "https://api.vk.com/method/groups.getMembers?v=5.60&group_id=" . $group->vkuser_id . "&offset=" . $offset);
-                        $query    = $request->getBody()->getContents();
-                        $userstmp = json_decode($query, true);
-                        $users    = $userstmp["response"]["items"];
-                        $users    = array_unique($users);
-                        foreach ($users as $value) {
-                            usleep(500000);
-                            $search = VKLinks::where([
-                                'vkuser_id' => $value,
-                                'task_id'   => $group->task_id,
-                                'type'      => 1
-                            ])->first();
+                    $query    = $request->getBody()->getContents();
+                    $userstmp = json_decode($query, true);
+                    $count    = intval($userstmp["response"]["count"]);
+                    $users    = $userstmp["response"]["items"];
+                    $array    = [];
+                    $skArray  = [];
+                    foreach ($users as $item) {
+                        $skypes                = [];
+                        $phones                = [];
+                        $city                  = "";
+                        $name                  = $item["first_name"] . " " . $item["last_name"];
+                        $searchQueriesContacts = [];
 
-                            if (isset($search)) {
-                                continue;
-                            }
-                            $vkuser            = new VKLinks;
-                            $vkuser->link      = "https://vk.com/id" . $value;
-                            $vkuser->task_id   = $group->task_id;
-                            $vkuser->vkuser_id = $value;
-                            $vkuser->type      = 1; //0=groups
-
-                            $vkuser->save();
+                        if (isset($item["deactivated"])) {
+                            continue;
                         }
-                        $offset += 1000;
-                        sleep(rand(3, 10));
+
+                        if (isset($item["home_phone"])) {
+                            $phones[] = $item["home_phone"];
+                        }
+                        if (isset($item["mobile_phone"])) {
+                            $phones[] = $item["mobile_phone"];
+                        }
+                        if (isset($item["skype"])) {
+                            $skypes[] = $item["skype"];
+                        }
+                        if (isset($item["city"])) {
+                            $city = $item["city"]["title"];
+                        }
+
+                        $phones = $this->filterPhoneArray($phones);
+
+                        foreach ($phones as $phone) {
+                            $array[] = [
+                                'value'   => $phone,
+                                'task_id' => $group->task_id,
+                                'type'    => Contacts::PHONES
+                            ];
+                        }
+
+                        $searchQueriesContacts['phones'] = $phones;
+
+                        foreach ($skypes as $skype) {
+                            $array[] = [
+                                'value'   => $skype,
+                                'task_id' => $group->task_id,
+                                'type'    => Contacts::SKYPES
+                            ];
+                        }
+                        $searchQueriesContacts['skypes'] = $skypes;
+
+                        if ($item["can_write_private_message"] == 1) {
+                            $array[]                        = [
+                                'value'   => $item['id'],
+                                'task_id' => $group->task_id,
+                                'type'    => Contacts::VK
+                            ];
+                            $searchQueriesContacts['vk_id'] = $item['id'];
+                        }
+
+                        $skArray[] = [
+                            'link'         => 'https://vk.com/id' . $item['id'],
+                            'name'         => $name,
+                            'city'         => $city,
+                            'contact_data' => json_encode($searchQueriesContacts)
+                        ];
                     }
-                }
+
+                    if (count($array) > 0) {
+                        Contacts::insert($array);
+                        $array = [];
+                    }
+
+                    if (count($skArray) > 0) {
+                        SearchQueries::insert($skArray);
+                        $skArray = [];
+                    }
+
+                    $offset += 1000;
+                    if ($count < $offset) {
+                        $canRun = false;
+                    }
+                    dd(1);
+                    sleep(rand(3, 7));
+                } while ($canRun);
 
                 return true;
             } catch (\Exception $ex) {
-                if (strpos($ex->getMessage(), 'cURL') !== false) {
-                    $error          = new ErrorLog();
-                    $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
-                    $error->task_id = 8888;
-                    $error->save();
-                }
+                $error          = new ErrorLog();
+                $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                $error->task_id = 8888;
+                $error->save();
             }
         }
+    }
+
+    public function filterPhoneArray($array)
+    {
+        $result = [];
+        foreach ($array as $item) {
+            $item = str_replace([" ", "-", "(", ")"], "", $item);
+            if (empty($item)) {
+                continue;
+            }
+            if (preg_match("/[^0-9]/", $item) == false) {
+
+                if ($item[0] == "8") {
+                    $item[0] = "7";
+                }
+
+                $result [] = $item;
+            }
+        }
+
+        return $result;
     }
 
     public function setProxyClient()
@@ -742,7 +788,6 @@ class VK
         }
 
         if ( ! empty($phones)) {
-
             foreach ($phones as $ph) {
                 $contacts[] = [
                     "value"             => $ph,

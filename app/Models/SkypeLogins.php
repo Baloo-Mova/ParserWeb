@@ -29,6 +29,13 @@ use App\Models\Proxy;
  * @method static \Illuminate\Database\Query\Builder|\App\Models\SkypeLogins whereSkypeToken($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\SkypeLogins whereValid($value)
  * @mixin \Eloquent
+ * @property int $count_request
+ * @property string $send_url
+ * @property-read \App\Models\Proxy $proxy
+ * @method static \Illuminate\Database\Query\Builder|\App\Models\SkypeLogins whereCountRequest($value)
+ * @method static \Illuminate\Database\Query\Builder|\App\Models\SkypeLogins whereReserved($value)
+ * @method static \Illuminate\Database\Query\Builder|\App\Models\SkypeLogins whereSendUrl($value)
+ * @method static \Illuminate\Database\Query\Builder|\App\Models\SkypeLogins whereSkypeId($value)
  */
 class SkypeLogins extends Model
 {

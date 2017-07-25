@@ -67,6 +67,10 @@ use Illuminate\Support\Facades\DB;
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Proxy whereVkReserved($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Proxy whereWhReserved($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Proxy whereYandexRuReserved($value)
+ * @property int $email
+ * @property int $email_reserved
+ * @method static \Illuminate\Database\Query\Builder|\App\Models\Proxy whereEmail($value)
+ * @method static \Illuminate\Database\Query\Builder|\App\Models\Proxy whereEmailReserved($value)
  */
 class Proxy extends Model
 {

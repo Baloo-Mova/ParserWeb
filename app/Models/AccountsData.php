@@ -64,6 +64,11 @@ use App\Models\Proxy as ProxyItem;
  * @mixin \Eloquent
  * @property int $count_request
  * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData whereCountRequest($value)
+ * @property int $reserved
+ * @property string $api_key
+ * @property-read \App\Models\Proxy $proxy
+ * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData whereApiKey($value)
+ * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData whereReserved($value)
  */
 class AccountsData extends Model
 {

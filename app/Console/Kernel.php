@@ -52,34 +52,31 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-         ParseGoogle::class,
-         ParseSite::class,
-         VKGroupsSearch::class,
-         VKGroupsFindUsers::class,
-         ParseTwGroups::class,
-         ParseInsGroups::class,
-         VKParseUsers::class,
-         ParseTw::class,
-         ParseIns::class,
-         VKSender::class,
-         ParseTw::class,
-         ParseFB::class,
-         ParseFBGetGroups::class,
-         ParseFBGetUsers::class,
-         TestFB::class,
-         FBSender::class,
-         TwitterSender::class,
-         ParseOk::class,
-         ParseOkGroups::class,
-         EmailSender::class,
-         Tester::class,
-         SkypeSender::class,
-         OkSender::class,
-         NotValidMailsCleaner::class,
-        
+        ParseGoogle::class,
+        ParseSite::class,
+        VKGroupsSearch::class,
+        VKGroupsFindUsers::class,
+        ParseTwGroups::class,
+        ParseInsGroups::class,
+        ParseTw::class,
+        ParseIns::class,
+        VKSender::class,
+        ParseTw::class,
+        ParseFB::class,
+        ParseFBGetGroups::class,
+        ParseFBGetUsers::class,
+        TestFB::class,
+        FBSender::class,
+        TwitterSender::class,
+        ParseOk::class,
+        ParseOkGroups::class,
+        EmailSender::class,
+        Tester::class,
+        SkypeSender::class,
+        OkSender::class,
+        NotValidMailsCleaner::class,
         ParseGoogleUa::class,
         ParseYandexRu::class,
-        //ParseYandexUa::class,
         AndroidBotManager::class,
         RegFB::class,
         RegVK::class,
@@ -95,7 +92,8 @@ class Kernel extends ConsoleKernel
     /**
      * Define the application's command schedule.
      *
-     * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
+     * @param  \Illuminate\Console\Scheduling\Schedule $schedule
+     *
      * @return void
      */
     protected function schedule(Schedule $schedule)

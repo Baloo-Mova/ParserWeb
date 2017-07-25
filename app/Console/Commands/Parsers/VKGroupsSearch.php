@@ -21,7 +21,7 @@ class VKGroupsSearch extends Command
      *
      * @var string
      */
-    protected $signature = 'parse:vk:groups:search';
+    protected $signature = 'vk:parse:groups';
 
     /**
      * The console command description.
@@ -60,7 +60,6 @@ class VKGroupsSearch extends Command
                 if ( ! isset($task)) {
                     return;
                 }
-
                 $task->vk_reserved = 1;
                 $task->save();
                 $this->content['task'] = $task;

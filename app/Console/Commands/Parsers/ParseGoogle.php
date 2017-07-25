@@ -12,6 +12,7 @@ use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use malkusch\lock\mutex\FlockMutex;
 
 class ParseGoogle extends Command
 {
@@ -48,15 +49,16 @@ class ParseGoogle extends Command
     public function handle()
     {
         while (true) {
-            sleep(random_int(20,30));
             $proxy                 = null;
             $this->content['task'] = null;
-            DB::transaction(function () {
+            
+            $mutex                 = new FlockMutex(fopen(__FILE__, "r"));
+            $mutex->synchronized(function () {
                 $task = Tasks::where([
                     'task_type_id' => TasksType::WORD,
                     'google_ru'    => 0,
                     'active_type'  => 1
-                ])->lockForUpdate()->first();
+                ])->first();
 
                 if ( ! isset($task)) {
                     return;
@@ -73,7 +75,6 @@ class ParseGoogle extends Command
             }
 
             $ignore = IgnoreDomains::all();
-
             try {
                 $web           = new Web();
                 $crawler       = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
@@ -118,10 +119,10 @@ class ParseGoogle extends Command
                             if ($this->validate($link->href, $ignore)) {
                                 $data = parse_url($link->href, PHP_URL_HOST);
                                 $tmp  = SiteLinks::where([
-                                    ['task_id', '=', trim($this->content['task']->id)],
+                                    ['task_id', '=', $this->content['task']->id],
                                     ['link', 'like', '%' . $data . '%']
                                 ])->first();
-                                if (!isset($tmp)) {
+                                if ( ! isset($tmp)) {
                                     SiteLinks::insert([
                                         'link'     => $link->href,
                                         'task_id'  => $this->content['task']->id,
@@ -163,7 +164,6 @@ class ParseGoogle extends Command
     {
         $valid = true;
         foreach ($check as $val) {
-
             if (stripos($url, $val->domain) !== false) {
                 $valid = false;
                 break;
