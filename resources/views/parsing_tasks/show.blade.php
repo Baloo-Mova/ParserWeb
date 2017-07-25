@@ -86,10 +86,10 @@
                                         <form action="{{ route('parsing_tasks.getFromCsv') }}" enctype="multipart/form-data" method="post" id="targetForm" style="display: inline-block;">
                                             {{ csrf_field() }}
                                             <input type="hidden" name="task_id" value="{{ $data->id }}">
-                                            <label for="file-upload" class="custom-file-upload">
+                                            <label for="file-upload" class="custom-file-upload" >
                                                 Импортировать из CSV
                                             </label>
-                                            <input id="file-upload" type="file" name="myfile"/>
+                                            <input id="file-upload" type="file" disabled name="myfile"/>
                                         </form>
                                     </div>
                                     <div class="file_format_info">
@@ -108,15 +108,12 @@
                                             <th>Link</th>
                                             <th>Name</th>
                                             <th>City</th>
-                                            <th>Mails</th>
-                                            <th>Phones</th>
-                                            <th>Skypes</th>
-                                            <th>Soc.Network</th>
+                                            <th>Contact data</th>
                                         </tr>
                                         </thead>
                                         <tbody class="task_result_tbody">
                                         <tr class="no_results_class">
-                                            <td colspan="8" class="text-center"> Ожидание результатов ...</td>
+                                            <td colspan="5" class="text-center"> Ожидание результатов ...</td>
                                         </tr>
                                         </tbody>
                                     </table>
@@ -401,22 +398,55 @@
                                     }
 
                                     var
+                                        cdata = "",
                                         link = item.link === null ? "" : item.link,
                                         name = item.name === null ? "" : item.name,
                                         city = item.city === null ? "" : item.city,
-                                        mails = item.mails === null ? "" : item.mails,
-                                        phones = item.phones === null ? "" : item.phones,
-                                        skypes = item.skypes === null ? "" : item.skypes;
+                                        contacts_data = JSON.parse(item.contact_data);
+
+                                    if(contacts_data.phones !== undefined && contacts_data.phones.length > 0){
+                                        cdata += "phones: ";
+                                        contacts_data.phones.forEach(function(item, i, arr) {
+                                            if(i == (contacts_data.phones.length - 1)){
+                                                cdata += item;
+                                            }else{
+                                                cdata += item+", ";
+                                            }
+                                        });
+                                    }
+
+                                    if(contacts_data.skypes !== undefined && contacts_data.skypes.length > 0){
+                                        cdata += " skypes: ";
+                                        contacts_data.skypes.forEach(function(item, i, arr) {
+                                            if(i == (contacts_data.skypes.length - 1)){
+                                                cdata += item;
+                                            }else{
+                                                cdata += item+", ";
+                                            }
+                                        });
+                                    }
+
+                                    if(contacts_data.emails !== undefined && contacts_data.emails.length > 0){
+                                        cdata += " emails: ";
+                                        contacts_data.emails.forEach(function(item, i, arr) {
+                                            if(i == (contacts_data.emails.length - 1)){
+                                                cdata += item;
+                                            }else{
+                                                cdata += item+", ";
+                                            }
+                                        });
+                                    }
+
+                                    cdata += contacts_data.vk_id === undefined ? "" : " vk_id: "+contacts_data.vk_id;
+                                    cdata += contacts_data.fb_id === undefined ? "" : " fb_id: "+contacts_data.fb_id;
+                                    cdata += contacts_data.ok_id === undefined ? "" : " ok_id: "+contacts_data.ok_id;
 
                                     $(".task_result_table").append("<tr>" +
                                         "<td  data-id='" + item.id + "' data-task-id='" + item.task_id + "' data-list-number='"+ ((data.count_parsed - page_number * 10) + 10 - i ) +"'>" + ((data.count_parsed - page_number * 10) + 10 - i ) + "</td>" +
                                         "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ link+"\">" + link + "</div></td>" +
                                         "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + name + "</div></td>" +
                                         "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ city+"\">" + city + "</div></td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ mails+"\">" + mails + "</div></td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ phones+"\">" + phones + "</div></td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ skypes+"\">" + skypes + "</div></td>" +
-                                        "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + socn + "</div></td>" +
+                                        "<td width='250px'><div style=\"max-width:500px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\""+ cdata+"\">" + cdata + "</div></td>" +
                                         "</tr>");
                                 });
 
