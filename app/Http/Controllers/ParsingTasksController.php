@@ -449,6 +449,9 @@ class ParsingTasksController extends Controller
         $i    = 0;
 
         if (count($table) > 0) {
+            if(!file_exists(storage_path('app/csv/'))){
+                mkdir(storage_path('app/csv/'));
+            }
             $file = fopen(storage_path('app/csv/')."parse_result_" . $id . ".csv", 'w');
 
             $cols[0] = "link";
@@ -465,25 +468,35 @@ class ParsingTasksController extends Controller
             foreach ($table as $row) {
                 $res = [];
 
-                $res[0] = $row->link === null ? null : $this->icv($row->link);
-                $res[1] = $row->name === null ? null : $this->icv($row->name);
-                $res[2] = $row->city === null ? null : $this->icv($row->city);
-
-                $cols[3] = "-";
-                $cols[4] = "-";
-                $cols[5] = "-";
-
-                $cols[6] = $row->vk_id === null ? null : $this->icv($row->vk_id);
-                $cols[7] = $row->fb_id === null ? null : $this->icv($row->fb_id);
-                $cols[8] = $row->ok_id === null ? null : $this->icv($row->ok_id);
-
-                /*foreach ($row as $item) {
+                $res[0] = $row->link === null ? "" : $this->icv($row->link);
+                $res[1] = $row->name === null ? "" : $this->icv($row->name);
+                $res[2] = $row->city === null ? "" : $this->icv($row->city);
 
 
+                $cdata = json_decode($row->contact_data);
 
-                    $res[] = $item === null ? null : "=\"" . iconv("UTF-8", "Windows-1251//IGNORE", $item) . "\"";
+                if(isset($cdata->phones) && count($cdata->phones) > 0){
+                    $res[3] = implode(",", $cdata->phones);
+                }else{
+                    $res[3] = "";
                 }
-                $i++;*/
+
+                if(isset($cdata->skypes) && count($cdata->skypes) > 0){
+                    $res[4] = $this->icv(implode(",", $cdata->skypes));
+                }else{
+                    $res[4] = "";
+                }
+
+                if(isset($cdata->emails) && count($cdata->emails) > 0){
+                    $res[5] = implode(",", $cdata->emails);
+                }else{
+                    $res[5] = "";
+                }
+
+                $res[6] = $row->vk_id === null ? "" : $this->icv($row->vk_id);
+                $res[7] = $row->fb_id === null ? "" : $this->icv($row->fb_id);
+                $res[8] = $row->ok_id === null ? "" : $this->icv($row->ok_id);
+
                 fputcsv($file, $res, ';');
             }
             fclose($file);
