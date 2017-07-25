@@ -563,7 +563,8 @@ class VK
                             'link'         => 'https://vk.com/id' . $item['id'],
                             'name'         => $name,
                             'city'         => $city,
-                            'contact_data' => json_encode($searchQueriesContacts)
+                            'contact_data' => json_encode($searchQueriesContacts),
+                            'task_id'      => $group->task_id
                         ];
                     }
 
