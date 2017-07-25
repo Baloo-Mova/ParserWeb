@@ -207,7 +207,7 @@ class SettingsController extends Controller
         try {
             $supervisor->stopAllProcesses($wait = true); //stopProcessGroup("google",$wait=true);
         } catch (\Supervisor\ApiException $e) {
-            dd($e);
+
         }
 
         //$processtmp = $supervisor->getProcessInfo($process->name);
@@ -217,16 +217,6 @@ class SettingsController extends Controller
 
     public function proc_restart()
     {
-        //$supervisor = new \Supervisor\Api('127.0.0.1', 9001, 'admin', 'admin');
-        // try {
-        //$supervisor->restart();
-        //$supervisor->startAllProcess($wait=true);
-        //
-        //}
-        //catch (\Supervisor\ApiException $e){
-        //}
-        //$processtmp = $supervisor->getProcessInfo($process->name);
-        //$process->statename = "STOPPED";
         return redirect()->route('settings.index');
     }
 }
