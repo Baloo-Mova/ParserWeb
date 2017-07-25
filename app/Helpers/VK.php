@@ -582,7 +582,7 @@ class VK
                     if ($count < $offset) {
                         $canRun = false;
                     }
-                    dd(1);
+                     
                     sleep(rand(3, 7));
                 } while ($canRun);
 
