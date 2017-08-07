@@ -11,6 +11,8 @@ use App\Helpers\SimpleHtmlDom;
 use Illuminate\Console\Command;
 use App\Models\Parser\FBLinks;
 use Illuminate\Support\Facades\DB;
+use malkusch\lock\mutex\FlockMutex;
+
 class ParseFB extends Command {
     public $content;
     /**
@@ -43,64 +45,43 @@ class ParseFB extends Command {
      */
     public function handle() {
         while (true) {
-            $this->content['link'] = null;
-            DB::transaction(function () {
-                $fblink = FBLinks::join('tasks', 'tasks.id', '=', 'fb_links.task_id')->where(['fb_links.parsed' => 0, 'fb_links.reserved' => 0, 'tasks.active_type' => 1,])->select('fb_links.*')->
-                lockForUpdate()->first();
-                if ( !isset($fblink)) {
+            $this->content['task'] = null;
+
+            $mutex = new FlockMutex(fopen(__FILE__, "r"));
+            $mutex->synchronized(function () {
+                $task = Tasks::where([
+                    ['task_type_id', '=', 1],
+                    ['fb_reserved', '=', 0],
+                    ['fb_complete', '=', 0],
+                    ['active_type', '=', 1],
+                ])->first();
+                if ( ! isset($task)) {
                     return;
                 }
-                $fblink->reserved = 1;
-                $fblink->save();
-                $this->content['link'] = $fblink;
+                $task->fb_reserved = 1;
+                $task->save();
+                $this->content['task'] = $task;
             });
-            if (!isset($this->content['link'])) {
-                sleep(10);
 
+            if ( ! isset($this->content['task'])) {
+                sleep(10);
                 continue;
             }
-//echo("\n".$fblink->link);
-        //    $fblink->reserved = 1;
-           // $fblink->save();
-            try {
-                $web = new FB();
 
-                if ($this->content['link']->type == 0) {
-                   
-                    $web->parseGroup($this->content['link']);
-                    $this->content['link']->reserved =0;
-                    $this->content['link']->parsed =1;
-                    $this->content['link']->save();
-                    //$fblink->delete();
-                    
+            try{
+                $fb = new FB();
+                if($fb->getGroups($this->content['task']->task_query, $this->content['task']->id)){
+                    $this->content['task']->fb_complete = 1;
+                    $this->content['task']->save();
                 }
-                DB::transaction(function () {
-                    $link = FBLinks::
-                    where(['id'=>$this->content['link']->id,'parsed' => 1,'getusers_status'=>1])
-                        ->lockForUpdate()->first();
-
-                    if ( !isset($link)) {
-                        return;
-                    }
-                    $link->delete();
-
-
-                });
-
-                if ($this->content['link']->type == 1) {
-                   // echo($fblink->user_id."\n");
-                    $web->parseUser($this->content['link']);
-                    $this->content['link']->delete();
-                    //echo($fblink->user_id."deleted\n");
-                   // $fblink->reserved =0;
-           // $fblink->save();
-                }
-            } catch (\Exception $ex) {
-                $log = new ErrorLog();
-                $log->task_id = $this->content['link']->task_id;
-                $log->message = $ex->getMessage() . " line:" . __LINE__;
-                $log->save();
-                
+                sleep(random_int(10, 20));
+            }catch(\Exception $ex){
+                $this->content['task']->fb_reserved = 0;
+                $this->content['task']->save();
+                $error = new ErrorLog();
+                $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                $error->task_id = $this->content['task']->id;
+                $error->save();
             }
         }
     }

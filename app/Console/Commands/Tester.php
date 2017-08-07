@@ -51,7 +51,7 @@ class Tester extends Command
 
     public function handle()
     {
-        var_dump($this->filterPhoneArray(["8(952)-308-91-61","asdasd","12301823asd","..."]));
+
     }
 
     public function filterPhoneArray($array)
