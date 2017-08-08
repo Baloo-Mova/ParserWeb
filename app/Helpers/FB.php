@@ -47,7 +47,7 @@ class FB
                         ['is_sender', '=', 0],
                         ['reserved', '=', 0],
                         ['api_key', '<>', '']
-                    ])->orderBy('count_request', 'asc')->first();
+                    ])->orderByRaw("RAND()")->first();
 
                     if (!isset($sender)) {
                         return;
