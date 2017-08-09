@@ -75,7 +75,7 @@ class VKGroupsFindUsers extends Command
                     if ($vk->parseUsers($this->content['vklink'])) {
                         $this->content['vklink']->delete();
                     }
-                    sleep(rand(5, 10));
+
                 } catch (\Exception $ex) {
                     $log          = new ErrorLog();
                     $log->task_id = 8888;
@@ -88,6 +88,7 @@ class VKGroupsFindUsers extends Command
                 $log->message = $ex->getMessage() . " line:" . $ex->getLine();
                 $log->save();
             }
+            sleep(rand(5, 10));
         }
     }
 }
