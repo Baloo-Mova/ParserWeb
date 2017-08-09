@@ -165,6 +165,7 @@ class FB
                             } else {
                                 break;
                             }
+                            sleep(10);
                         }
                     }
                 }
@@ -179,6 +180,7 @@ class FB
                 $sender->reserved = 0;
                 $sender->save();
                 return true;
+                sleep(random_int(10, 15));
             }
         }
     }
