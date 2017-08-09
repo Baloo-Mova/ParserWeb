@@ -152,6 +152,7 @@ class ParseGoogleUa extends Command
                     } else {
                         break;
                     }
+                    sleep(rand(30, 60));
                 } while ($sitesCountNow > $sitesCountWas);
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();

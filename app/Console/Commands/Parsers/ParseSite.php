@@ -28,8 +28,8 @@ class ParseSite extends Command
      *
      * @var string
      */
-    protected $description       = 'Parse Site from list';
-    private   $ua_operators_code = [
+    protected $description = 'Parse Site from list';
+    private $ua_operators_code = [
         "039",
         "050",
         "066",
@@ -47,7 +47,7 @@ class ParseSite extends Command
         "094",
         "044"
     ];
-    private   $check             = [];
+    private $check = [];
 
     /**
      * Create a new command instance.
@@ -88,24 +88,24 @@ class ParseSite extends Command
             ".gif"
         ];
         while (true) {
-            $web                = new Web();
-            $crawler            = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' '); //TRANSLIT//IGNORE
+            $web = new Web();
+            $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' '); //TRANSLIT//IGNORE
             $this->data['link'] = null;
             try {
                 $mutex = new FlockMutex(fopen(__FILE__, "r"));
                 $mutex->synchronized(function () {
                     $link = SiteLinks::join('tasks', 'tasks.id', '=', 'site_links.task_id')->where([
                         'site_links.reserved' => 0,
-                        'tasks.active_type'   => 1
+                        'tasks.active_type' => 1
                     ])->select('site_links.*')->first();
                     if (isset($link)) {
                         $this->data['link'] = $link;
-                        $link->reserved     = 1;
+                        $link->reserved = 1;
                         $link->save();
                     }
                 });
                 $link = $this->data['link'];
-                if ( ! isset($link)) {
+                if (!isset($link)) {
                     sleep(10);
                     continue;
                 }
@@ -116,7 +116,7 @@ class ParseSite extends Command
                     continue;
                 }
 
-                $task_id      = $link->task_id;
+                $task_id = $link->task_id;
                 $default_link = $link->link;
 
                 $data = $web->get($link->link);
@@ -125,7 +125,7 @@ class ParseSite extends Command
                 $crawler->load($data);
 
                 $data = $crawler->find('body', 0);
-                if ( ! isset($data)) {
+                if (!isset($data)) {
                     $link->delete();
                     continue;
                 }
@@ -134,24 +134,24 @@ class ParseSite extends Command
                 } catch (\Exception $ex) {
                     if (strpos($ex->getMessage(), "conv():")) {
                         $crawler = new SimpleHtmlDom(null, true, true, 'windows-1251', true, '\r\n', ' ');
-                        $data    = $web->get($link->link);
+                        $data = $web->get($link->link);
                         $crawler->clear();
                         $crawler->load($data);
                         $data = $crawler->find('body', 0);
                     }
                 }
 
-                if ( ! empty($data)) {
+                if (!empty($data)) {
                     $baseData = parse_url($link->link);
-                    $emails   = $this->extractEmails($data);
-                    $phones   = $this->extractPhones($data);
-                    $skypes   = $this->extractSkype($data);
+                    $emails = $this->extractEmails($data);
+                    $phones = $this->extractPhones($data);
+                    $skypes = $this->extractSkype($data);
 
                     if (count($emails) > 0 || count($phones) > 0 || count($skypes) > 0) {
                         try {
-                            $res               = new SearchQueries();
-                            $res->link         = $default_link;
-                            $res->task_id      = $task_id;
+                            $res = new SearchQueries();
+                            $res->link = $default_link;
+                            $res->task_id = $task_id;
                             $res->contact_data = json_encode([
                                 "emails" => $emails,
                                 "phones" => $phones,
@@ -183,9 +183,9 @@ class ParseSite extends Command
                             $skypes = $this->extractSkype($data, $skypes);
                             $phones = $this->extractPhones($data);
                             if (count($emails) > 0 || count($phones) > 0 || count($skypes) > 0) {
-                                $res               = new SearchQueries();
-                                $res->link         = $default_link;
-                                $res->task_id      = $task_id;
+                                $res = new SearchQueries();
+                                $res->link = $default_link;
+                                $res->task_id = $task_id;
                                 $res->contact_data = json_encode([
                                     "emails" => $emails,
                                     "phones" => $phones,
@@ -200,11 +200,12 @@ class ParseSite extends Command
                             }
                         } catch (\Exception $ex) {
                         }
+                        sleep(rand(2, 5));
                     }
                     $link->delete();
                 }
             } catch (\Exception $ex) {
-                $log          = new ErrorLog();
+                $log = new ErrorLog();
                 $log->message = $ex->getMessage() . " line:" . $ex->getLine();
                 $log->task_id = 0;
                 $log->save();
@@ -216,7 +217,7 @@ class ParseSite extends Command
     {
         try {
 
-            if ( ! isset($before)) {
+            if (!isset($before)) {
                 $before = [];
             }
 
@@ -228,7 +229,7 @@ class ParseSite extends Command
             ];
 
             $plain = $data->plaintext;
-            $html  = $data->innertext;
+            $html = $data->innertext;
             preg_match_all('/[\._a-zA-Z0-9-]+@[\._a-zA-Z0-9-]+/i', $plain, $M);
             preg_match_all('/[\._a-zA-Z0-9-]+@[\._a-zA-Z0-9-]+/i', $html, $T);
             $M = array_merge($M[0], $T[0]);
@@ -261,7 +262,7 @@ class ParseSite extends Command
 
             return [];
         } catch (\Exception $ex) {
-            $log          = new ErrorLog();
+            $log = new ErrorLog();
             $log->message = $ex->getMessage() . " line:" . $ex->getLine();
             $log->task_id = 5554;
             $log->save();
@@ -271,7 +272,7 @@ class ParseSite extends Command
     public function extractPhones($data, $before = [])
     {
         try {
-            $del   = ["(", ")", " ", "-", "\t", "#9658;", "."];
+            $del = ["(", ")", " ", "-", "\t", "#9658;", "."];
             $plain = $data->plaintext;
             $plain = str_replace(["&nbsp;", "&larr;", "&rarr;"], [" ", ""], $plain);
 
@@ -283,7 +284,7 @@ class ParseSite extends Command
                 foreach ($M as $m) {
                     $m = str_replace($del, "", $m);
 
-                    if ( ! in_array(trim($m), $before) && ! $this->endsWith(trim($m),
+                    if (!in_array(trim($m), $before) && !$this->endsWith(trim($m),
                             "png") && strlen($m) >= 9 && strlen($m) <= 12
                     ) {
 
@@ -314,7 +315,7 @@ class ParseSite extends Command
                 foreach ($M as $m) {
                     $m = str_replace($del, "", $m);
 
-                    if ( ! in_array(trim($m), $before) && ! $this->endsWith(trim($m),
+                    if (!in_array(trim($m), $before) && !$this->endsWith(trim($m),
                             "png") && strlen($m) >= 9 && strlen($m) <= 12
                     ) {
                         // echo$m . "\n";
@@ -336,7 +337,7 @@ class ParseSite extends Command
 
                     $t = str_replace($del, "", $t);
                     $t = str_replace(["+"], "", $t);
-                    if ( ! in_array(trim($t), $before) && ! $this->endsWith(trim($t),
+                    if (!in_array(trim($t), $before) && !$this->endsWith(trim($t),
                             "png") && strlen($t) >= 9 && strlen($t) <= 12
                     ) {
                         // echo$t . "\n";
@@ -359,7 +360,7 @@ class ParseSite extends Command
             //dd($before);
             return array_unique($before);
         } catch (\Exception $ex) {
-            $log          = new ErrorLog();
+            $log = new ErrorLog();
             $log->message = $ex->getMessage() . " line:" . $ex->getLine();
             $log->task_id = 5555;
             $log->save();
@@ -382,16 +383,16 @@ class ParseSite extends Command
 
         while (strpos($html, "\"skype:") > 0) {
             $start = strpos($html, "\"skype:");
-            $temp  = substr($html, $start + 7, 50);
-            $html  = substr($html, $start + 57);
+            $temp = substr($html, $start + 7, 50);
+            $html = substr($html, $start + 57);
 
-            $temp       = substr($temp, 0, strpos($temp, "\""));
+            $temp = substr($temp, 0, strpos($temp, "\""));
             $questonPos = strpos($temp, "?");
             if ($questonPos > 0) {
                 $temp = substr($temp, 0, $questonPos);
             }
 
-            if ( ! in_array($temp, $before)) {
+            if (!in_array($temp, $before)) {
                 $before[] = $temp;
             }
         }
@@ -403,33 +404,33 @@ class ParseSite extends Command
     {
         $contacts = [];
 
-        if ( ! empty($mails)) {
+        if (!empty($mails)) {
             foreach ($mails as $ml) {
                 $contacts[] = [
-                    "value"   => $ml,
+                    "value" => $ml,
                     "task_id" => $task_id,
-                    "type"    => Contacts::MAILS
+                    "type" => Contacts::MAILS
                 ];
             }
         }
 
-        if ( ! empty($skypes)) {
+        if (!empty($skypes)) {
             foreach ($skypes as $sk) {
                 $contacts[] = [
-                    "value"   => $sk,
+                    "value" => $sk,
                     "task_id" => $task_id,
-                    "type"    => Contacts::SKYPES
+                    "type" => Contacts::SKYPES
                 ];
             }
         }
 
-        if ( ! empty($phones)) {
+        if (!empty($phones)) {
             $phones = $this->filterPhoneArray($phones);
             foreach ($phones as $ph) {
                 $contacts[] = [
-                    "value"   => $ph,
+                    "value" => $ph,
                     "task_id" => $task_id,
-                    "type"    => Contacts::PHONES
+                    "type" => Contacts::PHONES
                 ];
             }
         }
@@ -466,13 +467,13 @@ class ParseSite extends Command
             $html = $data->innertext;
 
             $protocol = $def_link["scheme"] . "://";
-            $domain   = $def_link["host"];
+            $domain = $def_link["host"];
 
             if (preg_match_all("/<a[^>]*href\s*=\s*'([^']*)'|" . '<a[^>]*href\s*=\s*"([^"]*)"' . "/is", $html, $M)) {
 
                 $M = array_unique($M[2]);
                 foreach ($M as $m) {
-                    if ( ! $this->validate($m)) {
+                    if (!$this->validate($m)) {
                         continue;
                     }
                     if (strpos($m, "http") === false && trim($m) !== "") {
@@ -492,7 +493,7 @@ class ParseSite extends Command
                         }
                     }
 
-                    if ( ! in_array($m, $before) && trim($m) !== "") {
+                    if (!in_array($m, $before) && trim($m) !== "") {
                         if (strpos($m, "http://" . $domain) === 0 || strpos($m, "https://" . $domain) === 0) {
                             $before[] = $m;
                         }
@@ -501,7 +502,7 @@ class ParseSite extends Command
             }
             array_multisort(array_map('strlen', $before), $before);
         } catch (\Exception $ex) {
-            $log          = new ErrorLog();
+            $log = new ErrorLog();
             $log->message = $ex->getMessage() . " line:" . $ex->getLine();
             $log->task_id = 0;
             $log->save();
