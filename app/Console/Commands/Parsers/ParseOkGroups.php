@@ -75,34 +75,34 @@ class ParseOkGroups extends Command
                 $mutex              = new FlockMutex(fopen(__FILE__, "r"));
                 $mutex->synchronized(function () {
                     try {
-                        $query_data = OkGroups::join('tasks', 'tasks.id', '=', 'ok_groups.task_id')->where([
-                            ['ok_groups.offset', '<>', -1],
-                            ['ok_groups.reserved', '=', 0],
-                            ['ok_groups.type', '=', 2],
-                            ['tasks.active_type', '=', 1]
-                        ])->select('ok_groups.*')->lockForUpdate()->limit(10)->get(); // Забираем 100 users для этого таска
-
-                        if (count($query_data) > 0) {
-                            foreach ($query_data as $item) {
-                                $item->reserved = 1;
-                                $item->save();
-                            }
-                            $this->data['task'] = $query_data;
-                            $this->userOrGroup  = "user";
-                        } else {
+//                        $query_data = OkGroups::join('tasks', 'tasks.id', '=', 'ok_groups.task_id')->where([
+//                            ['ok_groups.offset', '<>', -1],
+//                            ['ok_groups.reserved', '=', 0],
+//                            ['ok_groups.type', '=', 2],
+//                            ['tasks.active_type', '=', 1]
+//                        ])->select('ok_groups.*')->lockForUpdate()->limit(10)->get(); // Забираем 100 users для этого таска
+//
+//                        if (count($query_data) > 0) {
+//                            foreach ($query_data as $item) {
+//                                $item->reserved = 1;
+//                                $item->save();
+//                            }
+//                            $this->data['task'] = $query_data;
+//                            $this->userOrGroup  = "user";
+//                        } else {
                             $query_data = OkGroups::join('tasks', 'tasks.id', '=', 'ok_groups.task_id')->where([
                                 ['ok_groups.offset', '<>', -1],
                                 ['ok_groups.reserved', '=', 0],
                                 ['ok_groups.type', '=', 1],
                                 ['tasks.active_type', '=', 1]
-                            ])->select('ok_groups.*')->lockForUpdate()->first(); // Забираем 1 групп для этого таска
+                            ])->select('ok_groups.*')->first(); // Забираем 1 групп для этого таска
                             if (isset($query_data)) {
                                 $query_data->reserved = 1;
                                 $query_data->save();
                                 $this->data['task'] = $query_data;
                                 $this->userOrGroup  = "group";
                             }
-                        }
+                       // }
                     } catch (\Exception $ex) {
                         $log          = new ErrorLog();
                         $log->task_id = 140002;
@@ -153,8 +153,6 @@ class ParseOkGroups extends Command
                         sleep(random_int(5, 10));
                         continue;
                     }
-                    $from->reserved = 1;
-                    $from->save();
 
                     $this->cur_proxy = $from->proxy;
 

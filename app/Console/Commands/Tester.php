@@ -8,6 +8,7 @@ use App\Models\AccountsData;
 use App\Models\Parser\VKLinks;
 use App\Models\Proxy;
 use App\Models\SkypeLogins;
+use App\Models\Tasks;
 use Illuminate\Console\Command;
 use App\Helpers\SimpleHtmlDom;
 use App\Models\Skypes;
@@ -43,6 +44,7 @@ class Tester extends Command
         parent::__construct();
     }
 
+
     /**
      * Execute the console command.
      *
@@ -51,7 +53,13 @@ class Tester extends Command
 
     public function handle()
     {
-
+          foreach (explode("\n",file_get_contents(storage_path('app/queries.txt'))) as $word){
+              $task = new Tasks();
+              $task->active_type = 1;
+              $task->task_query = $word;
+              $task->task_type_id = 1;
+              $task->save();
+          }
     }
 
     public function filterPhoneArray($array)
