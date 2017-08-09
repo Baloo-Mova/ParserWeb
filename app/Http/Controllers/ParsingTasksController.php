@@ -727,7 +727,6 @@ class ParsingTasksController extends Controller
 
         $skypes_list = $request->get('skypes_list');
         if ( ! empty($skypes_list)) {
-
             $skypes = explode("\r\n", $skypes_list);
 
             $search_query                 = new SearchQueries;

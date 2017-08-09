@@ -28,7 +28,7 @@ class VKGroupsSearch extends Command
      *
      * @var string
      */
-    protected $description = 'Parse groups  from vk.com';
+    protected $description = 'Parse groups from vk.com';
 
     /**
      * Create a new command instance.

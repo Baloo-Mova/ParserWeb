@@ -269,8 +269,9 @@ class Skype
                         'RegistrationToken' => "registrationToken=" . $this->accountData->registrationToken
                     ]
                 ]);
+
             $conversationData            = json_decode($conversationForm->getBody()->getContents());
-            $this->accountData->send_url = parse_url($conversationData->_metadata->backwardLink, PHP_URL_HOST);
+            $this->accountData->send_url = parse_url($conversationData->_metadata->syncState, PHP_URL_HOST);
             $this->accountData->save();
 
             return true;

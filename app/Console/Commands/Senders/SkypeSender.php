@@ -60,7 +60,7 @@ class SkypeSender extends Command
     {
         while (true) {
             try {
-                $this->task   = null;
+                $this->task = null;
                 $this->sender = null;
 
                 DB::transaction(function () {
@@ -75,7 +75,7 @@ class SkypeSender extends Command
                     }
                 });
 
-                if ( ! isset($this->sender)) {
+                if (!isset($this->sender)) {
                     sleep(10);
                     continue;
                 }
@@ -96,7 +96,7 @@ class SkypeSender extends Command
                             Contacts::whereIn('id', array_column($this->task->toArray(), 'id'))->update(['reserved' => 1]);
                         }
                     } catch (\Exception $ex) {
-                        if(isset($this->task)) {
+                        if (isset($this->task)) {
                             Contacts::whereIn('id',
                                 array_column($this->task->toArray(), 'id'))->update(['reserved' => 0]);
                         }
@@ -104,7 +104,7 @@ class SkypeSender extends Command
                     }
                 });
 
-                if ( ! isset($this->task) || count($this->task) == 0) {
+                if (!isset($this->task) || count($this->task) == 0) {
                     $this->sender->reserved = 0;
                     $this->sender->save();
                     sleep(10);
@@ -114,11 +114,11 @@ class SkypeSender extends Command
                 //$skypes  = array_filter(explode(",", trim($this->task->skypes)));
                 $message = TemplateDeliverySkypes::where('task_id', '=', $this->task[0]->task_id)->first();
 
-                if ( ! isset($message)) {
+                if (!isset($message)) {
                     $this->sender->reserved = 0;
                     $this->sender->save();
 
-                    $log          = new ErrorLog();
+                    $log = new ErrorLog();
                     $log->message = ErrorLog::SKYPE_NO_MESSAGE;
                     $log->task_id = $this->task[0]->task_id;
                     $log->save();
@@ -132,7 +132,7 @@ class SkypeSender extends Command
                     $this->sender->reserved = 0;
                     $this->sender->save();
 
-                    $log          = new ErrorLog();
+                    $log = new ErrorLog();
                     $log->message = ErrorLog::SKYPE_MESSAGE_TEXT_ERROR;
                     $log->task_id = $this->task[0]->id;
                     sleep(10);
@@ -173,7 +173,7 @@ class SkypeSender extends Command
                     $skype->sended = 1;
                     $skype->save();
 
-                    sleep(random_int(1, 5));
+                    sleep(random_int(5, 15));
                 }
 
                 $this->sender->reserved = 0;
@@ -183,7 +183,7 @@ class SkypeSender extends Command
 
                 sleep(random_int(10, 15));
             } catch (\Exception $ex) {
-                $log          = new ErrorLog();
+                $log = new ErrorLog();
                 $log->message = "SKYPE sender " . $ex->getMessage() . " " . $ex->getTraceAsString();
                 $log->task_id = 0;
                 $log->save();

@@ -29,7 +29,6 @@ use App\Console\Commands\Senders\SkypeSender;
 use App\Console\Commands\Senders\OkSender;
 use App\Console\Commands\Cleaner\NotValidMailsCleaner;
 use App\Console\Commands\Cleaner\RefreshSenders;
-
 use App\Console\Commands\Reg\RegFB;
 use App\Console\Commands\Reg\RegVK;
 use App\Console\Commands\Reg\RegOK;
@@ -37,9 +36,7 @@ use App\Console\Commands\Reg\RegGoogle;
 use App\Console\Commands\Reg\RegYandex;
 use App\Console\Commands\Reg\RegMailru;
 use App\Console\Commands\Reg\RegSkype;
-
 use App\Console\Commands\Parsers\ParseGoogleUa;
-//use App\Console\Commands\Parsers\ParseYandexUa;
 use App\Console\Commands\Parsers\ParseYandexRu;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -63,9 +60,6 @@ class Kernel extends ConsoleKernel
         VKSender::class,
         ParseTw::class,
         ParseFB::class,
-        ParseFBGetGroups::class,
-        ParseFBGetUsers::class,
-        TestFB::class,
         FBSender::class,
         TwitterSender::class,
         ParseOk::class,
@@ -85,7 +79,6 @@ class Kernel extends ConsoleKernel
         RegYandex::class,
         RegMailru::class,
         RegSkype::class,
-
         RefreshSenders::class,
     ];
 
