@@ -76,13 +76,15 @@ class VKGroupsSearch extends Command
                     $this->content['task']->vk_reserved = 2;
                     $this->content['task']->save();
                 }
-                sleep(random_int(10, 20));
+
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
                 $log->task_id = $this->content['task']->id;
                 $log->message = $ex->getMessage() . " line:" . $ex->getLine();
                 $log->save();
             }
+
+            sleep(rand(10,15));
         }
     }
 }
