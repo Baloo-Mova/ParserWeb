@@ -409,6 +409,10 @@ class VK
             ]);
 
             if (isset($result['error'])) {
+                $errror = new ErrorLog();
+                $errror->message = json_encode($result);
+                $errror->task_id = 1234567;
+                $errror->save();
                 $sender->reserved = 0;
                 $sender->valid = 0;
                 $sender->save();
