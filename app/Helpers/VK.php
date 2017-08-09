@@ -440,9 +440,9 @@ class VK
             }
 
             $sender->reserved = 0;
+            $sender->count_request++;
             $sender->save();
 
-            $sender->increments('count_request');
             return true;
         }
     }
