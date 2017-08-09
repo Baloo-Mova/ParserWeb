@@ -96,7 +96,7 @@ class FB
                 'proxy' => $this->proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
             ]);
 
-            $groupsLinkTo = "https://graph.facebook.com/v2.10/search/?q=" . $query . "&type=group&access_token=" . $sender->api_key . "&pretty=1&limit=50";
+            $groupsLinkTo = "https://graph.facebook.com/v2.10/search/?q=" . $query . "&type=group&access_token=" . $sender->api_key . "&pretty=1&limit=2000";
 
             while (true) {
 
@@ -112,7 +112,7 @@ class FB
                     $search_q_arr = [];
                     $contacts_arr = [];
                     foreach ($groupsJsonData["data"] as $res) {
-                        $linkTo = "https://graph.facebook.com/v2.10/" . $res['id'] . "/members?access_token=" . $sender->api_key . "&pretty=1&limit=50";
+                        $linkTo = "https://graph.facebook.com/v2.10/" . $res['id'] . "/members?access_token=" . $sender->api_key . "&pretty=1&limit=1000";
                         while (true) {
                             try {
                                 $data = $this->client->get($linkTo)->getBody()->getContents();
