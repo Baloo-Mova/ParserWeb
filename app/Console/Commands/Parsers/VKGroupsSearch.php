@@ -76,7 +76,6 @@ class VKGroupsSearch extends Command
                     $this->content['task']->vk_reserved = 2;
                     $this->content['task']->save();
                 }
-
             } catch (\Exception $ex) {
                 $log          = new ErrorLog();
                 $log->task_id = $this->content['task']->id;

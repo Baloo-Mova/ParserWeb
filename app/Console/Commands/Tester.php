@@ -20,6 +20,9 @@ use SebastianBergmann\CodeCoverage\Report\PHP;
 class Tester extends Command
 {
     public $client = null;
+    public $proxy_array = null;
+    public $cur_proxy = null;
+    public $proxy_string = null;
     public $crawler;
     /**
      * The name and signature of the console command.
@@ -53,33 +56,72 @@ class Tester extends Command
 
     public function handle()
     {
-          foreach (explode("\n",file_get_contents(storage_path('app/queries.txt'))) as $word){
-              $task = new Tasks();
-              $task->active_type = 1;
-              $task->task_query = $word;
-              $task->task_type_id = 1;
-              $task->save();
-          }
-    }
+        $this->client = new Client([
+            'headers' => [
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
+                'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+            ],
+            'verify' => false,
+            'cookies' => true,
+            'allow_redirects' => true,
+            'timeout' => 10,
+        ]);
 
-    public function filterPhoneArray($array)
-    {
-        $result = [];
-        foreach ($array as $item) {
-            $item = str_replace([" ", "-", "(", ")"], "", $item);
-            if (empty($item)) {
-                continue;
-            }
-            if (preg_match("/[^0-9]/", $item) == false) {
-
-                if ($item[0] == "8") {
-                    $item[0] = "7";
-                }
-
-                $result [] = $item;
+        foreach (Proxy::all() as $item) {
+            try {
+               var_dump($this->client->get('http://ok.ru/', ['proxy' => $item->proxy])->getBody()->getSize());
+            } catch (\Exception $ex) {
+                var_dump($ex->getMessage());
             }
         }
+    }
 
-        return $result;
+    public function login($login, $password)
+    {
+        $data = $this->client->request('POST', 'https://www.ok.ru/https', [
+            'form_params' => [
+                "st.redirect" => "",
+                "st.asr" => "",
+                "st.posted" => "set",
+                "st.originalaction" => "https://www.ok.ru/dk?cmd=AnonymLogin&st.cmd=anonymLogin",
+                "st.fJS" => "on",
+                "st.st.screenSize" => "1920 x 1080",
+                "st.st.browserSize" => "947",
+                "st.st.flashVer" => "23.0.0",
+                "st.email" => $login,
+                "st.password" => $password,
+                "st.iscode" => "false"
+            ],
+            'proxy' => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
+        ]);
+
+        $html_doc = $data->getBody()->getContents();
+        if (strpos($html_doc, 'Профиль заблокирован') > 0 || strpos($html_doc,
+                'восстановления доступа')
+        ) { // Вывелось сообщение безопасности, значит не залогинились
+            return false;
+        }
+        if ($this->client->getConfig("cookies")->count() > 2) { // Куков больше 2, возможно залогинились
+            $this->crawler->clear();
+            $this->crawler->load($html_doc);
+
+            if (count($this->crawler->find('Мы отправили')) > 0) { // Вывелось сообщение безопасности, значит не залогинились
+                return false;
+            }
+
+            //$this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
+            preg_match('/gwtHash\:("(.*?)(?:"|$)|([^"]+))/i', $html_doc, $this->gwt);
+            var_dump($this->gwt);
+            $this->gwt = $this->gwt[2];
+            // $this->tkn =substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
+            preg_match("/OK\.tkn\.set\(('(.*?)(?:'|$)|([^']+))\)/i", $html_doc, $this->tkn);
+            $this->tkn = $this->tkn[2];
+
+            return true;
+        } else {  // Точно не залогинись
+            return false;
+        }
     }
 }

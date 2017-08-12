@@ -164,11 +164,10 @@ class ParseOk extends Command
                         $from->count_request += 1;
                         $from->save();
                     } catch (\Exception $ex) {
-                        $err = new ErrorLog();
-                        $err->message = $ex->getMessage() . " " . $ex->getLine();
-                        $err->task_id = 150002;
-                        $err->save();
-                        $data = "";
+                        $from->valid = -1;
+                        $from->reserved = 0;
+                        $from->save();
+                        continue;
                     }
 
                     if (strpos($data, "Ваш профиль заблокирован") !== false || $data == "") {
@@ -184,7 +183,7 @@ class ParseOk extends Command
 
                     if ($needLogin) {
                         $logined = $this->login($from->login, $from->password);
-                        var_dump($logined);
+
                         if ($logined) {
                             $from->ok_user_gwt = $this->gwt;
                             $from->ok_user_tkn = $this->tkn;
@@ -259,7 +258,7 @@ class ParseOk extends Command
                     $task->save();
                     $page_numb++;
 
-                    sleep(random_int(2, 7));
+                    sleep(random_int(4, 15));
                     $from->increment('count_request');
                 } while (strlen($html_doc) > 200);
 
@@ -304,8 +303,6 @@ class ParseOk extends Command
         ]);
 
         $html_doc = $data->getBody()->getContents();
-var_dump($html_doc);
-exit();
         if (strpos($html_doc, 'Профиль заблокирован') > 0 || strpos($html_doc,
                 'восстановления доступа')
         ) { // Вывелось сообщение безопасности, значит не залогинились
@@ -338,7 +335,7 @@ exit();
         $this->crawler->load($data);
 
         foreach ($this->crawler->find("a") as $link) { // Вытаскиваем линки групп на 1 страницe
-            var_dump($link.PHP_EOL);
+            var_dump($link . PHP_EOL);
             if (strpos($link->href, 'st.redirect') > 0) {
                 $href = urldecode(substr($link->href, strripos($link->href, "st.redirect=") + 12));
                 if (strpos($href, "market") === false) {

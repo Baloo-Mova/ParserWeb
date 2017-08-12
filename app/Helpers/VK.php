@@ -403,7 +403,6 @@ class VK
             $result = $this->requestToApi('groups.search', [
                 'access_token' => $sender->api_key,
                 'q' => $find,
-                'type' => 'group',
                 'count' => 1000,
                 'offset' => 0
             ]);
@@ -514,6 +513,7 @@ class VK
                         $skypes = [];
                         $phones = [];
                         $city = "";
+                        $city_id = 0;
                         $name = $item["first_name"] . " " . $item["last_name"];
                         $searchQueriesContacts = [];
 
@@ -532,6 +532,7 @@ class VK
                         }
                         if (isset($item["city"])) {
                             $city = $item["city"]["title"];
+                            $city_id = $item['city']['id'];
                         }
 
                         $phones = $this->filterPhoneArray($phones);
@@ -568,6 +569,7 @@ class VK
                             'link' => 'https://vk.com/id' . $item['id'],
                             'name' => $name,
                             'city' => $city,
+                            'city_id' => $city_id,
                             'contact_data' => json_encode($searchQueriesContacts),
                             'task_id' => $group->task_id
                         ];

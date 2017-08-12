@@ -78,6 +78,7 @@ class SearchQueries extends Model
         'name',
         'city',
         'contact_data',
+        'city_id'
     ];
 
     public function getEmailTemplate()
