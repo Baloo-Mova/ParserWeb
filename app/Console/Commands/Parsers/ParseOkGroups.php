@@ -82,7 +82,8 @@ class ParseOkGroups extends Command
                         ])->select('ok_groups.*')->limit(10)->get(); // Забираем 100 users для этого таска
 
                         if (count($query_data) > 0) {
-                            //OkGroups::whereIn('id', array_collumn($query_data, 'id'))->update(['reserved' => 1]);
+                            $test = $query_data->toArray();
+                            OkGroups::whereIn('id', $test)->update(['reserved' => 1]);
                             $this->data['task'] = $query_data;
                             $this->userOrGroup = "user";
                         } else {
@@ -93,8 +94,8 @@ class ParseOkGroups extends Command
                                 ['tasks.active_type', '=', 1]
                             ])->select('ok_groups.*')->first(); // Забираем 1 групп для этого таска
                             if (isset($query_data)) {
-//                                $query_data->reserved = 1;
-//                                $query_data->save();
+                                $query_data->reserved = 1;
+                                $query_data->save();
                                 $this->data['task'] = $query_data;
                                 $this->userOrGroup = "group";
                             }
@@ -181,7 +182,7 @@ class ParseOkGroups extends Command
                         'cookies' => isset($from->ok_cookie) ? $array : true,
                         'allow_redirects' => true,
                         'timeout' => 20,
-                        'proxy' => $this->proxy_string,
+                        'proxy' => "127.0.0.1:8888"//$this->proxy_string,
                     ]);
 
                     $data = "";
@@ -574,9 +575,7 @@ class ParseOkGroups extends Command
     {
         $this->crawler->clear();
         $this->crawler->load($data);
-
         foreach ($this->crawler->find("a.photoWrapper") as $query_data2) {
-            var_dump($query_data2->href);
             $ok_group = new OkGroups();
             $ok_group->group_url = substr($query_data2->href, 0, strripos($query_data2->href, "?st."));
             $ok_group->task_id = $task_id;
