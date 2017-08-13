@@ -472,7 +472,6 @@ class ParseOkGroups extends Command
 
     public function login($login, $password)
     {
-        echo "LOGIn";
         $data = $this->client->request('POST', 'https://www.ok.ru/https', [
             'form_params' => [
                 "st.redirect" => "",

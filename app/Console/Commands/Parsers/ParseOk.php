@@ -146,7 +146,7 @@ class ParseOk extends Command
                         'headers' => [
                             'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
                             'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                            'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
+                            //'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
                             'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
                         ],
                         'verify' => false,
@@ -162,6 +162,10 @@ class ParseOk extends Command
                         $from->count_request += 1;
                         $from->save();
                     } catch (\Exception $ex) {
+                        $err = new ErrorLog();
+                        $err->message = $ex->getMessage() . " " . $ex->getLine();
+                        $err->task_id = 150001;
+                        $err->save();
                         $from->valid = -1;
                         $from->reserved = 0;
                         $from->save();
@@ -169,6 +173,10 @@ class ParseOk extends Command
                     }
 
                     if (strpos($data, "Ваш профиль заблокирован") !== false || $data == "") {
+                        $err = new ErrorLog();
+                        $err->message = "BLOCKED";
+                        $err->task_id = 150001;
+                        $err->save();
                         $from->valid = -1;
                         $from->reserved = 0;
                         $from->save();
@@ -176,12 +184,20 @@ class ParseOk extends Command
                     }
 
                     if (strpos($data, "https://www.ok.ru/https") === false) {
+                        $err = new ErrorLog();
+                        $err->message = "Need login";
+                        $err->task_id = 150001;
+                        $err->save();
                         $needLogin = false;
                     }
 
                     if ($needLogin) {
                         $logined = $this->login($from->login, $from->password);
                         if ($logined) {
+                            $err = new ErrorLog();
+                            $err->message = "LOGIN OK";
+                            $err->task_id = 150001;
+                            $err->save();
                             $from->ok_user_gwt = $this->gwt;
                             $from->ok_user_tkn = $this->tkn;
                             $from->ok_cookie = json_encode($this->client->getConfig('cookies')->toArray());
@@ -190,6 +206,10 @@ class ParseOk extends Command
                             $needFindAccount = false;
                             break;
                         } else {
+                            $err = new ErrorLog();
+                            $err->message = "LOGIN FAIL";
+                            $err->task_id = 150001;
+                            $err->save();
                             $from->count_request += 1;
                             $from->valid = -1;
                             $from->reserved = 0;
@@ -321,7 +341,10 @@ class ParseOk extends Command
                 preg_match("/OK\.tkn\.set\(('(.*?)(?:'|$)|([^']+))\)/i", $html_doc, $this->tkn);
                 $this->tkn = $this->tkn[2];
             } catch (\Exception $exception) {
-                dd($html_doc);
+                $err = new ErrorLog();
+                $err->message = $ex->getMessage() . " " . $ex->getLine();
+                $err->task_id = 150001;
+                $err->save();
                 return false;
             }
             return true;
