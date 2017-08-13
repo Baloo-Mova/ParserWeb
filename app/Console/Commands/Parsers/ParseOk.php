@@ -77,8 +77,8 @@ class ParseOk extends Command
                     if (!isset($task)) {
                         return;
                     }
-//                    $task->ok_reserved = 1;
-//                    $task->save();
+                    $task->ok_reserved = 1;
+                    $task->save();
                     $this->data['task'] = $task;
                 });
 
@@ -222,8 +222,8 @@ class ParseOk extends Command
 //                        ]
 //                    ]);
 
-//                $from->count_request += 1;
-//                $from->save();
+               $from->count_request += 1;
+                $from->save();
 
                 if (!empty($groups_data->getHeaderLine('TKN'))) {
                     $this->tkn = $groups_data->getHeaderLine('TKN');
@@ -271,7 +271,7 @@ class ParseOk extends Command
                 $from->ok_user_tkn = $this->tkn;
                 $from->ok_user_gwt = $this->gwt;
                 $from->save();
-                dd(1);
+
             } catch (\Exception $ex) {
                 $err = new ErrorLog();
                 $err->message = $ex->getMessage() . " " . $ex->getLine();
