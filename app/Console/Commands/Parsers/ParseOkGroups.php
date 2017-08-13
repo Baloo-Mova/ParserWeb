@@ -444,7 +444,8 @@ class ParseOkGroups extends Command
                             }
 
                             try {
-                                $sq = SearchQueries::create([
+                                var_dump($item->task_id);
+                                 SearchQueries::insert([
                                     'link' => "https://ok.ru" . $item->group_url,
                                     'task_id' => $item->task_id,
                                     'city' => isset($user_info) && strlen($user_info) > 0 && strlen($user_info) < 500 ? $user_info : null,
