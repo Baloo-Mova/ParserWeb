@@ -9,6 +9,7 @@ use App\Models\Parser\VKLinks;
 use App\Models\Proxy;
 use App\Models\SkypeLogins;
 use App\Models\Tasks;
+use function GuzzleHttp\Psr7\parse_query;
 use Illuminate\Console\Command;
 use App\Helpers\SimpleHtmlDom;
 use App\Models\Skypes;
@@ -56,26 +57,7 @@ class Tester extends Command
 
     public function handle()
     {
-        $this->client = new Client([
-            'headers' => [
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
-                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
-                'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
-            ],
-            'verify' => false,
-            'cookies' => true,
-            'allow_redirects' => true,
-            'timeout' => 10,
-        ]);
-
-        foreach (Proxy::all() as $item) {
-            try {
-               var_dump($this->client->get('http://ok.ru/', ['proxy' => $item->proxy])->getBody()->getSize());
-            } catch (\Exception $ex) {
-                var_dump($ex->getMessage());
-            }
-        }
+        dd(parse_url(htmlspecialchars_decode('/stuninghyu?st.cmd=altGroupMain&amp;st.groupId=52361708372143&amp;st.referenceName=stuninghyu&amp;st._aid=LS_Group_name')));
     }
 
     public function login($login, $password)

@@ -18,6 +18,7 @@ use App\Models\Proxy as ProxyItem;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use malkusch\lock\mutex\FlockMutex;
+use Mockery\Exception;
 
 class ParseOk extends Command
 {
@@ -76,8 +77,8 @@ class ParseOk extends Command
                     if (!isset($task)) {
                         return;
                     }
-                    $task->ok_reserved = 1;
-                    $task->save();
+                   $task->ok_reserved = 1;
+                   $task->save();
                     $this->data['task'] = $task;
                 });
 
@@ -89,7 +90,7 @@ class ParseOk extends Command
 
                 $page_numb = $task->ok_offset;
                 $from = null;
-                $needLogin = false;
+                $needLogin = true;
                 $needFindAccount = true;
                 while ($needFindAccount) {
                     $this->content['from'] = null;
@@ -113,9 +114,6 @@ class ParseOk extends Command
                         sleep(random_int(5, 10));
                         continue;
                     }
-
-                    $from->reserved = 1;
-                    $from->save();
 
                     $this->cur_proxy = $from->proxy;
 
@@ -155,7 +153,7 @@ class ParseOk extends Command
                         'cookies' => isset($from->ok_cookie) ? $array : true,
                         'allow_redirects' => true,
                         'timeout' => 20,
-                        'proxy' => $this->proxy_string,
+                        'proxy' => "127.0.0.1:8888"//$this->proxy_string,
                     ]);
 
                     $data = "";
@@ -177,13 +175,12 @@ class ParseOk extends Command
                         continue;
                     }
 
-                    if (strpos($data, "anonym__rich anonym__feed") !== false) {
-                        $needLogin = true;
+                    if (strpos($data, "https://www.ok.ru/https") === false) {
+                        $needLogin = false;
                     }
 
                     if ($needLogin) {
                         $logined = $this->login($from->login, $from->password);
-
                         if ($logined) {
                             $from->ok_user_gwt = $this->gwt;
                             $from->ok_user_tkn = $this->tkn;
@@ -203,6 +200,7 @@ class ParseOk extends Command
                         $needFindAccount = false;
                         $this->tkn = $from->ok_user_tkn;
                         $this->gwt = $from->ok_user_gwt;
+                        break;
                     }
                 }
 
@@ -299,7 +297,7 @@ class ParseOk extends Command
                 "st.password" => $password,
                 "st.iscode" => "false"
             ],
-            'proxy' => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
+            'proxy' => "127.0.0.1:8888"//$this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
         ]);
 
         $html_doc = $data->getBody()->getContents();
@@ -315,14 +313,17 @@ class ParseOk extends Command
             if (count($this->crawler->find('Мы отправили')) > 0) { // Вывелось сообщение безопасности, значит не залогинились
                 return false;
             }
-
-            //$this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
-            preg_match('/gwtHash\:("(.*?)(?:"|$)|([^"]+))/i', $html_doc, $this->gwt);
-            $this->gwt = $this->gwt[2];
-            // $this->tkn =substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
-            preg_match("/OK\.tkn\.set\(('(.*?)(?:'|$)|([^']+))\)/i", $html_doc, $this->tkn);
-            $this->tkn = $this->tkn[2];
-
+            try {
+                //$this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
+                preg_match('/gwtHash\:("(.*?)(?:"|$)|([^"]+))/i', $html_doc, $this->gwt);
+                $this->gwt = $this->gwt[2];
+                // $this->tkn =substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
+                preg_match("/OK\.tkn\.set\(('(.*?)(?:'|$)|([^']+))\)/i", $html_doc, $this->tkn);
+                $this->tkn = $this->tkn[2];
+            } catch (\Exception $exception) {
+                dd($html_doc);
+                return false;
+            }
             return true;
         } else {  // Точно не залогинись
             return false;
@@ -334,18 +335,16 @@ class ParseOk extends Command
         $this->crawler->clear();
         $this->crawler->load($data);
 
-        foreach ($this->crawler->find("a") as $link) { // Вытаскиваем линки групп на 1 страницe
-            var_dump($link . PHP_EOL);
-            if (strpos($link->href, 'st.redirect') > 0) {
-                $href = urldecode(substr($link->href, strripos($link->href, "st.redirect=") + 12));
-                if (strpos($href, "market") === false) {
-                    $ok_group = new OkGroups();
-                    $ok_group->group_url = $href;
-                    $ok_group->task_id = $task_id;
-                    $ok_group->type = 1;
-                    $ok_group->reserved = 0;
-                    $ok_group->save();
-                }
+        foreach ($this->crawler->find("a.gs_result_i_t_name") as $link) { // Вытаскиваем линки групп на 1 страницe
+
+            $href = urldecode($link->href);
+            if (strpos($href, "market") === false) {
+                $ok_group = new OkGroups();
+                $ok_group->group_url = $href;
+                $ok_group->task_id = $task_id;
+                $ok_group->type = 1;
+                $ok_group->reserved = 0;
+                $ok_group->save();
             }
         }
     }
