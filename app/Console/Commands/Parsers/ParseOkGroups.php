@@ -82,8 +82,10 @@ class ParseOkGroups extends Command
                         ])->select('ok_groups.*')->limit(10)->get(); // Забираем 100 users для этого таска
 
                         if (count($query_data) > 0) {
-                            $test = $query_data->toArray();
-                            OkGroups::whereIn('id', $test)->update(['reserved' => 1]);
+                           foreach ($query_data as $item){
+                               $item->reserved = 1;
+                               $item->save();
+                           }
                             $this->data['task'] = $query_data;
                             $this->userOrGroup = "user";
                         } else {
@@ -400,7 +402,7 @@ class ParseOkGroups extends Command
                             $people_id = preg_replace('~\D+~', '', $people_id_tmp);
                             $mails_users = $this->extractEmails($html_doc);
                             $searchQueriesContacts = [];
-                            $searchQueriesContacts['ok'] = $people_id;
+                            $searchQueriesContacts['ok_id'] = $people_id;
                             $searchQueriesContacts['emails'] = $mails_users;
                             $contacts[] = [
                                 'value' => $people_id,
