@@ -284,7 +284,9 @@ class ParseOkGroups extends Command
                             ];
                         }
                     }
-                    Contacts::insert($contacts);
+                    if (isset($contacts)) {
+                        Contacts::insert($contacts);
+                    }
                     SearchQueries::create([
                         'link' => "https://ok.ru" . $gr_url,
                         'task_id' => $query_data->task_id,
