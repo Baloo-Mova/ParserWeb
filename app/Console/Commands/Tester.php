@@ -57,7 +57,7 @@ class Tester extends Command
 
     public function handle()
     {
-        dd(parse_url(htmlspecialchars_decode('/stuninghyu?st.cmd=altGroupMain&amp;st.groupId=52361708372143&amp;st.referenceName=stuninghyu&amp;st._aid=LS_Group_name')));
+
     }
 
     public function login($login, $password)
