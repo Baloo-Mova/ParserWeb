@@ -251,7 +251,7 @@ class ParseOkGroups extends Command
                     }
 
                     $page_numb = $query_data->offset;
-                    $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url);
+                    $groups_data = $this->client->request('GET', 'https://ok.ru' . $gr_url);
                     $from->count_request += 1;
                     $from->save();
 
@@ -294,7 +294,7 @@ class ParseOkGroups extends Command
                     ]);
 
                     $contacts = [];
-                    $groups_data = $this->client->request('GET', 'http://ok.ru' . $gr_url . "/members");
+                    $groups_data = $this->client->request('GET', 'https://ok.ru' . $gr_url . "/members");
                     $from->count_request += 1;
                     $from->save();
 
@@ -384,7 +384,7 @@ class ParseOkGroups extends Command
                     $error = 1;
                     foreach ($query_data as $item) {
                         try {
-                            $groups_data = $this->client->request('GET', 'http://ok.ru' . $item->group_url);
+                            $groups_data = $this->client->request('GET', 'https://ok.ru' . $item->group_url);
                             $html_doc = $groups_data->getBody()->getContents();
 
                             $contacts = [];
