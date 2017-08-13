@@ -182,7 +182,7 @@ class ParseOkGroups extends Command
                         'cookies' => isset($from->ok_cookie) ? $array : true,
                         'allow_redirects' => true,
                         'timeout' => 20,
-                        'proxy' => "127.0.0.1:8888"//$this->proxy_string,
+                        'proxy' => $this->proxy_string,
                     ]);
 
                     $data = "";
