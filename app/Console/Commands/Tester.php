@@ -57,7 +57,10 @@ class Tester extends Command
 
     public function handle()
     {
+        $sk = SkypeLogins::first();
+        $skype = new Skype($sk);
 
+        $skype->sendMessage("bear_balooo","Hello From HELL");
     }
 
     public function login($login, $password)
