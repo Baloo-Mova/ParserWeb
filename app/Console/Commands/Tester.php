@@ -7,6 +7,7 @@ use App\Helpers\VK;
 use App\Models\AccountsData;
 use App\Models\Parser\VKLinks;
 use App\Models\Proxy;
+use App\Models\SearchQueries;
 use App\Models\SkypeLogins;
 use App\Models\Tasks;
 use function GuzzleHttp\Psr7\parse_query;
@@ -57,10 +58,35 @@ class Tester extends Command
 
     public function handle()
     {
-        $sk = SkypeLogins::first();
-        $skype = new Skype($sk);
+        $city = [
+            'Питер',
+            'Москва',
+            'Санкт',
+            'петер'
+        ];
 
-        $skype->sendMessage("bear_balooo","Hello From HELL");
+        $tasks = SearchQueries::where([['task_id', '<', 694], ['task_id', '>', 19]]);
+        foreach ($city as $item) {
+            $tasks->orWhere('city', 'like', '%' . $item . '%');
+        }
+        $items = $tasks->get();
+        $fp = fopen(storage_path('app/export.csv'), 'w');
+        fputcsv($fp, ['Номер п/п', 'Имя', "Город", "Email", 'Skype', "Phone", 'OK', 'VK']);
+        foreach ($items as $i => $item) {
+            $data = [];
+            $data[] = $i;
+            $data[] = $item->name;
+            $data[] = $item->city;
+            $info = json_decode($item->contact_data, true);
+            $data[] = (isset($info['emails']) && count($info['emails']) > 0) ? implode(',', $info['emails']) : "";
+            $data[] = (isset($info['skypes']) && count($info['skypes']) > 0) ? implode(',', $info['skypes']) : "";
+            $data[] = (isset($info['phones']) && count($info['phones']) > 0) ? implode(',', $info['phones']) : "";
+            $data[] = isset($info['vk_id']) ? $info['vk_id'] : "";
+            $data[] = isset($info['ok_id']) ? $info['ok_id'] : "";
+            fputcsv($fp, $data);
+        }
+
+        fclose($fp);
     }
 
     public function login($login, $password)
