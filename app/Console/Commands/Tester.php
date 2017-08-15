@@ -57,7 +57,7 @@ class Tester extends Command
      */
 
     public function handle()
-    {
+    {ini_set('memory_limit','900M');
         $city = [
             'Питер',
             'Москва',
