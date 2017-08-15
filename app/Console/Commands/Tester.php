@@ -57,7 +57,8 @@ class Tester extends Command
      */
 
     public function handle()
-    {ini_set('memory_limit','900M');
+    {
+        ini_set('memory_limit', '900M');
         $city = [
             'Питер',
             'Москва',
@@ -67,11 +68,11 @@ class Tester extends Command
 
         $tasks = SearchQueries::where([['task_id', '<', 694], ['task_id', '>', 19]]);
         foreach ($city as $item) {
-            $tasks->orWhere('city', 'like', '%' . $item . '%');
+            $tasks = $tasks->orWhere('city', 'like', '%' . $item . '%');
         }
         $items = $tasks->get();
-        $fp = fopen(storage_path('app/export.csv'), 'w');
-        fputcsv($fp, ['Номер п/п', 'Имя', "Город", "Email", 'Skype', "Phone", 'OK', 'VK']);
+        //$fp = fopen(storage_path('app/export.csv'), 'w');
+        file_put_contents(storage_path('app/data.csv'), implode(";", ['Номер п/п', 'Имя', "Город", "Email", 'Skype', "Phone", 'OK', 'VK']) . PHP_EOL);
         foreach ($items as $i => $item) {
             $data = [];
             $data[] = $i;
@@ -83,10 +84,10 @@ class Tester extends Command
             $data[] = (isset($info['phones']) && count($info['phones']) > 0) ? implode(',', $info['phones']) : "";
             $data[] = isset($info['vk_id']) ? $info['vk_id'] : "";
             $data[] = isset($info['ok_id']) ? $info['ok_id'] : "";
-            fputcsv($fp, $data);
+            file_put_contents(storage_path('app/data.csv'), implode(";", $data) . PHP_EOL, 8);
         }
 
-        fclose($fp);
+        //fclose($fp);
     }
 
     public function login($login, $password)
