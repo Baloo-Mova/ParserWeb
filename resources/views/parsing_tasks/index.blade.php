@@ -15,8 +15,7 @@
                         <thead>
                         <tr>
                             <th class="small__th">ID</th>
-                            <th>Тип Поиска</th>
-                            <th>Поисковый Запрос</th>
+                            <th>Группа </th>
                             <th class="parsing-tasks_action-th">Действия</th>
                         </tr>
                         </thead>
@@ -25,8 +24,7 @@
 
                                 <tr>
                                     <td>{{ $item->id }}</td>
-                                    <td>{{ $item->tasksType->name }}</td>
-                                    <td>{{ $item->task_query }}</td>
+                                    <td>{{ $item->name }}</td>
                                     <td>
                                         <a href="{{ route('parsing_tasks.show', ['id' => $item->id]) }}" class="btn btn-default btn-flat">
                                             <i class="fa fa-eye" aria-hidden="true"></i>

@@ -20,15 +20,8 @@
                                 <td class="reserve_task_id" data-task-id="{{ $data->id }}">{{ $data->id }}</td>
                             </tr>
                             <tr>
-                                <td><strong>Тип Поиска</strong></td>
-                                <td>{{ $data->tasksType->name }}</td>
-                            <tr>
-                                <td><strong>Статус</strong></td>
-                                <td>{{ $active_type }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Поисковый Запрос</strong></td>
-                                <td>{{ $data->task_type_id == 1 ? $data->task_query : "-" }}</td>
+                                <td><strong>Поисковые Запросы (первые 10)</strong></td>
+                                <td>{{ isset($taskGroupName) ? $taskGroupName : "-" }}</td>
                             </tr>
                             </tbody>
                         </table>
@@ -67,11 +60,79 @@
                                     <a href="#result" data-toggle="tab">Результаты</a>
                                 </li>
                                 <li>
+                                    <a href="#stat" data-toggle="tab">Статистика</a>
+                                </li>
+                                <li>
                                     <a href="#data" data-toggle="tab">Данные для рассылки</a>
                                 </li>
                             </ul>
                         </div>
                         <div class="tab-content">
+                            <div id="stat" class="tab-pane well fade">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th colspan="3">
+                                                Найдено
+                                            </th>
+                                        </tr>
+                                        <tr>
+                                            <th>1</th>
+                                            <th>2</th>
+                                            <th>3</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th colspan="4">Поиск</th>
+                                        </tr>
+                                        <tr>
+                                            <th>1</th>
+                                            <th>Google</th>
+                                            <th>Vk</th>
+                                            <th>Ok</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="4">
+                                                <div class="statistics_white_block">
+
+                                                </div>
+                                                <p class="statistics_description_p"> - ожидает</p>
+                                                <div class="clearfix"></div>
+                                                <div class="statistics_yellow_block">
+
+                                                </div>
+                                                <p class="statistics_description_p"> - в процессе</p>
+                                                <div class="clearfix"></div>
+                                                <div class="statistics_green_block">
+
+                                                </div>
+                                                <p class="statistics_description_p"> - завершенные</p>
+                                                <div class="clearfix"></div>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
                             <div id="result" class="tab-pane well fade in active">
                                 <div>
                                     <span>Обработаных: <span class="badge bg-success task_result_span_parsed">-</span></span>&nbsp;
@@ -131,7 +192,7 @@
                                     <input type="hidden" name="delivery_id" value="{!! $data->id !!}">
                                     <div class="row add_info_row">
                                         <div class="col-xs-12">
-                                            <div class="add_info_card_wrap {!! $mails_file == "" ? "add_info_card_wrap_medium" : "add_info_card_wrap_big" !!}">
+                                            <div class="add_info_card_wrap {!! isset($mails_file) == "" ? "add_info_card_wrap_medium" : "add_info_card_wrap_big" !!}">
                                                 <h4>Mail subject</h4>
                                                 <input type="text" class="form-control" name="mail_subject" value="{!! empty($mails) ? "-" : $mails->subject !!}">
                                                 <input type="hidden" name="mail_id" value="{!! empty($mails) ? "" : $mails->id !!}">
@@ -139,42 +200,25 @@
                                                 <h4 style="margin-top: 10px;">Mail text</h4>
                                                 <textarea name="mail_text" class="form-control" cols="30" rows="4">{!! empty($mails) ? "-" : $mails->text !!}</textarea>
                                                 <input type="hidden" name="mail_id" value="{!! empty($mails) ? "" : $mails->id !!}">
-                                                @if($mails_file)
-                                                    <label for="mails_file" class="mails_file_label">Mail file</label>
-                                                    <br>
-                                                    <strong class="small">
-                                                        {{ storage_path('app/').$mails_file }}
-                                                    </strong>
-                                                    <br>
-                                                    <label for="mails_file" class="custom-file-upload" style="margin-top: 10px;">
-                                                        Изменить файл
-                                                    </label>
-                                                    <input id="mails_file" type="file" name="mails_file"/>
-                                                @else
-                                                    <div class="small mails_file_path">
-                                                    </div>
-                                                    <label for="mails_file" class="custom-file-upload cfu2" style="margin-top: 10px;">
-                                                        Добавить файл
-                                                    </label>
-                                                    <input id="mails_file" type="file" class="mails_file_input" name="mails_file"/>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="row add_info_row">
-                                        <div class="col-xs-6 pr">
-                                            <div class="add_info_card_wrap add_info_card_wrap_normal">
-                                                <h4>Skype text</h4>
-                                                <input type="hidden" name="skype_id" value="{!! empty($skype) ? "" : $skype->id !!}">
-                                                <textarea name="skype_text" class="form-control" cols="30" rows="6">{!! empty($skype) ? "-" : $skype->text !!}</textarea>
-                                            </div>
-                                        </div>
-                                        <div class="col-xs-6 pl">
-                                            <div class="add_info_card_wrap add_info_card_wrap_normal">
-                                                <h4>VK text</h4>
-                                                <input type="hidden" name="vk_id" value="{!! empty($vk) ? "" : $vk->id !!}">
-                                                <textarea name="vk_text" class="form-control" cols="30" rows="6">{!! empty($vk) ? "-" : $vk->text !!}</textarea>
+                                                {{--@if($mails_file)--}}
+                                                    {{--<label for="mails_file" class="mails_file_label">Mail file</label>--}}
+                                                    {{--<br>--}}
+                                                    {{--<strong class="small">--}}
+                                                        {{--{{ storage_path('app/').$mails_file }}--}}
+                                                    {{--</strong>--}}
+                                                    {{--<br>--}}
+                                                    {{--<label for="mails_file" class="custom-file-upload" style="margin-top: 10px;">--}}
+                                                        {{--Изменить файл--}}
+                                                    {{--</label>--}}
+                                                    {{--<input id="mails_file" type="file" name="mails_file"/>--}}
+                                                {{--@else--}}
+                                                    {{--<div class="small mails_file_path">--}}
+                                                    {{--</div>--}}
+                                                    {{--<label for="mails_file" class="custom-file-upload cfu2" style="margin-top: 10px;">--}}
+                                                        {{--Добавить файл--}}
+                                                    {{--</label>--}}
+                                                    {{--<input id="mails_file" type="file" class="mails_file_input" name="mails_file"/>--}}
+                                                {{--@endif--}}
                                             </div>
                                         </div>
                                     </div>
@@ -189,9 +233,19 @@
                                         </div>
                                         <div class="col-xs-6 pl">
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
-                                                <h4>FB text</h4>
-                                                <input type="hidden" name="fb_id" value="{!! empty($fb) ? "" : $fb->id !!}">
-                                                <textarea name="fb_text" class="form-control" cols="30" rows="6">{!! empty($fb) ? "-" : $fb->text !!}</textarea>
+                                                <h4>VK text</h4>
+                                                <input type="hidden" name="vk_id" value="{!! empty($vk) ? "" : $vk->id !!}">
+                                                <textarea name="vk_text" class="form-control" cols="30" rows="6">{!! empty($vk) ? "-" : $vk->text !!}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row add_info_row">
+                                        <div class="col-xs-12 pr">
+                                            <div class="add_info_card_wrap add_info_card_wrap_normal">
+                                                <h4>Skype text</h4>
+                                                <input type="hidden" name="skype_id" value="{!! empty($skype) ? "" : $skype->id !!}">
+                                                <textarea name="skype_text" class="form-control" cols="30" rows="6">{!! empty($skype) ? "-" : $skype->text !!}</textarea>
                                             </div>
                                         </div>
                                     </div>
