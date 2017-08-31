@@ -74,5 +74,8 @@ label {
 .well {
     border-radius: 0px !important;
 }
-
+.bg-green{
+    background-color: #e0f2f1 !important;
+    color: rgba(0,0,0,.87) !important;
+}
 

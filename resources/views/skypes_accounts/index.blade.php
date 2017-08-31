@@ -25,13 +25,11 @@
                         </thead>
                         <tbody>
                             @forelse($data as $item)
-                                <tr>
+                                <tr class="{{ ($item->valid == 1) ? "bg-green" : "" }}">
                                     <td>{{ $item->id }}</td>
                                     <td>{{ $item->login }}</td>
                                     <td>{{ $item->password }}</td>
                                     <td>
-                                        <a href="{{ route('skypes_accounts.edit',['id'=>$item['id']]) }}"
-                                           class="btn btn-default btn-flat" title="Update"><span class="glyphicon glyphicon-pencil"></span></a>
                                         <a href="{{ route('skypes_accounts.delete',['id'=>$item['id']]) }}"
                                            onclick="return confirm('Удалить выбраную запись?')"
                                            class="btn btn-danger btn-flat" title="Delete"><span class="glyphicon glyphicon-trash"></span></a>

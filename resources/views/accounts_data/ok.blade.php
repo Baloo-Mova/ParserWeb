@@ -19,20 +19,18 @@
                                 <th>ID</th>
                                 <th>Логин</th>
                                 <th>Пароль</th>
-                                <th>Тип</th>
+                                <th>Количество запросов</th>
                                 <th>Действия</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($data as $item)
-                                <tr>
+                                <tr class="{{ ($item->valid == 1) ? "bg-green" : "" }}">
                                     <td>{{ $item->id }}</td>
                                     <td>{{ $item->login }}</td>
                                     <td>{{ $item->password }}</td>
-                                    <td>{{ $item->accountType->type_name }}</td>
+                                    <td>{{ $item->count_request }}</td>
                                     <td>
-                                        <a href="{{ route('accounts_data.edit',['id'=>$item['id']]) }}"
-                                           class="btn btn-default btn-flat" title="Update"><span class="glyphicon glyphicon-pencil"></span></a>
                                         <a href="{{ route('accounts_data.delete',['id'=>$item['id']]) }}"
                                            onclick="return confirm('Удалить выбраную запись?')"
                                            class="btn btn-danger btn-flat" title="Delete"><span class="glyphicon glyphicon-trash"></span></a>
