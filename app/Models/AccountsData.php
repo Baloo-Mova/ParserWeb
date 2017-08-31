@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\AccountsDataTypes;
 use App\Models\Proxy as ProxyItem;
+use malkusch\lock\mutex\FlockMutex;
 
 /**
  * App\Models\AccountsData
@@ -13,24 +14,12 @@ use App\Models\Proxy as ProxyItem;
  * @property string $login
  * @property string $password
  * @property int $type_id
- * @property int $smtp_port
- * @property string $smtp_address
  * @property int $user_id
  * @property bool $valid
  * @property int $proxy_id
  * @property int $process_id
  * @property int $is_sender
- * @property string $ok_user_gwt
- * @property string $ok_user_tkn
- * @property string $vk_cookie
- * @property string $ok_cookie
- * @property string $tw_cookie
- * @property string $tw_tkn
- * @property string $fb_user_id
- * @property string $fb_access_token
- * @property string $fb_cookie
- * @property string $ins_cookie
- * @property string $ins_tkn
+ * @property string $payload
  * @property-read \App\Models\AccountsDataTypes $accountType
  * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData emails()
  * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData fb()
@@ -65,7 +54,6 @@ use App\Models\Proxy as ProxyItem;
  * @property int $count_request
  * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData whereCountRequest($value)
  * @property int $reserved
- * @property string $api_key
  * @property-read \App\Models\Proxy $proxy
  * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData whereApiKey($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData whereReserved($value)
@@ -92,12 +80,17 @@ class AccountsData extends Model
         'count_request',
     ];
 
+
+    const VK = 1;
+    const OK = 2;
+
     public function accountType()
     {
         return $this->belongsTo(AccountsDataTypes::class, 'type_id');
     }
 
-    public function proxy(){
+    public function proxy()
+    {
         return $this->belongsTo(ProxyItem::class, 'proxy_id');
     }
 
@@ -115,12 +108,13 @@ class AccountsData extends Model
     {
         $query->where('type_id', '=', 4)->orderBy('id', 'desc');
     }
-   
+
     static function scopeIns($query)
     {
         $query->where('type_id', '=', 5)->orderBy('id', 'desc');
     }
-     static function scopeFb($query)
+
+    static function scopeFb($query)
     {
         $query->where('type_id', '=', 6)->orderBy('id', 'desc');
     }
@@ -128,5 +122,81 @@ class AccountsData extends Model
     static function scopeEmails($query)
     {
         $query->where('type_id', '=', 3)->orderBy('id', 'desc');
+    }
+
+    public static function receiveSenderAccount($accType)
+    {
+        $sender = null;
+        $mutex = new FlockMutex(fopen(__FILE__, "r"));
+        $mutex->synchronized(function () use ($sender) {
+            try {
+                $sender = self::where([
+                    ['type_id', '=', $accType],
+                    ['valid', '=', 1],
+                    ['is_sender', '=', 1],
+                    ['reserved', '=', 0],
+                    ['count_request', '<', 10]
+                ])->orderBy('count_request', 'asc')->first();
+
+                if (!isset($sender)) {
+                    return null;
+                }
+
+                $sender->reserved = 1;
+                $sender->save();
+
+                return $sender;
+            } catch (\Exception $ex) {
+                $error = new ErrorLog();
+                $error->message = $ex->getMessage() . " Line: " . $ex->getLine();
+                $error->task_id = 1000001;
+                $error->save();
+            }
+        });
+
+        return null;
+    }
+
+    public function getProxy()
+    {
+        if (!isset($this->proxy)) {
+            return "";
+        }
+
+        $proxy_arr = parse_url($this->proxy->proxy);
+        return $proxy_arr['scheme'] . "://" . $this->proxy->login . ':' . $this->proxy->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port'];
+
+    }
+
+    public function getApiKey()
+    {
+        $tmp = json_decode($this->payload, true);
+        if (isset($tmp['api_key'])) {
+            return $tmp['api_key'];
+        }
+
+        return null;
+    }
+
+    public function getCookies()
+    {
+        return $this->getParam('cookie');
+    }
+
+    public function getParam($key)
+    {
+        $tmp = json_decode($this->payload, true);
+        if (isset($tmp[$key])) {
+            return $tmp[$key];
+        }
+
+        return null;
+    }
+
+
+    public function release()
+    {
+        $this->reserved = 0;
+        $this->save();
     }
 }

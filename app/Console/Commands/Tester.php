@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Helpers\OK;
 use App\Helpers\Skype;
 use App\Helpers\VK;
 use App\Models\AccountsData;
@@ -10,6 +11,7 @@ use App\Models\Proxy;
 use App\Models\SearchQueries;
 use App\Models\SkypeLogins;
 use App\Models\Tasks;
+use Faker\Factory;
 use function GuzzleHttp\Psr7\parse_query;
 use Illuminate\Console\Command;
 use App\Helpers\SimpleHtmlDom;
@@ -58,82 +60,14 @@ class Tester extends Command
 
     public function handle()
     {
-        ini_set('memory_limit', '900M');
-        $city = [
-            'Питер',
-            'Москва',
-            'Санкт',
-            'петер'
-        ];
 
-        $tasks = SearchQueries::where([['task_id', '<', 694], ['task_id', '>', 19]]);
-        foreach ($city as $item) {
-            $tasks = $tasks->orWhere('city', 'like', '%' . $item . '%');
-        }
-        $items = $tasks->get();
-        //$fp = fopen(storage_path('app/export.csv'), 'w');
-        file_put_contents(storage_path('app/data.csv'), implode(";", ['Номер п/п', 'Имя', "Город", "Email", 'Skype', "Phone", 'OK', 'VK']) . PHP_EOL);
-        foreach ($items as $i => $item) {
-            $data = [];
-            $data[] = $i;
-            $data[] = $item->name;
-            $data[] = $item->city;
-            $info = json_decode($item->contact_data, true);
-            $data[] = (isset($info['emails']) && count($info['emails']) > 0) ? implode(',', $info['emails']) : "";
-            $data[] = (isset($info['skypes']) && count($info['skypes']) > 0) ? implode(',', $info['skypes']) : "";
-            $data[] = (isset($info['phones']) && count($info['phones']) > 0) ? implode(',', $info['phones']) : "";
-            $data[] = isset($info['vk_id']) ? $info['vk_id'] : "";
-            $data[] = isset($info['ok_id']) ? $info['ok_id'] : "";
-            file_put_contents(storage_path('app/data.csv'), implode(";", $data) . PHP_EOL, 8);
+        $faker = Factory::create();
+        $accs = AccountsData::where(['type_id' => 2])->inRandomOrder()->first();
+        $ok = new OK();
+        if ($ok->setAccount($accs)) {
+            var_dump($ok->sendMessage("570353585013", $faker->text(100)));
         }
 
-        //fclose($fp);
     }
 
-    public function login($login, $password)
-    {
-        $data = $this->client->request('POST', 'https://www.ok.ru/https', [
-            'form_params' => [
-                "st.redirect" => "",
-                "st.asr" => "",
-                "st.posted" => "set",
-                "st.originalaction" => "https://www.ok.ru/dk?cmd=AnonymLogin&st.cmd=anonymLogin",
-                "st.fJS" => "on",
-                "st.st.screenSize" => "1920 x 1080",
-                "st.st.browserSize" => "947",
-                "st.st.flashVer" => "23.0.0",
-                "st.email" => $login,
-                "st.password" => $password,
-                "st.iscode" => "false"
-            ],
-            'proxy' => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
-        ]);
-
-        $html_doc = $data->getBody()->getContents();
-        if (strpos($html_doc, 'Профиль заблокирован') > 0 || strpos($html_doc,
-                'восстановления доступа')
-        ) { // Вывелось сообщение безопасности, значит не залогинились
-            return false;
-        }
-        if ($this->client->getConfig("cookies")->count() > 2) { // Куков больше 2, возможно залогинились
-            $this->crawler->clear();
-            $this->crawler->load($html_doc);
-
-            if (count($this->crawler->find('Мы отправили')) > 0) { // Вывелось сообщение безопасности, значит не залогинились
-                return false;
-            }
-
-            //$this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
-            preg_match('/gwtHash\:("(.*?)(?:"|$)|([^"]+))/i', $html_doc, $this->gwt);
-            var_dump($this->gwt);
-            $this->gwt = $this->gwt[2];
-            // $this->tkn =substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
-            preg_match("/OK\.tkn\.set\(('(.*?)(?:'|$)|([^']+))\)/i", $html_doc, $this->tkn);
-            $this->tkn = $this->tkn[2];
-
-            return true;
-        } else {  // Точно не залогинись
-            return false;
-        }
-    }
 }

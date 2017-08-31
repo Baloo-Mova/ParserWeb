@@ -32,8 +32,13 @@ class VK
     public $proxy_arr;
     public $proxy_string;
     public $is_sender = 0;
+    /**
+     * @var AccountsData
+     */
     public $accountData = null;
     private $client;
+
+    public $apiKey = '';
 
     public function __construct()
     {
@@ -42,50 +47,19 @@ class VK
     public function sendRandomMessage($to_userId, $messages)
     {
         while (true) {
-            $sender = null;
-            $this->cur_proxy = null;
             $this->accountData = null;
             $this->client = null;
             try {
-                DB::transaction(function () {
-                    try {
-                        $sender = AccountsData::where([
-                            ['type_id', '=', 1],
-                            ['valid', '=', 1],
-                            ['is_sender', '=', 1],
-                            ['reserved', '=', 0],
-                            ['count_request', '<', 11]
-                        ])->orderBy('count_request', 'asc')->first();
-
-                        if (!isset($sender)) {
-                            return;
-                        }
-
-                        $sender->reserved = 1;
-                        $sender->save();
-
-                        $this->accountData = $sender;
-                    } catch (\Exception $ex) {
-                        $error = new ErrorLog();
-                        $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
-                        $error->task_id = self::VK_ACCOUNT_ERROR;
-                        $error->save();
-                    }
-                });
-
-                $sender = $this->accountData;
-
-                if (!isset($sender)) {
+                $this->accountData = AccountsData::receiveSenderAccount(AccountsData::VK);
+                if (!isset($this->accountData)) {
                     sleep(5);
                     continue;
                 }
 
-                $this->cur_proxy = $sender->proxy;//ProxyItem::find($sender->proxy_id);
-                //dd($this->cur_proxy->proxy);
-
-                if (!isset($this->cur_proxy)) {
-                    $sender->reserved = 0;
-                    $sender->save();
+                $this->proxyString = $this->accountData->getProxy();
+                if (!isset($this->proxyString)) {
+                    $this->accountData->release();
+                    sleep(5);
                     continue;
                 }
 
@@ -104,8 +78,7 @@ class VK
                     }
                 }
 
-                $this->proxy_arr = parse_url($this->cur_proxy->proxy);
-                $this->proxy_string = $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'];
+
                 $this->client = new Client([
                     'headers' => [
                         'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
@@ -117,7 +90,7 @@ class VK
                     'cookies' => $array->count() > 0 ? $array : true,
                     'allow_redirects' => true,
                     'timeout' => 15,
-                    'proxy' => $this->proxy_string
+                    'proxy' => $this->accountData->getProxy()
                 ]);
 
                 if ($array->count() < 1) {
@@ -156,7 +129,6 @@ class VK
                 }
 
                 preg_match_all("/   hash\: '(\w*)'/s", $data, $chas);
-                var_dump($chas);
                 $chas = $chas[1];
                 $request = $this->client->post("https://vk.com/al_im.php", [
 
@@ -217,25 +189,22 @@ class VK
         $ip_h = "";
         $lg_h = "";
         $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
-
         $request = $this->client->request("GET", "https://vk.com");
-
         $data = $request->getBody()->getContents();
         $crawler->clear();
         $crawler->load($data);
         $data = $crawler->find('body', 0);
         $ip_h = $crawler->find('input[name=ip_h]', 0)->value;
         $lg_h = $crawler->find('input[name=lg_h]', 0)->value;
-
         $request = $this->client->request("POST", "https://login.vk.com/?act=login", [
             'form_params' => [
                 'act' => 'login',
                 'role' => 'al_frame',
-                'captcha_sid' => '',
-                'captcha_key' => '',
+                // 'captcha_sid' => '',
+                //'captcha_key' => '',
                 'email' => $vk_login,
                 'pass' => $pass,
-                '_origin' => urlencode('https://vk.com'),
+                '_origin' => 'https://vk.com',
                 'lg_h' => $lg_h,
                 'ip_h' => $ip_h,
             ],
@@ -244,6 +213,7 @@ class VK
         if (strripos($data, "onLoginFailed")) {
             return false;
         }
+
 
         $request = $this->client->request("GET", "https://vk.com");
 
@@ -351,8 +321,7 @@ class VK
                         ['type_id', '=', 1],
                         ['valid', '=', 1],
                         ['is_sender', '=', 0],
-                        ['reserved', '=', 0],
-                        ['api_key', '<>', '']
+                        ['reserved', '=', 0]
                     ])->orderBy('count_request', 'asc')->first();
 
                     if (!isset($sender)) {
@@ -377,15 +346,13 @@ class VK
                 continue;
             }
 
-            $proxy = $sender->proxy;
+            $proxy = $sender->getProxy();
             if (!isset($proxy)) {
-                $sender->reserved = 0;
-                $sender->save();
+                $sender->release();
                 sleep(random_int(5, 10));
                 continue;
             }
 
-            $this->proxy_arr = parse_url($proxy->proxy);
             $this->client = new Client([
                 'headers' => [
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
@@ -397,17 +364,25 @@ class VK
                 'cookies' => true,
                 'allow_redirects' => true,
                 'timeout' => 10,
-                'proxy' => $this->proxy_arr['scheme'] . "://" . $proxy->login . ':' . $proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
+                'proxy' => $proxy
             ]);
 
+
+            $this->apiKey = $sender->getApiKey();
+
+            if (!isset($this->apiKey)) {
+                $sender->valid = -2;
+                $sender->save();
+            }
+
             $result = $this->requestToApi('groups.search', [
-                'access_token' => $sender->api_key,
+                'access_token' => $this->apiKey,
                 'q' => $find,
                 'count' => 1000,
                 'offset' => 0
             ]);
 
-            if (isset($result['error'])) {
+            if (!isset($result['response'])) {
                 $errror = new ErrorLog();
                 $errror->message = json_encode($result);
                 $errror->task_id = 1234567;
@@ -417,6 +392,7 @@ class VK
                 $sender->save();
                 return false;
             }
+
             $data = [];
             if ($result['response']['count'] > 0) {
                 foreach ($result['response']['items'] as $item) {
