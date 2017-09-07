@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contacts;
+use App\Models\TaskGroups;
 use Illuminate\Http\Request;
 use App\Models\TasksType;
 use App\Models\Tasks;
@@ -29,7 +30,7 @@ class ParsingTasksController extends Controller
 
     public function index()
     {
-        $data = Tasks::orderBy('id', 'desc')->paginate(config('config.accountsdatapaginate'));
+        $data = TaskGroups::orderBy('id', 'desc')->paginate(config('config.accountsdatapaginate'));
 
         return view('parsing_tasks.index', ['data' => $data]);
     }
@@ -43,20 +44,44 @@ class ParsingTasksController extends Controller
 
     public function store(Request $request)
     {
-        //Записываем в таблицу тасков
-        $task = new Tasks();
-        $task->task_type_id = $request->get('task_type_id');
-        $task->task_query = $request->get('task_query');
-        $task->active_type = 1;
-        //$task->reserved = 0;
-        //$task->google_offset = 0;
-        $task->tw_offset = "1";
-        $task->need_send = $request->get('send_directly') != null;
-        $task->save();
-        //Записываем в таблицу тасков
+
+        $taskTypeId = $request->get('task_type_id');
+        $tasksQueries = $request->get('task_query');
+
+        if($taskTypeId == 1 && empty($tasksQueries)){
+            Toastr::error("Вы не указали поисковые запросы!");
+            return back();
+        }
+
+        $tasksQueries = explode("\r\n", $tasksQueries);
+
+        $taskGroup = new TaskGroups();
+        $taskGroup->name = $tasksQueries[0];
+        $taskGroup->need_send = $request->get('send_directly') != null;
+        $taskGroup->save();
+
+        $tasks = [];
+        foreach ($tasksQueries as $task){
+            $tasks[] = [
+                'task_type_id' => $taskTypeId,
+                'task_query' => $task,
+                'task_group_id' => $taskGroup->id
+            ];
+
+            if(count($tasks) > 999){
+                Tasks::insert($tasks);
+                $tasks = [];
+            }
+        }
+
+        if(count($tasks) > 0){
+            Tasks::insert($tasks);
+            $tasks = [];
+        }
+
         //Обрабатываем список сайтов, если есть
         $site_list = $request->get('site_list');
-        if ($task->task_type_id == 2 && !empty($site_list)) {
+        if ($taskTypeId == 2 && !empty($site_list)) {
             $sites = explode("\r\n", $site_list);
             foreach ($sites as $item) {
                 $site_links = new SiteLinks;
@@ -82,7 +107,7 @@ class ParsingTasksController extends Controller
         }
         //Записываем в таблицу шаблонов mails
         //Записываем в таблицу шаблонов вложений для mails
-        if ($request->hasFile('file')) {
+        /*if ($request->hasFile('file')) {
             foreach ($request->file('file') as $file) {
                 $filename = uniqid('mail_' . $mails->id, true) . '.' . $file->getClientOriginalExtension();
                 $file->storeAs('mail_files', $filename);
@@ -95,7 +120,7 @@ class ParsingTasksController extends Controller
 
                 unset($file_model);
             }
-        }
+        }*/
         //Записываем в таблицу шаблонов вложений для mails
         //Записываем в таблицу шаблонов skypes
         if (!empty($request->get('skype_text'))) {
@@ -187,46 +212,32 @@ class ParsingTasksController extends Controller
 
     public function show($id)
     {
-        $task = Tasks::whereId($id)->first();
+        $task = TaskGroups::find($id);
+
         $mails = $task->getMail()->first();
-        $templateFile = (isset($mails)) ? TemplateDeliveryMailsFiles::whereMailId($mails->id)->first() : null;
+        //$templateFile = (isset($mails)) ? TemplateDeliveryMailsFiles::whereMailId($mails->id)->first() : null;
         $mails_file = (isset($templateFile)) ? $templateFile->path : "";
         $skype = $task->getSkype()->first();
         $vk = $task->getVK()->first();
         $ok = $task->getOK()->first();
-        $tw = $task->getTW()->first();
-        $fb = $task->getFB()->first();
         $viber = $task->getViber()->first();
         $whats = $task->getWhatsapp()->first();
         $search_queries = SearchQueries::where(['task_id' => $id])->orderBy('id', 'desc')->paginate(10);
 
-        $active_type = "";
-
-        switch ($task->active_type) {
-            case 0:
-                $active_type = "Пауза";
-                break;
-            case 1:
-                $active_type = "Работает";
-                break;
-            case 2:
-                $active_type = "Остановлен";
-                break;
-        }
+        $tasks = $task->getTenTasks->toArray();
+        $taskGroupName = implode(", ", array_column($tasks, "task_query"));
 
         return view('parsing_tasks.show', [
             'data' => $task,
-            'active_type' => $active_type,
             'mails' => $mails,
-            'mails_file' => $mails_file,
+            //'mails_file' => $mails_file,
             'skype' => $skype,
             'vk' => $vk,
             'ok' => $ok,
-            'tw' => $tw,
-            'fb' => $fb,
             'search_queries' => $search_queries,
             'viber' => $viber,
-            'whats' => $whats
+            'whats' => $whats,
+            'taskGroupName' => $taskGroupName
         ]);
     }
 

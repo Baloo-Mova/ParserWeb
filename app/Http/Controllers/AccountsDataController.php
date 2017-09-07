@@ -192,7 +192,7 @@ class AccountsDataController extends Controller {
             $max_proxy = AccountsData::where('type_id', '=', $type)
                 ->max('proxy_id'); // иначе ищем макс. номер прокси в таблице
 
-            $max_proxy = ($max_proxy === null) ? 0 : $max_proxy;
+            $max_proxy = ($max_proxy === null) ? 10 : $max_proxy;
 
             if($type == 3){
                 $proxy = Proxy::where([['proxy', 'like', 'socks%'],['id', '>', $max_proxy]])->first(); // находим следующий прокси

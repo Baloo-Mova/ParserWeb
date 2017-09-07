@@ -74,5 +74,36 @@ label {
 .well {
     border-radius: 0px !important;
 }
-
-
+.bg-green{
+    background-color: #e0f2f1 !important;
+    color: rgba(0,0,0,.87) !important;
+}
+.add-info-text{
+    font-size: 13px;
+}
+.statistics_white_block{
+    background-color: #fff;
+    height: 50px;
+    width: 100px;
+    margin-bottom: 10px;
+    float: left;
+}
+.statistics_yellow_block{
+    background-color: #ffeb3b;
+    height: 50px;
+    width: 100px;
+    margin-bottom: 10px;
+    float: left;
+}
+.statistics_green_block{
+    background-color: #009688;
+    height: 50px;
+    width: 100px;
+    margin-bottom: 10px;
+    float: left;
+}
+.statistics_description_p{
+    padding: 10px;
+    display: block;
+    float: left;
+}

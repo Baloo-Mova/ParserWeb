@@ -23,8 +23,9 @@
                                     </select>
                                 </div>
                                 <div class="form-group has-feedback task_query_div">
-                                    <label for="task_query" class="control-label">Поисковый Запрос</label>
-                                    <input type="text" class="form-control" placeholder="Запрос" name="task_query" id="task_query"/>
+                                    <label for="task_query" class="control-label">Поисковые Запросы</label>
+                                    <textarea name="task_query" class="form-control" id="task_query" cols="30" rows="10"></textarea>
+                                    <span class="add-info-text">Каждый с новой строки</span>
                                 </div>
                                 <div class="form-group has-feedback site_list_div">
                                     <label for="site_list" class="control-label">Список Сайтов</label>
@@ -48,10 +49,10 @@
                                         <label for="mails_text" class="control-label">Текст Сообщения E-mail</label>
                                         <textarea class="form-control" rows="5" name="mails_text" id="mails_text"></textarea>
                                     </div>
-                                    <div class="form-group has-feedback">
+                                    {{--<div class="form-group has-feedback">
                                         <label for="mails_file" class="control-label">Вложения Для Сообщения E-mail</label>
                                         <input type="file" id="mails_file" name="file[]" multiple>
-                                    </div>
+                                    </div>--}}
 
                                     <hr>
                                     <div class="form-group has-feedback">

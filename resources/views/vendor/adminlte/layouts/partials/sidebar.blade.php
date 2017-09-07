@@ -60,10 +60,10 @@
                             <i class='fa fa-twitter'></i>
                             <span>Twitter</span>
                         </a>-->
-                        <a href="{{ route('parsing_tasks.testingDeliveryFB') }}" class="{{ Request::path() == 'parsing-tasks/testing-delivery-fb' ? 'link_active' : ''}}">
-                            <i class='fa fa-facebook'></i>
-                            <span>Facebook</span>
-                        </a>
+                        {{--<a href="{{ route('parsing_tasks.testingDeliveryFB') }}" class="{{ Request::path() == 'parsing-tasks/testing-delivery-fb' ? 'link_active' : ''}}">--}}
+                            {{--<i class='fa fa-facebook'></i>--}}
+                            {{--<span>Facebook</span>--}}
+                        {{--</a>--}}
                         <a href="{{ route('parsing_tasks.testingDeliveryAndroidBots') }}" class="{{ Request::path() == 'parsing-tasks/testing-delivery-android-bots' ? 'link_active' : ''}}">
                             <i class='fa fa-whatsapp'></i>
                             <span>Viber, Whatsapp</span>
@@ -101,10 +101,10 @@
                             <i class='fa fa-odnoklassniki'></i>
                             <span>OK Аккаунты</span>
                         </a>
-                        <a href="{{ route('accounts_data.emails') }}" class="{{ Request::path() == 'accounts-data/emails' ? 'link_active' : ''}}">
+                        {{--<a href="{{ route('accounts_data.emails') }}" class="{{ Request::path() == 'accounts-data/emails' ? 'link_active' : ''}}">
                             <i class='fa fa-envelope-o'></i>
                             <span>Emails Аккаунты</span>
-                        </a>
+                        </a>--}}
                     </li>
                     <li class="">
                         <a href="{{ route('skypes_accounts.index') }}" class="{{ Request::path() == 'skypes-accounts' ? 'link_active' : ''}}">
@@ -112,7 +112,7 @@
                             <span>Skype Аккаунты</span>
                         </a>
                     </li>
-                    <!--<li class="">
+                    {{--<li class="">
                         <a href="{{ route('accounts_data.tw') }}" class="{{ Request::path() == 'accounts-data/tw' ? 'link_active' : ''}}">
                             <i class='fa fa-twitter'></i>
                             <span>Twitter Аккаунты</span>
@@ -123,8 +123,8 @@
                             <i class='fa fa-instagram'></i>
                             <span>Instagram Аккаунты</span>
                         </a>
-                    </li>-->
-                    <li class="">
+                    </li>--}}
+                    {{--<li class="">
                         <a href="{{ route('accounts_data.fb') }}" class="{{ Request::path() == 'accounts-data/fb' ? 'link_active' : ''}}">
                             <i class='fa fa-facebook'></i>
                             <span>Facebook Аккаунты</span>
@@ -135,13 +135,13 @@
                             <i class='fa fa-android'></i>
                             <span>Android Боты</span>
                         </a>
-                    </li>
-                    <li class="">
+                    </li>--}}
+                    {{--<li class="">
                         <a href="{{ route('smtpbase.index') }}" class="{{ Request::path() == 'smtp-base' ? 'link_active' : ''}}">
                             <i class='fa fa-envelope'></i>
                             <span>Default SMTP</span>
                         </a>
-                    </li>
+                    </li>--}}
                 </ul>
             </li>
             <li class="{{ Request::path() == 'emails-templates' ? 'active' : '' }}">
