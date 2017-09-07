@@ -10,6 +10,7 @@ namespace App\Helpers;
 
 
 use App\Models\AccountsData;
+use App\Models\SearchQueries;
 use Faker\Factory;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
@@ -25,6 +26,10 @@ class OK
      * @var Client
      */
     private $client;
+    /**
+     * @var SearchQueries
+     */
+    private $task;
 
     private $gwt;
     private $cookies;
@@ -177,6 +182,12 @@ class OK
         $this->incrementRequest();
 
         return $data;
+    }
+
+    public function search($task){
+        $this->task = $task;
+
+
     }
 
     private function login()

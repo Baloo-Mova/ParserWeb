@@ -62,10 +62,10 @@ class Tester extends Command
     {
 
         $faker = Factory::create();
-        $accs = AccountsData::where(['type_id' => 2])->inRandomOrder()->first();
+        $accs = AccountsData::find(2235);
         $ok = new OK();
         if ($ok->setAccount($accs)) {
-            var_dump($ok->sendMessage("570353585013", $faker->text(100)));
+            $ok->search();
         }
 
     }
