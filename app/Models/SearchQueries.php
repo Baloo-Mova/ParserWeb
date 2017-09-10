@@ -7,32 +7,32 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * App\Models\SearchQueries
  *
- * @property int    $id
+ * @property int $id
  * @property string $link
  * @property string $mails
  * @property string $phones
- * @property int    $phones_reserved_wh
- * @property int    $phones_reserved_viber
+ * @property int $phones_reserved_wh
+ * @property int $phones_reserved_viber
  * @property string $skypes
  * @property string $vk_id
  * @property string $city
  * @property string $name
- * @property int    $vk_sended
- * @property int    $vk_reserved
- * @property int    $task_id
- * @property int    $email_reserved
- * @property int    $email_sended
- * @property int    $sk_recevied
- * @property int    $sk_sended
+ * @property int $vk_sended
+ * @property int $vk_reserved
+ * @property int $task_id
+ * @property int $email_reserved
+ * @property int $email_sended
+ * @property int $sk_recevied
+ * @property int $sk_sended
  * @property string $ok_user_id
- * @property int    $ok_sended
- * @property int    $ok_reserved
+ * @property int $ok_sended
+ * @property int $ok_reserved
  * @property string $tw_user_id
- * @property int    $tw_sended
- * @property int    $tw_reserved
+ * @property int $tw_sended
+ * @property int $tw_reserved
  * @property string $fb_id
- * @property int    $fb_sended
- * @property int    $fb_reserved
+ * @property int $fb_sended
+ * @property int $fb_reserved
  * @property string $ins_user_id
  * @method static \Illuminate\Database\Query\Builder|\App\Models\SearchQueries whereEmailReserved($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\SearchQueries whereEmailSended($value)
@@ -75,7 +75,7 @@ use Illuminate\Database\Eloquent\Model;
 class SearchQueries extends Model
 {
     public $timestamps = false;
-    public $table      = "search_queries";
+    public $table = "search_queries";
 
     public $fillable = [
         'id',
@@ -88,5 +88,14 @@ class SearchQueries extends Model
         'task_id',
     ];
 
+    public function getItem($key)
+    {
+        $data = json_decode($this->contact_data, true);
+        if (isset($data[$key])) {
+            return $data[$key];
+        }
+
+        return "";
+    }
 
 }

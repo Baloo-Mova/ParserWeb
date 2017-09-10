@@ -212,6 +212,7 @@ class ParsingTasksController extends Controller
             if (!file_exists(storage_path('app/csv/'))) {
                 mkdir(storage_path('app/csv/'));
             }
+
             $file = fopen(storage_path('app/csv/') . "parse_result_" . $id . ".csv", 'w');
 
             $cols[0] = "link";
@@ -221,8 +222,7 @@ class ParsingTasksController extends Controller
             $cols[4] = "skypes";
             $cols[5] = "emails";
             $cols[6] = "vk_id";
-            $cols[7] = "fb_id";
-            $cols[8] = "ok_id";
+            $cols[7] = "ok_id";
 
             fputcsv($file, $cols, ";");
             foreach ($table as $row) {
@@ -231,7 +231,6 @@ class ParsingTasksController extends Controller
                 $res[0] = $row->link === null ? "" : $this->icv($row->link);
                 $res[1] = $row->name === null ? "" : $this->icv($row->name);
                 $res[2] = $row->city === null ? "" : $this->icv($row->city);
-
 
                 $cdata = json_decode($row->contact_data);
 
@@ -253,9 +252,8 @@ class ParsingTasksController extends Controller
                     $res[5] = "";
                 }
 
-                $res[6] = $row->vk_id === null ? "" : $this->icv($row->vk_id);
-                $res[7] = $row->fb_id === null ? "" : $this->icv($row->fb_id);
-                $res[8] = $row->ok_id === null ? "" : $this->icv($row->ok_id);
+                $res[6] = !isset($cdata['vk_id']) ? "" : $this->icv($cdata['vk_id']);
+                $res[7] = !isset($cdata['ok_id']) ? "" : $this->icv($cdata['ok_id']);
 
                 fputcsv($file, $res, ';');
             }
