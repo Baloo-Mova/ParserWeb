@@ -220,8 +220,9 @@ class AccountsData extends Model
         $this->save();
     }
 
-    public function actionDone(){
-        $this->whenCanUse = Carbon::now()->addMinute(rand(4,8));
+    public function actionDone()
+    {
+        $this->whenCanUse = Carbon::now()->addSeconds(rand(4 * 60, 8 * 60));
         $this->increment('count_request');
         $this->release();
     }
