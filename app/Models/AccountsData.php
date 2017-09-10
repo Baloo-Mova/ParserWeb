@@ -127,10 +127,14 @@ class AccountsData extends Model
         $query->where('type_id', '=', 3)->orderBy('id', 'desc');
     }
 
+    /**
+     * @var AccountsData
+     */
     private static $data = null;
 
     public static function getSenderAccount($accType)
     {
+        static::$data = null;
         $mutex = new FlockMutex(fopen(__FILE__, "r"));
         $mutex->synchronized(function () use ($accType) {
             try {
@@ -143,6 +147,10 @@ class AccountsData extends Model
                     ['whenCanUse', '<', Carbon::now()]
                 ])->orWhereRaw('(whenCanUse is null and valid = 1 and is_sender = 1 and reserved = 0 and count_request < 15 and type_id = ' . $accType . ')')
                     ->orderBy('count_request', 'asc')->first();
+
+                if (isset(static::$data)) {
+                    static::$data->reserve();
+                }
 
             } catch (\Exception $ex) {
                 $error = new ErrorLog();
@@ -191,7 +199,8 @@ class AccountsData extends Model
         return null;
     }
 
-    public function setParam($key, $value){
+    public function setParam($key, $value)
+    {
         $tmp = json_decode($this->payload, true);
         $tmp[$key] = $value;
         $this->payload = json_encode($tmp);
@@ -203,5 +212,17 @@ class AccountsData extends Model
     {
         $this->reserved = 0;
         $this->save();
+    }
+
+    public function reserve()
+    {
+        $this->reserved = 1;
+        $this->save();
+    }
+
+    public function actionDone(){
+        $this->whenCanUse = Carbon::now()->addMinute(rand(4,8));
+        $this->increment('count_request');
+        $this->release();
     }
 }

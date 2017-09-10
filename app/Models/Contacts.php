@@ -8,12 +8,12 @@ use App\Models\TemplateDeliveryMails;
 /**
  * App\Models\Contacts
  *
- * @property int    $id
+ * @property int $id
  * @property string $value
- * @property bool   $reserved
- * @property bool   $sended
- * @property int    $task_id
- * @property int    $type
+ * @property bool $reserved
+ * @property bool $sended
+ * @property int $task_id
+ * @property int $type
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Contacts whereId($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Contacts whereReserved($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Contacts whereSended($value)
@@ -31,19 +31,20 @@ use App\Models\TemplateDeliveryMails;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contacts whereCityName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contacts whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contacts whereTaskGroupId($value)
+ * @property-read \App\Models\DeliveryData $deliveryData
  */
 class Contacts extends Model
 {
 
-    const MAILS  = 1;
+    const MAILS = 1;
     const PHONES = 2;
     const SKYPES = 3;
-    const VK     = 4;
-    const OK     = 5;
-    const FB     = 6;
+    const VK = 4;
+    const OK = 5;
+    const FB = 6;
 
     public $timestamps = false;
-    public $table      = "contacts";
+    public $table = "contacts";
 
     public $fillable = [
         'value',
@@ -53,4 +54,31 @@ class Contacts extends Model
         'task_id',
     ];
 
+    public function reserve()
+    {
+        $this->reserved = 1;
+        $this->save();
+    }
+
+    public function realise()
+    {
+        if ($this->sended == 1) {
+            return;
+        }
+
+        $this->reserved = 0;
+        $this->save();
+    }
+
+    public function deliveryData()
+    {
+        return $this->hasOne(DeliveryData::class, 'task_group_id', 'task_group_id');
+    }
+
+    public function getSendData($type)
+    {
+        if (isset($this->deliveryData)) {
+            return json_decode($this->deliveryData->payload, true)[$type];
+        }
+    }
 }

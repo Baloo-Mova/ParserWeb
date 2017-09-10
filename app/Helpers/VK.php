@@ -28,6 +28,7 @@ class VK
     const VK_API_ERROR = 140002;
     const VK_PARSE_ERROR = 140003;
     const VK_USER_ERROR = 140004;
+    const VK_SEND_ERROR = 140005;
 
     public $cur_proxy;
     public $proxy_arr;
@@ -99,7 +100,7 @@ class VK
     private function request($method, $url, $options = [])
     {
         $data = $this->client->request($method, $url, $options);
-        $this->incrementRequest();
+       // $this->incrementRequest();
         return $data;
     }
 
@@ -123,7 +124,7 @@ class VK
     {
         $this->needLogin = true;
         $this->accountData = $account;
-        $this->setReserved()->save();
+       // $this->setReserved()->save();
         $this->cookies = $this->accountData->getCookies();
         $this->proxyString = $this->accountData->getProxy();
         if (isset($this->cookies)) {
@@ -203,7 +204,7 @@ class VK
         ]);
 
         $data = $request->getBody()->getContents();
-        $this->incrementRequest();
+        //$this->incrementRequest();
 
         $data = iconv('windows-1251', 'UTF-8', $data);
 

@@ -2,6 +2,9 @@
 
 namespace App\Console\Commands\Senders;
 
+use App\Models\AccountsData;
+use App\Models\AccountsDataTypes;
+use App\Models\Contacts;
 use Illuminate\Console\Command;
 use App\MyFacades\SkypeClassFacade;
 use App\Models\TemplateDeliveryVK;
@@ -12,11 +15,18 @@ use App\Helpers\VK;
 use App\Models\Parser\ErrorLog;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\Macros;
+use malkusch\lock\mutex\FlockMutex;
 
 class VKSender extends Command
 {
+    /**
+     * @var Contacts
+     */
     public $content;
-
+    /**
+     * @var AccountsData
+     */
+    public $account;
     /**
      * The name and signature of the console command.
      *
@@ -51,67 +61,88 @@ class VKSender extends Command
         while (true) {
             try {
                 $this->content = null;
+                $this->account = AccountsData::getSenderAccount(AccountsDataTypes::VK);
+                if (!isset($this->account)) {
+                    sleep(10);
+                    continue;
+                }
+
                 $mutex = new FlockMutex(fopen(__FILE__, "r"));
                 $mutex->synchronized(function () {
+                    $this->content = Contacts::with('deliveryData')->where([
+                        'contacts.type' => Contacts::VK,
+                        'contacts.sended' => 0,
+                        'task_groups.need_send' => 1,
+                        'contacts.reserved' => 0,
+                    ])
+                        ->join('task_groups', 'contacts.task_group_id', '=', 'task_groups.id')
+                        ->orderBy('actual_mark', 'desc')
+                        ->select(['contacts.*'])
+                        ->first();
 
-                    $sk_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
-                        ['search_queries.vk_id', '<>', ''],
-                        'search_queries.vk_sended' => 0,
-                        'search_queries.vk_reserved' => 0,
-                        'tasks.need_send' => 1,
-                        'tasks.active_type' => 1,
-                    ])->select('search_queries.*')->lockForUpdate()->first();
-                    if (!isset($sk_query)) {
-                        return;
+                    if (isset($this->content)) {
+                        $this->content->reserve();
                     }
-                    $sk_query->vk_reserved = 1;
-                    $sk_query->save();
-                    $this->content['vkquery'] = $sk_query;
+
                 });
-                if (!isset($this->content['vkquery'])) {
+
+                if (!isset($this->content)) {
+                    $this->account->release();
                     sleep(10);
                     continue;
                 }
 
-                $message = TemplateDeliveryVK::where('task_id', '=', $this->content['vkquery']->task_id)->first();
-                if (!isset($message)) {
+                $sendThis = $this->content->getSendData('vk');
+
+                if (!isset($sendThis) || count($sendThis) < 2 || empty($sendThis['text'])) {
+                    $this->account->release();
+                    $this->content->realise();
                     sleep(10);
-                    $this->content['vkquery']->vk_reserved = 0;
-                    $this->content['vkquery']->save();
                     continue;
                 }
-                if (substr_count($message, "{") == substr_count($message, "}")) {
-                    if ((substr_count($message, "{") == 0 && substr_count($message, "}") == 0)) {
-                        $str_mes = $message->text;
-                    } else {
-                        $str_mes = Macros::convertMacro($message->text);
-                    }
-                    sleep(random_int(7, 10));
-                    $web = new VK();
-                    if ($web->sendRandomMessage($this->content['vkquery']->vk_id, $str_mes)) {
-                        $this->content['vkquery']->vk_sended = 1;
-                        $this->content['vkquery']->vk_reserved = 0;
-                        $this->content['vkquery']->save();
-                    } else {
-                        $this->content['vkquery']->vk_reserved = 2;
-                        $this->content['vkquery']->save();
-                    }
-                    sleep(random_int(25, 35));
-                } else {
+
+                if (substr_count($sendThis['text'], "{") != substr_count($sendThis['text'], "}")) {
                     $log = new ErrorLog();
                     $log->message = "VK_SEND: MESSAGE NOT CORRECT - update and try again";
-                    $log->task_id = $this->content['vkquery']->task_id;
+                    $log->task_id = $this->content->task_group_id;
                     $log->save();
-                    $this->content['vkquery']->vk_reserved = 0;
-                    $this->content['vkquery']->save();
-                    sleep(random_int(25, 35));
+
+                    $this->content->realise();
+                    $this->account->release();
+                    sleep(10);
                     continue;
                 }
 
+
+                $str_mes = Macros::convertMacro($sendThis['text']);
+
+                $vk = new VK();
+                if (!$vk->setAccount($this->account)) {
+                    $this->content->realise();
+                    sleep(10);
+                    continue;
+                }
+
+                if ($vk->sendMessage($this->content->value, $str_mes, $sendThis['media'])) {
+                    $this->content->sended = 1;
+                    $this->content->save();
+                }
+
+                $this->account->actionDone();
+             
             } catch (\Exception $ex) {
+
+                if (isset($this->account)) {
+                    $this->account->release();
+                }
+
+                if (isset($this->content)) {
+                    $this->content->realise();
+                }
+
                 $log = new ErrorLog();
                 $log->message = $ex->getTraceAsString() . " VK_SEND " . $ex->getLine();
-                $log->task_id = 8888;
+                $log->task_id = VK::VK_SEND_ERROR;
                 $log->save();
             }
         }

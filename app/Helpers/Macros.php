@@ -36,7 +36,7 @@ class Macros {
             }
             return $result;
         } catch (\Exception $ex) {
-            var_dump($ex->getMessage() .' '.$ex->getLine());
+
         }
 
     }
