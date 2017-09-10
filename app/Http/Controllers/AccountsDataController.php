@@ -442,6 +442,7 @@ class AccountsDataController extends Controller
                 $accData->proxy_id = $proxy;
                 $accData->type_id = $type;
                 $accData->user_id = $user;
+                $accData->is_sender = 1;
                 $accData->save();
             }
         }
