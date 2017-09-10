@@ -252,8 +252,8 @@ class ParsingTasksController extends Controller
                     $res[5] = "";
                 }
 
-                $res[6] = !isset($cdata['vk_id']) ? "" : $this->icv($cdata['vk_id']);
-                $res[7] = !isset($cdata['ok_id']) ? "" : $this->icv($cdata['ok_id']);
+                $res[6] = !isset($cdata->vk_id) ? "" : $this->icv($cdata->vk_id);
+                $res[7] = !isset($cdata->ok_id) ? "" : $this->icv($cdata->ok_id);
 
                 fputcsv($file, $res, ';');
             }
