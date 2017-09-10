@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\Parser\ErrorLog;
+use App\Models\Proxy;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
@@ -44,233 +45,256 @@ class VK
     {
     }
 
-    public function sendRandomMessage($to_userId, $messages)
+    public function setInvalid()
     {
-        while (true) {
-            $this->accountData = null;
-            $this->client = null;
-            try {
-                $this->accountData = AccountsData::receiveSenderAccount(AccountsData::VK);
-                if (!isset($this->accountData)) {
-                    sleep(5);
-                    continue;
-                }
-
-                $this->proxyString = $this->accountData->getProxy();
-                if (!isset($this->proxyString)) {
-                    $this->accountData->release();
-                    sleep(5);
-                    continue;
-                }
-
-                $cookies = json_decode($sender->vk_cookie);
-                $array = new CookieJar();
-
-                if (isset($cookies)) {
-                    foreach ($cookies as $cookie) {
-                        $set = new SetCookie();
-                        $set->setDomain($cookie->Domain);
-                        $set->setExpires($cookie->Expires);
-                        $set->setName($cookie->Name);
-                        $set->setValue($cookie->Value);
-                        $set->setPath($cookie->Path);
-                        $array->setCookie($set);
-                    }
-                }
-
-
-                $this->client = new Client([
-                    'headers' => [
-                        'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
-                        'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
-                        'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
-                    ],
-                    'verify' => false,
-                    'cookies' => $array->count() > 0 ? $array : true,
-                    'allow_redirects' => true,
-                    'timeout' => 15,
-                    'proxy' => $this->accountData->getProxy()
-                ]);
-
-                if ($array->count() < 1) {
-                    if (!$this->login($sender->login, $sender->password)) {
-                        $sender->valid = -1;
-                        $sender->reserved = 0;
-                        $sender->save();
-                        continue;
-                    }
-                }
-
-                $request = $this->client->request("GET", "https://vk.com/id" . $to_userId);
-                $data = $request->getBody()->getContents();
-
-                if (strpos($data, "quick_login_button") !== false) {
-                    $sender->vk_cookie = null;
-                    $sender->reserved = 0;
-                    $sender->save();
-                    continue;
-                }
-                if (strpos($data, "login_blocked_wrap") === true) {
-                    $sender->reserved = 0;
-                    $sender->valid = -1;
-                    $sender->vk_cookie = null;
-                    $sender->save();
-                    continue;
-                }
-
-                if (strpos($data, "flat_button profile_btn_cut_left") === false || strpos($data,
-                        "profile_blocked page_block") === true
-                ) {
-                    $sender->reserved = 0;
-                    $sender->save();
-
-                    return false;
-                }
-
-                preg_match_all("/   hash\: '(\w*)'/s", $data, $chas);
-                $chas = $chas[1];
-                $request = $this->client->post("https://vk.com/al_im.php", [
-
-                    'form_params' => [
-                        'act' => 'a_send_box',
-                        'al' => 1,
-                        'chas' => $chas[0],
-                        'from' => 'box',
-                        'media' => '',
-                        'message' => $messages,
-                        'title' => '',
-                        'to_ids' => $to_userId,
-                    ],
-                ]);
-
-                $data = $request->getBody()->getContents();
-
-                $sender->increment('count_request');
-
-                if (strpos($data, 'error') === true) {
-                    $sender->reserved = 0;
-                    $sender->save();
-
-                    return false;
-                }
-                $data = iconv('windows-1251', 'UTF-8', $data);
-
-                if (strpos($data, "отправлено") !== false) {
-                    $sender->reserved = 0;
-                    $sender->save();
-
-                    return true;
-                } else {
-                    $sender->reserved = 0;
-                    $sender->save();
-
-                    return false;
-                }
-            } catch (\Exception $ex) {
-                $sender->reserved = 0;
-                $sender->save();
-                $error = new ErrorLog();
-                $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
-                $error->task_id = 8888;
-                $error->save();
-                if (strpos($ex->getMessage(), "cURL") !== false) {
-                    continue;
-                } else {
-                    return false;
-                }
-            }
-        }
+        $this->accountData->valid = -1;
+        return $this;
     }
 
-    public function login($vk_login, $pass)
+    public function setUnReserved()
     {
+        $this->accountData->reserved = 0;
+        return $this;
+    }
 
-        $ip_h = "";
-        $lg_h = "";
-        $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
-        $request = $this->client->request("GET", "https://vk.com");
-        $data = $request->getBody()->getContents();
-        $crawler->clear();
-        $crawler->load($data);
-        $data = $crawler->find('body', 0);
-        $ip_h = $crawler->find('input[name=ip_h]', 0)->value;
-        $lg_h = $crawler->find('input[name=lg_h]', 0)->value;
-        $request = $this->client->request("POST", "https://login.vk.com/?act=login", [
-            'form_params' => [
-                'act' => 'login',
-                'role' => 'al_frame',
-                // 'captcha_sid' => '',
-                //'captcha_key' => '',
-                'email' => $vk_login,
-                'pass' => $pass,
-                '_origin' => 'https://vk.com',
-                'lg_h' => $lg_h,
-                'ip_h' => $ip_h,
-            ],
-        ]);
-        $data = $request->getBody()->getContents();
-        if (strripos($data, "onLoginFailed")) {
+    public function setReserved()
+    {
+        $this->accountData->reserved = 1;
+        return $this;
+    }
+
+    public function save()
+    {
+        $this->accountData->save();
+        return $this;
+    }
+
+    public function isValidAccount()
+    {
+        return $this->accountData->valid != -1;
+    }
+
+    private function incrementRequest()
+    {
+        $this->accountData->count_request++;
+        $this->save();
+        return $this;
+    }
+
+    private function checkData($data)
+    {
+        if (strpos($data, "login_blocked_wrap") === true) {
+            $this->setInvalid()->save();
             return false;
         }
 
-
-        $request = $this->client->request("GET", "https://vk.com");
-
-        $data = $request->getBody()->getContents();
-        if (preg_match('/act=security\_check/s', $data)) {
-            preg_match("/al\_page\: '\d*'\, hash\: '(\w*)'/s", $data, $security_check_location);
-            print_r($security_check_location);
-
-            $hash = $security_check_location[1];
-            $request = $this->client->post("https://vk.com/login.php?act=security_check", [
-
-                'form_params' => [
-                    'al' => 1,
-                    'al_page' => 3,
-                    'code' => substr($vk_login, 1, strlen($vk_login) - 3),
-                    'hash' => $hash,
-                    'to' => '',
-                ],
-            ]);
-            $data = $request->getBody()->getContents();
-        }
-
-        $request = $this->client->request("GET", "https://vk.com");
-
-        $data = $request->getBody()->getContents();
-
-        $crawler->load($data);
-        if ($crawler->find('#login_blocked_wrap', 0) != null) {
+        if (strpos($data, "заблокиров") !== false || $data == "") {
+            $this->setInvalid()->save();
             return false;
-        }
-
-        $request = $this->client->post("https://vk.com/al_im.php", [
-            'form_params' => [
-                'act' => 'a_get_comms_key',
-                'al' => 1,
-            ],
-        ]);
-
-        $cookie = $this->client->getConfig('cookies');
-        $gg = new CookieJar($cookie);
-        $json = json_encode($cookie->toArray());
-        $account = AccountsData::where(['login' => $vk_login, 'type_id' => 1])->first();
-
-        if (!empty($account)) {
-            $account->vk_cookie = $json;
-            $account->save();
         }
 
         return true;
     }
 
-    public function setDataToLogin($acc)
+    private function request($method, $url, $options = [])
     {
-        $this->accountData = $acc;
+        $data = $this->client->request($method, $url, $options);
+        $this->incrementRequest();
+        return $data;
     }
 
-    public function get($url, $proxy = "")
+    private function saveSession()
+    {
+        $this->accountData->payload = json_encode([
+            'cookie' => $this->client->getConfig('cookies')->toArray()
+        ]);
+        return $this;
+    }
+
+    private function checkLogin()
+    {
+        $request = $this->request("GET", 'https://vk.com');
+        $data = $request->getBody()->getContents();
+        $this->saveSession()->save();
+        return $this->checkData($data);
+    }
+
+    public function setAccount($account)
+    {
+        $this->needLogin = true;
+        $this->accountData = $account;
+        $this->setReserved()->save();
+        $this->cookies = $this->accountData->getCookies();
+        $this->proxyString = $this->accountData->getProxy();
+        if (isset($this->cookies)) {
+            $this->needLogin = false;
+            if (is_array($this->cookies)) {
+                $array = new CookieJar();
+                foreach ($this->cookies as $cookie) {
+                    $set = new SetCookie();
+                    $set->setDomain($cookie['Domain']);
+                    $set->setExpires($cookie['Expires']);
+                    $set->setName($cookie['Name']);
+                    $set->setValue($cookie['Value']);
+                    $set->setPath($cookie['Path']);
+                    $array->setCookie($set);
+                }
+            }
+        }
+
+        $this->client = new Client([
+            'headers' => [
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36 OPR/47.0.2631.71',
+                'Accept' => '*/*',
+                'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+                'Accept-Encoding' => 'gzip',
+            ],
+            'verify' => false,
+            'cookies' => isset($array) && count($array) > 2 ? $array : true,
+            'allow_redirects' => true,
+            'timeout' => 15,
+            'proxy' => $this->proxyString,
+        ]);
+
+        if (isset($array) && count($array) > 2) {
+            if (!$this->checkLogin()) {
+                return false;
+            }
+        }
+
+        if ($this->needLogin) {
+            if (!$this->login()) {
+                return false;
+            }
+        }
+
+        return $this->isValidAccount();
+    }
+
+    public function sendMessage($to_userId, $messages, $media = "")
+    {
+        $request = $this->client->request("GET", "https://vk.com/id" . $to_userId);
+        $data = $request->getBody()->getContents();
+
+        if (strpos($data, "flat_button profile_btn_cut_left") === false || strpos($data,
+                "profile_blocked page_block") === true
+        ) {
+            return false;
+        }
+
+        preg_match_all("/   hash\: '(\w*)'/s", $data, $chas);
+        $chas = $chas[1];
+        $request = $this->client->post("https://vk.com/al_im.php", [
+            'form_params' => [
+                'act' => 'a_send_box',
+                'al' => 1,
+                'chas' => $chas[0],
+                'from' => 'box',
+                'media' => $media,
+                'message' => $messages,
+                'title' => '',
+                'to_ids' => $to_userId,
+            ],
+            'headers' => [
+                'Origin' => 'https://vk.com',
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Referer' => 'https://vk.com/id' . $to_userId
+            ]
+        ]);
+
+        $data = $request->getBody()->getContents();
+        $this->incrementRequest();
+
+        $data = iconv('windows-1251', 'UTF-8', $data);
+
+        return strpos($data, "отправлено") !== false;
+    }
+
+    public function login()
+    {
+        try {
+            $ip_h = "";
+            $lg_h = "";
+            $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
+            $request = $this->client->request("GET", "https://vk.com");
+            $data = $request->getBody()->getContents();
+            $crawler->clear();
+            $crawler->load($data);
+            $data = $crawler->find('body', 0);
+            $ip_h = $crawler->find('input[name=ip_h]', 0)->value;
+            $lg_h = $crawler->find('input[name=lg_h]', 0)->value;
+            $request = $this->client->request("POST", "https://login.vk.com/?act=login", [
+                'form_params' => [
+                    'act' => 'login',
+                    'role' => 'al_frame',
+                    'email' => $this->accountData->login,
+                    'pass' => $this->accountData->password,
+                    '_origin' => 'https://vk.com',
+                    'lg_h' => $lg_h,
+                    'ip_h' => $ip_h,
+                ],
+            ]);
+
+            $data = $request->getBody()->getContents();
+            if (strripos($data, "onLoginFailed")) {
+                $this->setInvalid()->save();
+                return false;
+            }
+
+            $request = $this->client->request("GET", "https://vk.com");
+            $data = $request->getBody()->getContents();
+
+            if (preg_match('/act=security\_check/s', $data)) {
+                preg_match("/al\_page\: '\d*'\, hash\: '(\w*)'/s", $data, $security_check_location);
+                print_r($security_check_location);
+
+                $hash = $security_check_location[1];
+                $request = $this->client->post("https://vk.com/login.php?act=security_check", [
+
+                    'form_params' => [
+                        'al' => 1,
+                        'al_page' => 3,
+                        'code' => substr($vk_login, 1, strlen($vk_login) - 3),
+                        'hash' => $hash,
+                        'to' => '',
+                    ],
+
+                ]);
+
+                $data = $request->getBody()->getContents();
+            }
+
+
+            $crawler->load($data);
+            if ($crawler->find('#login_blocked_wrap', 0) != null) {
+                $this->setInvalid()->save();
+                return false;
+            }
+
+            $request = $this->client->post("https://vk.com/al_im.php", [
+                'form_params' => [
+                    'act' => 'a_get_comms_key',
+                    'al' => 1,
+                ],
+            ]);
+
+            $this->saveSession()->save();
+
+        } catch (\Exception $ex) {
+            $err = new ErrorLog();
+            $err->message = "ОШИБКА ПРИ ЛОГИНЕ РЕВАЛИДИРОВАТЬ   " . $ex->getMessage() . " " . $ex->getLine();
+            $err->task_id = $this->accountData->id;
+            $err->save();
+            $this->setInvalid()->save();
+            return false;
+        }
+
+        return true;
+    }
+
+
+    public
+    function get($url, $proxy = "")
     {
         $tries = 0;
         $errorMessage = "";
@@ -309,7 +333,8 @@ class VK
         }
     }
 
-    public function getGroups($find, $task_id)
+    public
+    function getGroups($find, $task_id)
     {
         while (true) {
             $proxy = null;
@@ -383,6 +408,7 @@ class VK
             ]);
 
             if (!isset($result['response'])) {
+
                 $errror = new ErrorLog();
                 $errror->message = json_encode($result);
                 $errror->task_id = 1234567;
@@ -422,7 +448,8 @@ class VK
         }
     }
 
-    private function requestToApi($method, $fields)
+    private
+    function requestToApi($method, $fields)
     {
         $fields['v'] = '5.64';
         $data = "";
@@ -444,7 +471,8 @@ class VK
         }
     }
 
-    public function parseUsers(VKLinks $group)
+    public
+    function parseUsers(VKLinks $group)
     {
         while (true) {
             try {
@@ -578,7 +606,33 @@ class VK
         }
     }
 
-    public function filterPhoneArray($array)
+    public function validateUsers($users)
+    {
+        $proxy = Proxy::inRandomOrder()->first();
+        $this->client = new Client([
+            'headers' => [
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
+                'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+            ],
+            'verify' => false,
+            'cookies' => true,
+            'allow_redirects' => true,
+            'timeout' => 10,
+            'proxy' => "127.0.0.1:8888"//$proxy->generateString(),
+        ]);
+
+        $result = $this->requestToApi('users.get', [
+            'user_ids' => implode(',', $users),
+            'fields' => 'last_seen, city'
+        ]);
+
+        return $result;
+    }
+
+    public
+    function filterPhoneArray($array)
     {
         $result = [];
         foreach ($array as $item) {
@@ -599,7 +653,8 @@ class VK
         return $result;
     }
 
-    public function setProxyClient()
+    public
+    function setProxyClient()
     {
         if ($this->is_sender == 0) {
             $this->proxy_string = $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'];
@@ -620,7 +675,8 @@ class VK
         ]);
     }
 
-    public function parseUser($user)
+    public
+    function parseUser($user)
     {
         try {
             $ids_arr = array_column($user, "vkuser_id");
@@ -744,7 +800,8 @@ class VK
         }
     }
 
-    public function saveContactsInfo($mails, $skypes, $phones, $search_q_id)
+    public
+    function saveContactsInfo($mails, $skypes, $phones, $search_q_id)
     {
         $contacts = [];
 

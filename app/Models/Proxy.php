@@ -8,22 +8,22 @@ use Illuminate\Support\Facades\DB;
 /**
  * App\Models\Proxy
  *
- * @property int            $id
- * @property string         $proxy
- * @property string         $login
- * @property string         $password
- * @property int            $google
- * @property int            $yandex_ru
- * @property int            $fb
- * @property int            $vk
- * @property int            $ok
- * @property int            $skype
- * @property int            $wh
- * @property int            $viber
- * @property int            $twitter
- * @property int            $ins
- * @property string         $country
- * @property int            $valid
+ * @property int $id
+ * @property string $proxy
+ * @property string $login
+ * @property string $password
+ * @property int $google
+ * @property int $yandex_ru
+ * @property int $fb
+ * @property int $vk
+ * @property int $ok
+ * @property int $skype
+ * @property int $wh
+ * @property int $viber
+ * @property int $twitter
+ * @property int $ins
+ * @property string $country
+ * @property int $valid
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Proxy whereCountry($value)
@@ -45,17 +45,17 @@ use Illuminate\Support\Facades\DB;
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Proxy whereWh($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Proxy whereYandexRu($value)
  * @mixin \Eloquent
- * @property bool           $google_reserved
- * @property bool           $yandex_ru_reserved
- * @property bool           $fb_reserved
- * @property bool           $vk_reserved
- * @property bool           $ok_reserved
- * @property bool           $skype_reserved
- * @property bool           $wh_reserved
- * @property bool           $viber_reserved
- * @property bool           $twitter_reserved
- * @property int            $instagram
- * @property bool           $instagram_reserved
+ * @property bool $google_reserved
+ * @property bool $yandex_ru_reserved
+ * @property bool $fb_reserved
+ * @property bool $vk_reserved
+ * @property bool $ok_reserved
+ * @property bool $skype_reserved
+ * @property bool $wh_reserved
+ * @property bool $viber_reserved
+ * @property bool $twitter_reserved
+ * @property int $instagram
+ * @property bool $instagram_reserved
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Proxy whereFbReserved($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Proxy whereGoogleReserved($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Proxy whereInstagram($value)
@@ -74,20 +74,20 @@ use Illuminate\Support\Facades\DB;
  */
 class Proxy extends Model
 {
-    const Google    = 'google';
-    const Yandex    = 'yandex_ru';
-    const FaceBook  = 'fb';
-    const VK        = 'vk';
-    const OK        = 'ok';
-    const Skype     = 'skype';
-    const WhatsApp  = 'wh';
-    const Viber     = 'viber';
-    const Twitter   = 'twitter';
+    const Google = 'google';
+    const Yandex = 'yandex_ru';
+    const FaceBook = 'fb';
+    const VK = 'vk';
+    const OK = 'ok';
+    const Skype = 'skype';
+    const WhatsApp = 'wh';
+    const Viber = 'viber';
+    const Twitter = 'twitter';
     const Instagram = 'instagram';
-    const Email     = 'email';
-    public  $table       = 'proxy';
-    public  $timestamps  = true;
-    public  $fillable    = [
+    const Email = 'email';
+    public $table = 'proxy';
+    public $timestamps = true;
+    public $fillable = [
         'proxy',
         'login',
         'password',
@@ -122,33 +122,32 @@ class Proxy extends Model
      *
      * @return Proxy
      */
-    public static function getProxy($type,$proxy_id=0)
+    public static function getProxy($type, $proxy_id = 0)
     {
         $proxy = null;
 
 
-        if($proxy_id==0){
-        DB::transaction(function () use ($type, &$proxy) {
-            $proxy = static::where([
-                [$type, '>',-1],
-                [$type, '<', 1000],
-                [$type . '_reserved', '=', 0],
-                ['valid', '=', 1],
-            ])->inRandomOrder()->first();
-
-            if (isset($proxy)) {
-                $proxy->reservedFor = $type;
-                $proxy->reserve();
-            }
-        });
-        }else{
-            DB::transaction(function () use ($type,$proxy_id, &$proxy) {
+        if ($proxy_id == 0) {
+            DB::transaction(function () use ($type, &$proxy) {
                 $proxy = static::where([
-                    [$type,'>',-1],
+                    [$type, '>', -1],
+                    [$type . '_reserved', '=', 0],
+                    ['valid', '=', 1],
+                ])->inRandomOrder()->first();
+
+                if (isset($proxy)) {
+                    $proxy->reservedFor = $type;
+                    $proxy->reserve();
+                }
+            });
+        } else {
+            DB::transaction(function () use ($type, $proxy_id, &$proxy) {
+                $proxy = static::where([
+                    [$type, '>', -1],
                     [$type, '<', 1000],
                     //[$type . '_reserved', '<', 4],
                     ['valid', '=', 1],
-                    ['id','=',$proxy_id],
+                    ['id', '=', $proxy_id],
                 ])->first();
 
                 if (isset($proxy)) {
@@ -175,10 +174,10 @@ class Proxy extends Model
     public function release()
     {
         if (isset($this->reservedFor)) {
-            if($this->{$this->reservedFor . '_reserved'}>0) {
+            if ($this->{$this->reservedFor . '_reserved'} > 0) {
                 $this->decrement($this->reservedFor . '_reserved');
                 $this->update([
-                  //  $this->{$this->reservedFor . '_reserved'}-=1,
+                    //  $this->{$this->reservedFor . '_reserved'}-=1,
                     $this->reservedFor => $this->{$this->reservedFor}
                 ]);
             }
@@ -187,35 +186,16 @@ class Proxy extends Model
 
     public function inc()
     {
-        //$this->{$this->reservedFor}++;
         $this->increment($this->reservedFor);
         $this->save();
-      //  $this->save();
     }
 
-    public function canProcess(){
-        return !($this->{$this->reservedFor} >= 1000);
-    }
-    public static function findProxy($type)
+
+    public function generateString()
     {
-        $proxy = null;
-
-
-
-            DB::transaction(function () use ($type, &$proxy) {
-                $proxy = static::where([
-                    [$type, '>',-1],
-
-                    ['valid', '=', 1],
-                ])->inRandomOrder()->first();
-
-                if (isset($proxy)) {
-                    $proxy->reservedFor = $type;
-                   //$proxy->reserve();
-                }
-            });
-
-
-        return $proxy;
+        $proxy_arr = parse_url($this->proxy);
+        return $proxy_arr['scheme'] . "://" . $this->login . ':' . $this->password . '@' . $proxy_arr['host'] . ':' . $proxy_arr['port'];
     }
+
+
 }

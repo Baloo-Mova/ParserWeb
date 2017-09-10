@@ -2,9 +2,13 @@
 
 namespace App\Models;
 
+use App\Helpers\VK;
+use App\Models\Parser\ErrorLog;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\AccountsDataTypes;
 use App\Models\Proxy as ProxyItem;
+use Illuminate\Support\Facades\DB;
 use malkusch\lock\mutex\FlockMutex;
 
 /**
@@ -20,6 +24,7 @@ use malkusch\lock\mutex\FlockMutex;
  * @property int $process_id
  * @property int $is_sender
  * @property string $payload
+ * @property Carbon $whenCanUse
  * @property-read \App\Models\AccountsDataTypes $accountType
  * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData emails()
  * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData fb()
@@ -57,6 +62,8 @@ use malkusch\lock\mutex\FlockMutex;
  * @property-read \App\Models\Proxy $proxy
  * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData whereApiKey($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\AccountsData whereReserved($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\AccountsData wherePayload($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\AccountsData whereWhenCanUse($value)
  */
 class AccountsData extends Model
 {
@@ -68,15 +75,11 @@ class AccountsData extends Model
         'password',
         'type_id',
         'user_id',
-        //'count_sended_messages',
-        'vk_cookie',
-        'fb_cookie',
-        'fb_user_id',
-        'fb_access_token',
         'process_id',
         'proxy_id',
         'is_sender',
         'valid',
+        'whenCanSend',
         'count_request',
     ];
 
@@ -124,37 +127,32 @@ class AccountsData extends Model
         $query->where('type_id', '=', 3)->orderBy('id', 'desc');
     }
 
-    public static function receiveSenderAccount($accType)
+    private static $data = null;
+
+    public static function getSenderAccount($accType)
     {
-        $sender = null;
         $mutex = new FlockMutex(fopen(__FILE__, "r"));
-        $mutex->synchronized(function () use ($sender) {
+        $mutex->synchronized(function () use ($accType) {
             try {
-                $sender = self::where([
+                static::$data = AccountsData::where([
                     ['type_id', '=', $accType],
                     ['valid', '=', 1],
                     ['is_sender', '=', 1],
                     ['reserved', '=', 0],
-                    ['count_request', '<', 10]
-                ])->orderBy('count_request', 'asc')->first();
+                    ['count_request', '<', 15],
+                    ['whenCanUse', '<', Carbon::now()]
+                ])->orWhereRaw('(whenCanUse is null and valid = 1 and is_sender = 1 and reserved = 0 and count_request < 15 and type_id = ' . $accType . ')')
+                    ->orderBy('count_request', 'asc')->first();
 
-                if (!isset($sender)) {
-                    return null;
-                }
-
-                $sender->reserved = 1;
-                $sender->save();
-
-                return $sender;
             } catch (\Exception $ex) {
                 $error = new ErrorLog();
                 $error->message = $ex->getMessage() . " Line: " . $ex->getLine();
-                $error->task_id = 1000001;
+                $error->task_id = VK::VK_ACCOUNT_ERROR;
                 $error->save();
             }
         });
 
-        return null;
+        return static::$data;
     }
 
     public function getProxy()
@@ -191,6 +189,13 @@ class AccountsData extends Model
         }
 
         return null;
+    }
+
+    public function setParam($key, $value){
+        $tmp = json_decode($this->payload, true);
+        $tmp[$key] = $value;
+        $this->payload = json_encode($tmp);
+        $this->save();
     }
 
 

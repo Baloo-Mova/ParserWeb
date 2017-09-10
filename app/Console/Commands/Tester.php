@@ -6,6 +6,7 @@ use App\Helpers\OK;
 use App\Helpers\Skype;
 use App\Helpers\VK;
 use App\Models\AccountsData;
+use App\Models\Contacts;
 use App\Models\Parser\VKLinks;
 use App\Models\Proxy;
 use App\Models\SearchQueries;
@@ -52,6 +53,26 @@ class Tester extends Command
     }
 
 
+    public function test()
+    {
+        $data = SearchQueries::all();
+        $insertArray = [];
+        $filter = [];
+
+        foreach ($data as $item) {
+            if (!in_array($item->link, $filter)) {
+                $insertArray[] = $item->toArray();
+                $filter[] = $item->link;
+            }
+        }
+
+        SearchQueries::truncate();
+        $chuncked = array_chunk($insertArray, 1000);
+        foreach ($chuncked as $item) {
+            SearchQueries::insert($item);
+        }
+    }
+
     /**
      * Execute the console command.
      *
@@ -60,14 +81,110 @@ class Tester extends Command
 
     public function handle()
     {
+        $ids = [];
+        $toInsert = [];
+        $search = SearchQueries::all();
+        foreach ($search as $item) {
+            $ids[] = str_replace("https://vk.com/id", "", $item->link);
+            if (count($ids) > 950) {
+                $vk = new VK();
+                $results = $vk->validateUsers($ids);
+                foreach ($results['response'] as $items) {
+                    $toInsert [] = [
+                        'value' => $items['id'],
+                        'reserved' => 0,
+                        'sended' => 0,
+                        'task_id' => 1,
+                        'type' => Contacts::VK,
+                        'name' => $items['last_name'] . ' ' . $items['first_name'],
+                        'actual_mark' => isset($items['last_seen']) ? $items['last_seen']['time'] : 0,
+                        'city_id' => isset($items['city']) ? $items['city']['id'] : '',
+                        'city_name' => isset($items['city']) ? $items['city']['title'] : '',
+                    ];
+                }
 
-        $faker = Factory::create();
-        $accs = AccountsData::find(2235);
-        $ok = new OK();
-        if ($ok->setAccount($accs)) {
-            $ok->search();
+                Contacts::insert($toInsert);
+                $toInsert = [];
+                $ids = [];
+                sleep(1);
+            }
+
+
         }
 
+        $vk = new VK();
+        $results = $vk->validateUsers($ids);
+
+        foreach ($results['response'] as $items) {
+            $toInsert [] = [
+                'value' => $items['id'],
+                'reserved' => 0,
+                'sended' => 0,
+                'task_id' => 1,
+                'type' => Contacts::VK,
+                'name' => $items['last_name'] . ' ' . $items['first_name'],
+                'actual_mark' => isset($items['last_seen']) ? $items['last_seen']['time'] : 0,
+                'city_id' => isset($items['city']) ? $items['city']['id'] : '',
+                'city_name' => isset($items['city']) ? $items['city']['title'] : '',
+            ];
+        }
+
+        Contacts::insert($toInsert);
+        $toInsert = [];
+
+//        $accounts = AccountsData::where('is_sender', '=', 1)->get(); //AccountsData::getSenderAccount(AccountsData::VK);
+//
+//        foreach ($accounts as $account) {
+//            $vk = new VK();
+//            var_dump($vk->setAccount($account));
+//            $vk->setUnReserved()->save();
+//        }
+//        $vk->sendMessage("115035415", "Хватит копить, пора покупать! HYUNDAI SOLARIS за 6000 руб/ в месяц.
+//Выгодная программа HYUNDAI СТАРТ.
+//Новый Solaris от 559 000 руб. Выгода до 300 000 руб в РОЛЬФ Лахта. +7(812)424-6293
+//https://vk.cc/75KTp0", 'photo:445941137_456239027');
+
+
+    }
+
+    public function getIds()
+    {
+        $contacts = [];
+        $data = SearchQueries::where('contact_data', 'like', '%vk_id%')->get();
+
+        foreach ($data as $item) {
+            $cd = json_decode($item->contact_data, true);
+            $contacts[] = [
+                'value' => $cd['vk_id'],
+                'reserved' => 0,
+                'sended' => 0,
+                'task_id' => 0,
+                'type' => Contacts::VK,
+                'name' => $item->name,
+                'actual_mark' => 0,
+                'city_id' => $item->city_id,
+                'city_name' => $item->city
+            ];
+
+            if (count($contacts) > 100) {
+                Contacts::insert($contacts);
+                $contacts = [];
+            }
+        }
+        if (count($contacts) > 0) {
+            Contacts::insert($contacts);
+            $contacts = [];
+        }
+    }
+
+    public function ok()
+    {
+        //        $faker = Factory::create();
+        //  $accs = AccountsData::find(2235);
+//        $ok = new OK();
+//        if ($ok->setAccount($accs)) {
+//            $ok->search();
+//        }
     }
 
 }

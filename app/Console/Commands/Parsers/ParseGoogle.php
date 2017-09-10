@@ -94,7 +94,7 @@ class ParseGoogle extends Command
                         $data = $web->get("https://www.google.ru/search?q=" . urlencode($this->content['task']->task_query) . "&start=" . $i * 10,
                             $proxy);
                         $proxy->inc();
-                        if (!$proxy->canProcess()) {
+                        if (true) {
                             $proxy->release();
                             $proxy = Proxy::getProxy(Proxy::Google);
                         }

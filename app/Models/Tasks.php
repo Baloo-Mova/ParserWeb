@@ -46,6 +46,10 @@ use App\Models\TasksType;
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Tasks whereYandexUaReserved($value)
  * @mixin \Eloquent
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Tasks whereOkReserved($value)
+ * @property int $google_ru_reserved
+ * @property int $task_group_id
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Tasks whereGoogleRuReserved($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Tasks whereTaskGroupId($value)
  */
 class Tasks extends Model
 {
@@ -67,36 +71,5 @@ class Tasks extends Model
     {
         return $this->belongsTo(TasksType::class, 'task_type_id');
     }
-    public function getMail()
-    {
-        return $this->belongsTo(TemplateDeliveryMails::class, 'id', 'task_id');
-    }
-    public function getSkype()
-    {
-        return $this->belongsTo(TemplateDeliverySkypes::class, 'id', 'task_id');
-    }
-    public function getVK()
-    {
-        return $this->belongsTo(TemplateDeliveryVK::class, 'id', 'task_id');
-    }
-    public function getOK()
-    {
-        return $this->belongsTo(TemplateDeliveryOK::class, 'id', 'task_id');
-    }
-    public function getTW()
-    {
-        return $this->belongsTo(TemplateDeliveryTw::class, 'id', 'task_id');
-    }
-     public function getFB()
-    {
-        return $this->belongsTo(TemplateDeliveryFB::class, 'id', 'task_id');
-    }
-     public function getViber()
-    {
-        return $this->belongsTo(TemplateDeliveryViber::class, 'id', 'task_id');
-    }
-     public function getWhatsapp()
-    {
-        return $this->belongsTo(TemplateDeliveryWhatsapp::class, 'id', 'task_id');
-    }
+
 }

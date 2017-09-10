@@ -13,4 +13,5 @@ return [
     "tmp_folder" => "app/tmp_files/",
     "max_count_for_sended_messages" => 40,
     "total_requets_limit" => 401,
+    'proxy_count'=>50,
 ];

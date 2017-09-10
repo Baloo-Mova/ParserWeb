@@ -27,9 +27,6 @@ class NotValidMessages extends Model
             'id_sender',
     ];
 
-    public function texts(){
-        return $this->hasMany(TemplateDeliveryMails::class,'id', 'id_text');
-    }
     public function senders(){
         return $this->hasMany(AccountsData::class,'id', 'id_sender');
     }

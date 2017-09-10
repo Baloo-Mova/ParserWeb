@@ -52,18 +52,18 @@ class ParseGoogleUa extends Command
 
         while (true) {
             try {
-                sleep(random_int(10,15));
-                $proxy                 = null;
+                sleep(random_int(10, 15));
+                $proxy = null;
                 $this->content['task'] = null;
-                $mutex                 = new FlockMutex(fopen(__FILE__, "r"));
+                $mutex = new FlockMutex(fopen(__FILE__, "r"));
                 $mutex->synchronized(function () {
                     $task = Tasks::where([
-                        'task_type_id'       => TasksType::WORD,
+                        'task_type_id' => TasksType::WORD,
                         'google_ua_reserved' => 0,
-                        'active_type'        => 1
+                        'active_type' => 1
                     ])->first();
 
-                    if ( ! isset($task)) {
+                    if (!isset($task)) {
                         return;
                     }
 
@@ -72,7 +72,7 @@ class ParseGoogleUa extends Command
                     $this->content['task'] = $task;
                 });
 
-                if ( ! isset($this->content['task'])) {
+                if (!isset($this->content['task'])) {
                     sleep(10);
                     continue;
                 }
@@ -81,12 +81,12 @@ class ParseGoogleUa extends Command
             }
             $ignore = IgnoreDomains::all();
             try {
-                $web           = new Web();
-                $crawler       = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
+                $web = new Web();
+                $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
                 $sitesCountNow = 0;
                 $sitesCountWas = 0;
-                $proxy         = Proxy::getProxy(Proxy::Google);
-                if ( ! isset($proxy)) {
+                $proxy = Proxy::getProxy(Proxy::Google);
+                if (!isset($proxy)) {
                     sleep(random_int(5, 10));
                     continue;
                 }
@@ -99,7 +99,7 @@ class ParseGoogleUa extends Command
                         $data = $web->get("https://www.google.com.ua/search?q=" . urlencode($this->content['task']->task_query) . "&start=" . $i * 10,
                             $proxy);
                         $proxy->inc();
-                        if ( ! $proxy->canProcess()) {
+                        if (true) {
                             $proxy->release();
                             $proxy = Proxy::getProxy(Proxy::Google);
                         }
@@ -119,18 +119,18 @@ class ParseGoogleUa extends Command
                     $crawler->load($data);
                     foreach ($crawler->find('.r') as $item) {
                         $link = $item->find('a', 0);
-                        if (isset($link) && ! empty($link->href)) {
+                        if (isset($link) && !empty($link->href)) {
                             if ($this->validate($link->href, $ignore)) {
                                 $data = parse_url($link->href, PHP_URL_HOST);
-                                $tmp  = SiteLinks::where([
+                                $tmp = SiteLinks::where([
                                     ['task_id', '=', trim($this->content['task']->id)],
                                     ['link', 'like', '%' . $data . '%']
                                 ])->first();
-                                if ( ! isset($tmp)) {
+                                if (!isset($tmp)) {
                                     SiteLinks::insert([
-                                        'link'     => $link->href,
-                                        'link'     => $link->href,
-                                        'task_id'  => $this->content['task']->id,
+                                        'link' => $link->href,
+                                        'link' => $link->href,
+                                        'task_id' => $this->content['task']->id,
                                         'reserved' => 0
                                     ]);
                                 }
@@ -155,7 +155,7 @@ class ParseGoogleUa extends Command
                     sleep(rand(30, 60));
                 } while ($sitesCountNow > $sitesCountWas);
             } catch (\Exception $ex) {
-                $log          = new ErrorLog();
+                $log = new ErrorLog();
                 $log->task_id = $this->content['task']->id;
                 $log->message = $ex->getMessage() . " line:" . __LINE__;
                 $log->save();

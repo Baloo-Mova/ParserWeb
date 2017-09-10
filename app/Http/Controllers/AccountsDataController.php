@@ -11,14 +11,16 @@ use App\Models\SmtpBase;
 use Illuminate\Support\Facades\Storage;
 use PHPMailer;
 
-class AccountsDataController extends Controller {
+class AccountsDataController extends Controller
+{
 
     /**
      * Главный экшен. Перенаправление на список акков ВК
      *
      * @return \Illuminate\Http\Response
      */
-    public function index() {
+    public function index()
+    {
         return redirect()->route('accounts_data.vk');
     }
 
@@ -27,7 +29,8 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function vk() {
+    public function vk()
+    {
         $data = AccountsData::vk()->paginate(config('config.accountsdatapaginate'));
 
         return view('accounts_data.vk', ['data' => $data]);
@@ -38,7 +41,8 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function ok() {
+    public function ok()
+    {
         $data = AccountsData::ok()->paginate(config('config.accountsdatapaginate'));
 
         return view('accounts_data.ok', ['data' => $data]);
@@ -49,13 +53,15 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function tw() {
+    public function tw()
+    {
         $data = AccountsData::tw()->paginate(config('config.accountsdatapaginate'));
 
         return view('accounts_data.tw', ['data' => $data]);
     }
 
-    public function fb() {
+    public function fb()
+    {
         $data = AccountsData::fb()->paginate(config('config.accountsdatapaginate'));
 
         return view('accounts_data.fb', ['data' => $data]);
@@ -78,7 +84,8 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function emails() {
+    public function emails()
+    {
         $data = AccountsData::emails()->paginate(config('config.accountsdatapaginate'));
 
         return view('accounts_data.emails', ['data' => $data]);
@@ -89,7 +96,8 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function create($type) {
+    public function create($type)
+    {
         return view('accounts_data.create', ["type" => $type]);
     }
 
@@ -100,7 +108,8 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $data = new AccountsData;
         $data->fill($request->all());
         $type_id = $request->get("type_id");
@@ -155,63 +164,26 @@ class AccountsDataController extends Controller {
         }
     }
 
-    private function findProxyId($type, $counter)
+    private function findProxyId($type)
     {
-        $res = [];
+        $acc = AccountsData::where(['type_id' => $type])->max('proxy_id');
 
-        $proxyInfo = AccountsData::select(DB::raw('count(proxy_id) as count, proxy_id'))
-            ->where([
-                ['type_id', '=', $type]
-            ])
-            ->groupBy('proxy_id')
-            ->orderBy('proxy_id', 'desc')
-            ->having('count', '<', $counter)
-            ->first();
+        if (!isset($acc)) {
+            return 1;
+        }
 
-        if($proxyInfo !== null) {
-            return [
-                "proxy_id" => $proxyInfo->proxy_id,
-                "counter"  => $counter,
-                "number"   => $counter - $proxyInfo->count
-            ];
-        }else{
-            if($type == 3){
-                $proxyNumber = Proxy::where('proxy', 'like', 'socks%')->count();
-            }else{
-                $proxyNumber = Proxy::count();
-            }
+        if ($acc < 50) {
+            return ++$acc;
+        }
 
-            $proxyInAcc = AccountsData::where('type_id', '=', $type)
-                ->distinct('proxy_id')
-                ->count('proxy_id');
-
-            if($proxyInAcc == $proxyNumber){ // если все прокси уже заняты по 3 раза, то увеличиваем счетчик
-                return $this->findProxyId($type, ++$counter);
-            }
-
-            $max_proxy = AccountsData::where('type_id', '=', $type)
-                ->max('proxy_id'); // иначе ищем макс. номер прокси в таблице
-
-            $max_proxy = ($max_proxy === null) ? 10 : $max_proxy;
-
-            if($type == 3){
-                $proxy = Proxy::where([['proxy', 'like', 'socks%'],['id', '>', $max_proxy]])->first(); // находим следующий прокси
-            }else{
-                $proxy = Proxy::where([
-                    ['proxy', 'not like', 'socks%'],
-                    ['id', '>', $max_proxy]
-                ])->first(); // находим следующий прокси
-            }
-
-            return [
-                "proxy_id" => $proxy->id,
-                "counter"  => $counter,
-                "number"   => $counter - 0
-            ];
+        $data = AccountsData::selectRaw('count(proxy_id) as counts , proxy_id')->where(['type_id' => $type])->groupBy('proxy_id')->orderByRaw('counts,proxy_id asc')->first();
+        if (isset($data)) {
+            return $data->proxy_id;
         }
     }
 
-    public function testEmail($data) {
+    public function testEmail($data)
+    {
         try {
             $mail = new PHPMailer;
             // $mail->SMTPDebug = 3;                               // Enable verbose debug output
@@ -251,7 +223,8 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function edit($id) {
+    public function edit($id)
+    {
         $data = AccountsData::whereId($id)->first();
 
         return view("accounts_data.edit", ["data" => $data]);
@@ -261,11 +234,12 @@ class AccountsDataController extends Controller {
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request $request
-     * @param  int                      $id
+     * @param  int $id
      *
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id) {
+    public function update(Request $request, $id)
+    {
         $data = AccountsData::whereId($id)->first();
         $data->fill($request->all());
         $type_id = $request->get("type_id");
@@ -320,7 +294,8 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function delete($id) {
+    public function delete($id)
+    {
         $data = AccountsData::whereId($id)->first();
         $data->delete();
 
@@ -333,7 +308,8 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroyVk() {
+    public function destroyVk()
+    {
 
         DB::table('accounts_data')->where('type_id', '=', 1)->delete();
 
@@ -346,7 +322,8 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroyOk() {
+    public function destroyOk()
+    {
 
         DB::table('accounts_data')->where('type_id', '=', 2)->delete();
 
@@ -359,19 +336,22 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroyTw() {
+    public function destroyTw()
+    {
 
         DB::table('accounts_data')->where('type_id', '=', 4)->delete();
 
         return redirect()->route('accounts_data.tw');
     }
+
     /**
      * Удаление всех записей типа Facebook
      *
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroyFb() {
+    public function destroyFb()
+    {
 
         DB::table('accounts_data')->where('type_id', '=', 6)->delete();
 
@@ -398,7 +378,8 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroyEmails() {
+    public function destroyEmails()
+    {
 
         DB::table('accounts_data')->where('type_id', '=', 3)->delete();
 
@@ -411,7 +392,8 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroy() {
+    public function destroy()
+    {
         DB::table('accounts_data')->truncate();
 
         return redirect()->back();
@@ -423,23 +405,17 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function vkupload(Request $request) {
+    public function vkupload(Request $request)
+    {
         if (!(empty($request->get('text')))) {
-            $accounts = explode("\r\n", $request->get('text'));
+            $accounts = explode("\n", $request->get('text'));
             $this->vkokParse($accounts, $request->get('user_id'), 1);
-        } else {
-            if ($request->hasFile('text_file')) {
-                $filename = uniqid('vk_file', true) . '.' . $request->file('text_file')->getClientOriginalExtension();
-                $request->file('text_file')->storeAs('tmp_files', $filename);
-                $file = file(storage_path(config('config.tmp_folder')) . $filename);
-                $this->vkokParse($file, $request->get('user_id'), 1);
-            }
         }
-
         return redirect()->route('accounts_data.vk');
     }
 
-    public function fbupload(Request $request) {
+    public function fbupload(Request $request)
+    {
         if (!(empty($request->get('text')))) {
             $accounts = explode("\r\n", $request->get('text'));
             $this->vkokParse($accounts, $request->get('user_id'), 6);
@@ -456,35 +432,19 @@ class AccountsDataController extends Controller {
      */
     public function vkokParse($data, $user, $type)
     {
-
-        $proxyNumber = 3;
-
-        $proxy = $this->findProxyId($type, $proxyNumber);
-        $proxyNumber = $proxy["counter"];
-        $proxy_number = $proxy["number"];
-
         foreach ($data as $line) {
-
-            if($proxy_number >= $proxyNumber){
-                $proxy = $this->findProxyId($type, $proxyNumber);
-                $proxyNumber = $proxy["counter"];
+            $proxy = $this->findProxyId($type);
+            $tmp = explode(":", trim($line));
+            if (count($tmp) > 1) {
+                $accData = new AccountsData;
+                $accData->login = $tmp[0];
+                $accData->password = $tmp[1];
+                $accData->proxy_id = $proxy;
+                $accData->type_id = $type;
+                $accData->user_id = $user;
+                $accData->save();
             }
-
-            $tmp = explode(":", $line);
-            $accData = new AccountsData;
-
-            $accData->login = $tmp[0];
-            $accData->password = $tmp[1];
-            $accData->proxy_id = $proxy["proxy_id"];
-            $accData->type_id = $type;
-            $accData->user_id = $user;
-            $accData->save();
-
-            $proxy_number++;
-
-            unset($tmp);
         }
-
     }
 
 
@@ -494,7 +454,9 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function okupload(Request $request) {
+    public
+    function okupload(Request $request)
+    {
         if (!(empty($request->get('text')))) {
             $accounts = explode("\r\n", $request->get('text'));
             $this->vkokParse($accounts, $request->get('user_id'), 2);
@@ -516,9 +478,10 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function twupload(Request $request)
+    public
+    function twupload(Request $request)
     {
-        if ( ! (empty($request->get('text')))) {
+        if (!(empty($request->get('text')))) {
             $accounts = explode("\r\n", $request->get('text'));
             $this->vkokParse($accounts, $request->get('user_id'), 4);
         } else {
@@ -539,9 +502,10 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function insupload(Request $request)
+    public
+    function insupload(Request $request)
     {
-        if ( ! (empty($request->get('text')))) {
+        if (!(empty($request->get('text')))) {
             $accounts = explode("\r\n", $request->get('text'));
             $this->vkokParse($accounts, $request->get('user_id'), 5);
         } else {
@@ -562,7 +526,9 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function mailsupload(Request $request) {
+    public
+    function mailsupload(Request $request)
+    {
         if (!(empty($request->get('text')))) {
             $accounts = explode("\n", $request->get('text'));
             $this->mailsParse($accounts, $request->get('user_id'));
@@ -584,17 +550,19 @@ class AccountsDataController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function mailsParse($data, $user) {
+    public
+    function mailsParse($data, $user)
+    {
 
         $proxyNumber = 3;
 
-        $proxy = $this->findProxyId(3,$proxyNumber);
+        $proxy = $this->findProxyId(3, $proxyNumber);
         $proxyNumber = $proxy["counter"];
         $proxy_number = $proxy["number"];
 
         foreach ($data as $line) {
 
-            if($proxy_number >= $proxyNumber){
+            if ($proxy_number >= $proxyNumber) {
                 $proxy = $this->findProxyId(3, $proxyNumber);
                 $proxyNumber = $proxy["counter"];
             }

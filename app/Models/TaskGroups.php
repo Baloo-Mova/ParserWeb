@@ -4,6 +4,24 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * App\Models\TaskGroups
+ *
+ * @property int $id
+ * @property int $active_type
+ * @property int $need_send
+ * @property string $name
+ * @property \Carbon\Carbon|null $created_at
+ * @property \Carbon\Carbon|null $updated_at
+ * @property-read \App\Models\DeliveryData $deliveryData
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\TaskGroups whereActiveType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\TaskGroups whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\TaskGroups whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\TaskGroups whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\TaskGroups whereNeedSend($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\TaskGroups whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
 class TaskGroups extends Model
 {
     public $timestamps = true;
@@ -19,29 +37,11 @@ class TaskGroups extends Model
     {
         return $this->hasMany(Tasks::class, 'task_group_id', 'id')->limit(10);
     }
-    public function getMail()
+
+
+    public function deliveryData()
     {
-        return $this->belongsTo(TemplateDeliveryMails::class, 'id', 'task_id');
-    }
-    public function getSkype()
-    {
-        return $this->belongsTo(TemplateDeliverySkypes::class, 'id', 'task_id');
-    }
-    public function getVK()
-    {
-        return $this->belongsTo(TemplateDeliveryVK::class, 'id', 'task_id');
-    }
-    public function getOK()
-    {
-        return $this->belongsTo(TemplateDeliveryOK::class, 'id', 'task_id');
-    }
-    public function getViber()
-    {
-        return $this->belongsTo(TemplateDeliveryViber::class, 'id', 'task_id');
-    }
-    public function getWhatsapp()
-    {
-        return $this->belongsTo(TemplateDeliveryWhatsapp::class, 'id', 'task_id');
+        return $this->hasOne(DeliveryData::class, 'task_group_id', 'id');
     }
 
 }

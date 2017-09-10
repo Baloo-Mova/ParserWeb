@@ -30,6 +30,8 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Parser\VKLinks whereUpdatedAt($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Parser\VKLinks whereVkuserId($value)
  * @mixin \Eloquent
+ * @property int $task_group_id
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Parser\VKLinks whereTaskGroupId($value)
  */
 class VKLinks extends Model
 {

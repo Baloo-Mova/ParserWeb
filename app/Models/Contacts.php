@@ -21,6 +21,16 @@ use App\Models\TemplateDeliveryMails;
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Contacts whereType($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Contacts whereValue($value)
  * @mixin \Eloquent
+ * @property string|null $name
+ * @property int $actual_mark
+ * @property int|null $city_id
+ * @property string|null $city_name
+ * @property int|null $task_group_id
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contacts whereActualMark($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contacts whereCityId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contacts whereCityName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contacts whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contacts whereTaskGroupId($value)
  */
 class Contacts extends Model
 {

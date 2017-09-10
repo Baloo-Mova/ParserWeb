@@ -23,12 +23,14 @@ use App\Helpers\Macros;
 use App\Models\Parser\ErrorLog;
 use App\Models\TemplateDeliveryFB;
 
-class APIController extends Controller {
+class APIController extends Controller
+{
 
     public $data = null;
     public $account = null;
 
-    public function getEmailSendResult(Request $request) {
+    public function getEmailSendResult(Request $request)
+    {
         $data = $request->getContent();
         if (strlen($data) > 0) {
             $result = json_decode($data, true);
@@ -54,13 +56,14 @@ class APIController extends Controller {
         }
     }
 
-    public function getEmailSendData() {
+    public function getEmailSendData()
+    {
         DB::transaction(function () {
             $this->account = AccountsData::where([
-                        ['reserved', '=', '0'],
-                        ['type_id', '=', 3],
-                        ['valid', '=', 1]
-                    ])->orderBy('count_request', 'asc')->with('proxy')->lockForUpdate()->first();
+                ['reserved', '=', '0'],
+                ['type_id', '=', 3],
+                ['valid', '=', 1]
+            ])->orderBy('count_request', 'asc')->with('proxy')->lockForUpdate()->first();
 
             if (isset($this->account)) {
                 $this->account->reserved = 1;
@@ -93,11 +96,11 @@ class APIController extends Controller {
 
         DB::transaction(function () {
             $this->data = Contacts::join('search_queries', 'search_queries.id', '=', 'contacts.search_queries_id')->join('tasks', 'tasks.id', '=', 'search_queries.task_id')->join('template_delivery_mails', 'template_delivery_mails.task_id', '=', 'search_queries.task_id')->where([
-                        ['contacts.type', '=', Contacts::MAILS],
-                        ['contacts.sended', '=', 0],
-                        ['contacts.reserved', '=', 0],
-                        ['tasks.need_send', '=', 1],
-                    ])->lockForUpdate()->limit(3)->get([
+                ['contacts.type', '=', Contacts::MAILS],
+                ['contacts.sended', '=', 0],
+                ['contacts.reserved', '=', 0],
+                ['tasks.need_send', '=', 1],
+            ])->lockForUpdate()->limit(3)->get([
                 'contacts.*',
                 'search_queries.task_id',
                 'template_delivery_mails.subject',
@@ -142,47 +145,42 @@ class APIController extends Controller {
         }
     }
 
-    public function is_html($string) {
+    public function is_html($string)
+    {
         return preg_match("/<[^<]+>/", $string, $m) != 0;
     }
 
-    public function getTaskParsedInfo($taskId, $lastId, $page_number) {
+    public function getTaskParsedInfo($taskId, $lastId, $page_number)
+    {
         $maxId = \intval($lastId);
 
         $skip = ($page_number - 1) * 10;
-        $results = DB::select(DB::raw('SELECT search_queries.* FROM search_queries where task_id=' . $taskId . ' order by id desc limit ' . $skip . ',10'));
+        $results = SearchQueries::where(['task_group_id' => $taskId])->orderBy('id', 'desc')->limit(10)->skip($skip)->get();
 
-        if (count($results) > 0) {
+        if ($results->count() > 0) {
             $maxId = $results[0]->id;
         }
+        $sqCountQueue = SiteLinks::where('task_group_id', '=', $taskId)->count() +
+            VKLinks::where('task_group_id', '=', $taskId)->count() +
+            OkGroups::where('task_group_id', '=', $taskId)->count();
+        $sqCountAll = SearchQueries::where('task_group_id', '=', $taskId)->count();
 
-        $count = SearchQueries::where('task_id', '=', $taskId)->count();
-        $countQueue = SiteLinks::where('task_id', '=', $taskId)->count() + VKLinks::where('task_id', '=', $taskId)->count() + OkGroups::where('task_id', '=', $taskId)->count() + FBLinks::where('task_id', '=', $taskId)->count();
+        $contactCountSended = Contacts::where(['task_group_id' => $taskId, 'sended' => 1])->count();
+        $contactCountAll = Contacts::where('task_group_id', '=', $taskId)->count();
 
-        $countSended = Contacts::where(['task_id' => $taskId, 'sended' => 1])->count();
-
-        if ($lastId == $maxId) {
-            return json_encode([
-                'success' => true,
-                'count_parsed' => $count,
-                'count_queue' => $countQueue,
-                'count_sended' => $countSended,
-                'max_id' => $maxId,
-                'result' => null
-            ]);
-        } else {
-            return json_encode([
-                'success' => true,
-                'count_parsed' => $count,
-                'count_queue' => $countQueue,
-                'count_sended' => $countSended,
-                'max_id' => $maxId,
-                'result' => $results
-            ]);
-        }
+        return json_encode([
+            'success' => true,
+            'sqCountQueue' => $sqCountQueue,
+            'sqCountAll' => $sqCountAll,
+            'countAll' => $contactCountAll,
+            'countSended' => $contactCountSended,
+            'max_id' => $maxId,
+            'result' => $lastId == $maxId ? null : $results
+        ]);
     }
 
-    public function getSelectEmailTemplate(Request $request, $id) {
+    public function getSelectEmailTemplate(Request $request, $id)
+    {
 
         $results = EmailTemplates::where('id', '=', $id)->first();
 
@@ -203,7 +201,8 @@ class APIController extends Controller {
         ]);
     }
 
-    public function setYandexContext(Request $request) {
+    public function setYandexContext(Request $request)
+    {
         $text = $request->getContent();
         $data = json_decode($text, true);
         $array = [];
@@ -217,19 +216,20 @@ class APIController extends Controller {
         try {
             SiteLinks::insert($array);
         } catch (\Exception $ex) {
-            
+
         }
 
         echo count($array);
     }
 
-    public function getYandexTask() {
+    public function getYandexTask()
+    {
         DB::transaction(function () {
             $task = Tasks::where([
-                        'task_type_id' => TasksType::WORD,
-                        'yandex_ru_reserved' => 0,
-                        'active_type' => 1
-                    ])->first();
+                'task_type_id' => TasksType::WORD,
+                'yandex_ru_reserved' => 0,
+                'active_type' => 1
+            ])->first();
 
             if (isset($task)) {
                 $task->yandex_ru_reserved = 1;
@@ -252,7 +252,8 @@ class APIController extends Controller {
         ];
     }
 
-    public function getRandomProxy($type) {
+    public function getRandomProxy($type)
+    {
 
         $counter = 3;
         $res = [];
@@ -296,8 +297,8 @@ class APIController extends Controller {
         } else {
 
             $proxyInfo = AccountsData::select(DB::raw('count(proxy_id) as count, proxy_id'))->where([
-                        ['type_id', '=', $type]
-                    ])->groupBy('proxy_id')->orderBy('proxy_id', 'desc')->having('count', '<', $counter)->first();
+                ['type_id', '=', $type]
+            ])->groupBy('proxy_id')->orderBy('proxy_id', 'desc')->having('count', '<', $counter)->first();
 
             if ($proxyInfo !== null) {
                 $proxy = Proxy::where('id', '=', $proxyInfo->proxy_id)->first();
@@ -336,7 +337,8 @@ class APIController extends Controller {
         }
     }
 
-    public function addAccs($type, Request $request) {
+    public function addAccs($type, Request $request)
+    {
         if ($type == "skype") {
             $json = $request->getContent();
             $json = json_decode($json, true);
@@ -383,7 +385,8 @@ class APIController extends Controller {
 
     /* section for fb parse */
 
-    public function updateFBAcc(Request $request) {
+    public function updateFBAcc(Request $request)
+    {
 
         //if($type =="facebook"){
         $json = $request->getContent();
@@ -421,19 +424,20 @@ class APIController extends Controller {
     public $acc;
     public $cur_type_acc = 0;
 
-    public function getFBAcc($type) {
+    public function getFBAcc($type)
+    {
         $this->acc = null;
         $this->cur_type_acc = intval($type, 10);
 
         DB::transaction(function () {
 
             $sender = AccountsData::where([
-                        ['type_id', '=', 6],
-                        ['valid', '=', 1],
-                        ['is_sender', '=', $this->cur_type_acc],
-                        ['reserved', '=', 0],
-                        ['count_request', '<', 401]
-                    ])->orderBy('count_request', 'asc')->first();
+                ['type_id', '=', 6],
+                ['valid', '=', 1],
+                ['is_sender', '=', $this->cur_type_acc],
+                ['reserved', '=', 0],
+                ['count_request', '<', 401]
+            ])->orderBy('count_request', 'asc')->first();
 
             if (!isset($sender)) {
                 return;
@@ -473,7 +477,8 @@ class APIController extends Controller {
     public $content;
 
 //Route::get('/getTask',['uses'=>'APIController@getTask', 'as'=>'get.task.fb']);
-    public function getTaskFB() {
+    public function getTaskFB()
+    {
         $this->content['fb_task'] = null;
         DB::transaction(function () {
             $task = Tasks::where(['task_type_id' => 1, 'fb_reserved' => 0, 'fb_complete' => 0, 'active_type' => 1])->lockForUpdate()->first();
@@ -496,7 +501,8 @@ class APIController extends Controller {
             ];
     }
 
-    public function updateTaskFB(Request $request) {
+    public function updateTaskFB(Request $request)
+    {
 
         $json = $request->getContent();
 
@@ -527,13 +533,14 @@ class APIController extends Controller {
         return ['response' => null];
     }
 
-    public function getFBLinks($type) {
+    public function getFBLinks($type)
+    {
         $this->content['fb_links'] = null;
         if ($type == 'Group') {
 
             DB::transaction(function () {
                 $group = FBLinks::join('tasks', 'tasks.id', '=', 'fb_links.task_id')->where(['fb_links.type' => 0, 'fb_links.getusers_reserved' => 0, 'fb_links.getusers_status' => 0, 'tasks.active_type' => 1,])->
-                                select('fb_links.*')->lockForUpdate()->first();
+                select('fb_links.*')->lockForUpdate()->first();
                 if (!isset($group)) {
                     return;
                 }
@@ -557,7 +564,7 @@ class APIController extends Controller {
         if ($type == 'ParseGroup') {
             DB::transaction(function () {
                 $group = FBLinks::join('tasks', 'tasks.id', '=', 'fb_links.task_id')->where(['fb_links.type' => 0, 'fb_links.reserved' => 0, 'fb_links.parsed' => 0, 'tasks.active_type' => 1,])->
-                                select('fb_links.*')->lockForUpdate()->first();
+                select('fb_links.*')->lockForUpdate()->first();
                 if (!isset($group)) {
                     return;
                 }
@@ -581,7 +588,7 @@ class APIController extends Controller {
         if ($type == 'ParseUsers') {
             DB::transaction(function () {
                 $users = FBLinks::join('tasks', 'tasks.id', '=', 'fb_links.task_id')->where(['fb_links.type' => 1, 'fb_links.reserved' => 0, 'fb_links.parsed' => 0, 'tasks.active_type' => 1,])->
-                                select('fb_links.*')->lockForUpdate()->limit(10)->get();
+                select('fb_links.*')->lockForUpdate()->limit(10)->get();
                 if (!isset($users)) {
                     return;
                 }
@@ -617,7 +624,8 @@ class APIController extends Controller {
         }
     }
 
-    public function addFBLinks(Request $request) {
+    public function addFBLinks(Request $request)
+    {
         try {
             $json = $request->getContent();
 
@@ -638,7 +646,8 @@ class APIController extends Controller {
         }
     }
 
-    public function updateFBLinks(Request $request) {
+    public function updateFBLinks(Request $request)
+    {
         try {
             $delete = false;
             $json = $request->getContent();
@@ -681,17 +690,18 @@ class APIController extends Controller {
         }
     }
 
-    public function getQueryFB() {
+    public function getQueryFB()
+    {
         $this->content['fb_queries'] = null;
         try {
             DB::transaction(function () {
                 $fb_queries = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
-                            ['search_queries.fb_id', '<>', ''],
-                            'search_queries.fb_sended' => 0,
-                            'search_queries.fb_reserved' => 0,
-                            'tasks.need_send' => 1,
-                            'tasks.active_type' => 1,
-                        ])->select('search_queries.*')->lockForUpdate()->limit(10)->get();
+                    ['search_queries.fb_id', '<>', ''],
+                    'search_queries.fb_sended' => 0,
+                    'search_queries.fb_reserved' => 0,
+                    'tasks.need_send' => 1,
+                    'tasks.active_type' => 1,
+                ])->select('search_queries.*')->lockForUpdate()->limit(10)->get();
                 if (!isset($fb_queries)) {
                     return;
                 }
@@ -738,44 +748,45 @@ class APIController extends Controller {
                     }
 
 
-
-                    $result[] = ['id'=>$query->id,'fb_id' => $query->fb_id, 'message' => $str_mes];
+                    $result[] = ['id' => $query->id, 'fb_id' => $query->fb_id, 'message' => $str_mes];
                 }
             }
             return ['response' => 'OK', 'users' => $result];
         } catch (\Exception $ex) {
             SearchQueries::whereIn('id', array_column($this->content['fb_queries']->toArray(), 'id'))->update(['fb_reserved' => 0]);
-        
-            return ['response'=>null];
+
+            return ['response' => null];
         }
     }
 
-    public function updateQueryFB(Request $request) {
+    public function updateQueryFB(Request $request)
+    {
         //try{
-            $json = $request->getContent();
+        $json = $request->getContent();
 
-            $json = json_decode($json, true);
-            
-            if (isset($json["queries"])) {
-                
+        $json = json_decode($json, true);
+
+        if (isset($json["queries"])) {
+
             foreach ($json["queries"] as $query) {
-                
-                $arr =[];
-              if(isset($query["fb_reserved"])){
-                  $arr['fb_reserved']=$query["fb_reserved"];
-              }  
-              if(isset($query["fb_sended"])){
-                  $arr['fb_sended']=$query["fb_sended"];
-              }
-              SearchQueries::where(['id'=>$query["id"]])->update($arr);
+
+                $arr = [];
+                if (isset($query["fb_reserved"])) {
+                    $arr['fb_reserved'] = $query["fb_reserved"];
+                }
+                if (isset($query["fb_sended"])) {
+                    $arr['fb_sended'] = $query["fb_sended"];
+                }
+                SearchQueries::where(['id' => $query["id"]])->update($arr);
             }
-            return ['response'=>'OK'];
-              }
-            return ['response'=>null];
+            return ['response' => 'OK'];
+        }
+        return ['response' => null];
         //}catch(\Exception $ex){return ['response'=>null];}
     }
 
-    public function addQueryFB(Request $request) {
+    public function addQueryFB(Request $request)
+    {
         try {
             $json = $request->getContent();
 
@@ -795,7 +806,8 @@ class APIController extends Controller {
         }
     }
 
-    public function addContactsFB(Request $request) {
+    public function addContactsFB(Request $request)
+    {
         try {
             $json = $request->getContent();
 

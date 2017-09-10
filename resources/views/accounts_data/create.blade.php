@@ -49,7 +49,7 @@
         </div>
         <div class="col-md-6">
             @if($type == 1)
-            <div class="box box-primary collapsed-box">
+            <div class="box box-primary">
                 <div class="box-header">
                     Массовое Добавление (VK)
                     <div class="box-tools pull-right">
@@ -71,7 +71,7 @@
             @endif
 
             @if($type == 2)
-            <div class="box box-primary collapsed-box">
+            <div class="box box-primary">
                 <div class="box-header">
                     Массовое Добавление (OK)
                     <div class="box-tools pull-right">
@@ -93,7 +93,7 @@
             @endif
 
             @if($type == 3)
-            <div class="box box-primary collapsed-box">
+            <div class="box box-primary">
                 <div class="box-header">
                     Массовое Добавление (Mails)
                     <div class="box-tools pull-right">
@@ -115,7 +115,7 @@
             @endif
 
             @if($type == 4)
-            <div class="box box-primary collapsed-box">
+            <div class="box box-primary">
                 <div class="box-header">
                     Массовое Добавление (Twitter)
                     <div class="box-tools pull-right">
@@ -137,7 +137,7 @@
             @endif
 
             @if($type == 5)
-            <div class="box box-primary collapsed-box">
+            <div class="box box-primary">
                 <div class="box-header">
                     Массовое Добавление (Instagram)
                     <div class="box-tools pull-right">
@@ -158,7 +158,7 @@
             </div>
             @endif
             @if($type == 6)
-            <div class="box box-primary collapsed-box">
+            <div class="box box-primary">
                 <div class="box-header">
                     Массовое Добавление (Facebook)
                     <div class="box-tools pull-right">

@@ -24,6 +24,8 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Parser\OkGroups whereType($value)
  * @method static \Illuminate\Database\Query\Builder|\App\Models\Parser\OkGroups whereUpdatedAt($value)
  * @mixin \Eloquent
+ * @property int $task_group_id
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Parser\OkGroups whereTaskGroupId($value)
  */
 class OkGroups extends Model
 {

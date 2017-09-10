@@ -67,6 +67,10 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Query\Builder|\App\Models\SearchQueries whereName($value)
  * @property string $contact_data
  * @method static \Illuminate\Database\Query\Builder|\App\Models\SearchQueries whereContactData($value)
+ * @property int $city_id
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\SearchQueries whereCityId($value)
+ * @property int $task_group_id
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\SearchQueries whereTaskGroupId($value)
  */
 class SearchQueries extends Model
 {
@@ -74,21 +78,15 @@ class SearchQueries extends Model
     public $table      = "search_queries";
 
     public $fillable = [
+        'id',
         'link',
         'name',
         'city',
         'contact_data',
-        'city_id'
+        'city_id',
+        'task_group_id',
+        'task_id',
     ];
 
-    public function getEmailTemplate()
-    {
-        return TemplateDeliveryMails::with('attaches')->where('task_id', '=', $this->task_id)->first();
-    }
-
-    public function getSkypeTemplate()
-    {
-        return TemplateDeliverySkypes::where('task_id', '=', $this->task_id)->first();
-    }
 
 }

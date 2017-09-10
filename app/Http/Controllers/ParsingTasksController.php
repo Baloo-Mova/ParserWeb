@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contacts;
+use App\Models\DeliveryData;
 use App\Models\TaskGroups;
 use Illuminate\Http\Request;
 use App\Models\TasksType;
@@ -44,156 +45,72 @@ class ParsingTasksController extends Controller
 
     public function store(Request $request)
     {
-
         $taskTypeId = $request->get('task_type_id');
         $tasksQueries = $request->get('task_query');
 
-        if($taskTypeId == 1 && empty($tasksQueries)){
+        if ($taskTypeId == 1 && empty($tasksQueries)) {
             Toastr::error("Вы не указали поисковые запросы!");
             return back();
         }
 
-        $tasksQueries = explode("\r\n", $tasksQueries);
+        if ($taskTypeId == 2 && empty($site_list)) {
+            Toastr::error("Вы не указали список сайтов!");
+            return back();
+        }
 
         $taskGroup = new TaskGroups();
-        $taskGroup->name = $tasksQueries[0];
+        $taskGroup->name = "";
         $taskGroup->need_send = $request->get('send_directly') != null;
-        $taskGroup->save();
+        $taskGroup->active_type = 2;
 
-        $tasks = [];
-        foreach ($tasksQueries as $task){
-            $tasks[] = [
-                'task_type_id' => $taskTypeId,
-                'task_query' => $task,
-                'task_group_id' => $taskGroup->id
-            ];
+        if ($taskTypeId == 1) {
+            $tasksQueries = explode("\r\n", $tasksQueries);
+            $taskGroup->name = $tasksQueries[0];
+            $taskGroup->save();
+            $tasks = [];
+            foreach ($tasksQueries as $task) {
+                $tasks[] = [
+                    'task_type_id' => TasksType::WORD,
+                    'task_query' => $task,
+                    'task_group_id' => $taskGroup->id
+                ];
 
-            if(count($tasks) > 999){
+                if (count($tasks) > 999) {
+                    Tasks::insert($tasks);
+                    $tasks = [];
+                }
+            }
+
+            if (count($tasks) > 0) {
                 Tasks::insert($tasks);
                 $tasks = [];
             }
-        }
+        } else {
+            $site_list = $request->get('site_list');
+            $taskGroup->name = "Список сайтов";
+            $taskGroup->save();
 
-        if(count($tasks) > 0){
-            Tasks::insert($tasks);
-            $tasks = [];
-        }
+            $task = new Tasks();
+            $task->task_query = "*";
+            $task->task_type_id = TasksType::SITES;
+            $task->task_group_id = $taskGroup->id;
+            $task->save();
 
-        //Обрабатываем список сайтов, если есть
-        $site_list = $request->get('site_list');
-        if ($taskTypeId == 2 && !empty($site_list)) {
             $sites = explode("\r\n", $site_list);
             foreach ($sites as $item) {
                 $site_links = new SiteLinks;
                 $site_links->task_id = $task->id;
+                $site_links->task_group_id = $taskGroup->id;
                 $site_links->link = $item;
                 $site_links->reserved = 0;
                 $site_links->save();
-                unset($site_links);
-            }
-        }
-        //Обрабатываем список сайтов, если есть
-        //Записываем в таблицу шаблонов mails
-        if (!empty($request->get('subject')) && !empty($request->get('mails_text'))) {
-            $mails = new TemplateDeliveryMails;
-            $mails->subject = $request->get('subject');
-            $mails->text = $request->get('mails_text');
-            $mails->task_id = $task->id;
-            if ($this->checkSymbolsInText($request->get('mails_text'))) {
-                $mails->save();
-            } else {
-                Toastr::error("В тексте Contacts найдены недопустимые символы!", $title = "Ошибка!", $options = []);
-            }
-        }
-        //Записываем в таблицу шаблонов mails
-        //Записываем в таблицу шаблонов вложений для mails
-        /*if ($request->hasFile('file')) {
-            foreach ($request->file('file') as $file) {
-                $filename = uniqid('mail_' . $mails->id, true) . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('mail_files', $filename);
-
-                $file_model = new TemplateDeliveryMailsFiles;
-                $file_model->mail_id = $mails->id;
-                $file_model->name = $filename;
-                $file_model->path = 'mail_files/' . $filename;
-                $file_model->save();
-
-                unset($file_model);
-            }
-        }*/
-        //Записываем в таблицу шаблонов вложений для mails
-        //Записываем в таблицу шаблонов skypes
-        if (!empty($request->get('skype_text'))) {
-            $skype = new TemplateDeliverySkypes();
-            $skype->text = $request->get('skype_text');
-            $skype->task_id = $task->id;
-            if ($this->checkSymbolsInText($request->get('skype_text'))) {
-                $skype->save();
-            } else {
-                Toastr::error("В тексте Skype найдены недопустимые символы!", $title = "Ошибка!", $options = []);
-            }
-        }
-        if (!empty($request->get('vk_text'))) {
-            $vk = new TemplateDeliveryVK();
-            $vk->text = $request->get('vk_text');
-            $vk->task_id = $task->id;
-            if ($this->checkSymbolsInText($request->get('vk_text'))) {
-                $vk->save();
-            } else {
-                Toastr::error("В тексте Вконтакте найдены недопустимые символы!", $title = "Ошибка!", $options = []);
-            }
-        }
-        if (!empty($request->get('ok_text'))) {
-            $ok = new TemplateDeliveryOK();
-            $ok->text = $request->get('ok_text');
-            $ok->task_id = $task->id;
-            if ($this->checkSymbolsInText($request->get('ok_text'))) {
-                $ok->save();
-            } else {
-                Toastr::error("В тексте Одноклассники найдены недопустимые символы!", $title = "Ошибка!",
-                    $options = []);
-            }
-        }
-        if (!empty($request->get('tw_text'))) {
-            $tw = new TemplateDeliveryTw();
-            $tw->text = $request->get('tw_text');
-            $tw->task_id = $task->id;
-            if ($this->checkSymbolsInText($request->get('tw_text'))) {
-                $tw->save();
-            }
-        }
-        if (!empty($request->get('fb_text'))) {
-            $fb = new TemplateDeliveryFB();
-            $fb->text = $request->get('fb_text');
-            $fb->task_id = $task->id;
-            if ($this->checkSymbolsInText($request->get('fb_text'))) {
-                $fb->save();
-            } else {
-                Toastr::error("В тексте Facebook найдены недопустимые символы!", $title = "Ошибка!", $options = []);
-            }
-        }
-        if (!empty($request->get('viber_text'))) {
-            $viber = new TemplateDeliveryViber();
-            $viber->text = $request->get('viber_text');
-            $viber->task_id = $task->id;
-            if ($this->checkSymbolsInText($request->get('viber_text'))) {
-                $viber->save();
-            } else {
-                Toastr::error("В тексте Viber найдены недопустимые символы!", $title = "Ошибка!", $options = []);
-            }
-        }
-        if (!empty($request->get('whats_text'))) {
-            $whatsapp = new TemplateDeliveryWhatsapp();
-            $whatsapp->text = $request->get('whats_text');
-            $whatsapp->task_id = $task->id;
-            if ($this->checkSymbolsInText($request->get('whats_text'))) {
-                $whatsapp->save();
-            } else {
-                Toastr::error("В тексте WhatsApp найдены недопустимые символы!", $title = "Ошибка!", $options = []);
             }
         }
 
-        //Записываем в таблицу шаблонов skypes
+        $sendData = new DeliveryData();
+        $sendData->task_group_id = $taskGroup->id;
+        $sendData->payload = json_encode($request->get('data'));
+        $sendData->save();
 
         return redirect()->route('parsing_tasks.index');
     }
@@ -212,32 +129,15 @@ class ParsingTasksController extends Controller
 
     public function show($id)
     {
-        $task = TaskGroups::find($id);
-
-        $mails = $task->getMail()->first();
-        //$templateFile = (isset($mails)) ? TemplateDeliveryMailsFiles::whereMailId($mails->id)->first() : null;
-        $mails_file = (isset($templateFile)) ? $templateFile->path : "";
-        $skype = $task->getSkype()->first();
-        $vk = $task->getVK()->first();
-        $ok = $task->getOK()->first();
-        $viber = $task->getViber()->first();
-        $whats = $task->getWhatsapp()->first();
-        $search_queries = SearchQueries::where(['task_id' => $id])->orderBy('id', 'desc')->paginate(10);
+        $task = TaskGroups::with(['deliveryData', 'getTenTasks'])->find($id);
+        if (!isset($task)) {
+            abort(404);
+        }
 
         $tasks = $task->getTenTasks->toArray();
-        $taskGroupName = implode(", ", array_column($tasks, "task_query"));
-
         return view('parsing_tasks.show', [
             'data' => $task,
-            'mails' => $mails,
-            //'mails_file' => $mails_file,
-            'skype' => $skype,
-            'vk' => $vk,
-            'ok' => $ok,
-            'search_queries' => $search_queries,
-            'viber' => $viber,
-            'whats' => $whats,
-            'taskGroupName' => $taskGroupName
+            'send' => json_decode($task->deliveryData->payload, true),
         ]);
     }
 
@@ -252,9 +152,11 @@ class ParsingTasksController extends Controller
 
     public function stop($id)
     {
-        $task = Tasks::whereId($id)->first();
-        $task->active_type = 2;
-        $task->save();
+
+        $task_group = TaskGroups::find($id);
+        $task_group->active_type = 2;
+        $task_group->save();
+
 
         return redirect()->back();
     }
@@ -270,7 +172,7 @@ class ParsingTasksController extends Controller
 
     public function startDelivery($id)
     {
-        $task = Tasks::whereId($id)->first();
+        $task = TaskGroups::whereId($id)->first();
         $task->need_send = 1;
         $task->save();
 
@@ -279,7 +181,7 @@ class ParsingTasksController extends Controller
 
     public function stopDelivery($id)
     {
-        $task = Tasks::whereId($id)->first();
+        $task = TaskGroups::whereId($id)->first();
         $task->need_send = 0;
         $task->save();
 
@@ -288,163 +190,10 @@ class ParsingTasksController extends Controller
 
     public function changeDeliveryInfo(Request $request)
     {
-        $skype_text = $request->get("skype_text");
-        $mail_subj = $request->get("mail_subject");
-        $mail_text = $request->get("mail_text");
-        $ok_text = $request->get("ok_text");
-        $vk_text = $request->get("vk_text");
-        //$tw_text = $request->get("tw_text");
-        $fb_text = $request->get("fb_text");
-        $viber_text = $request->get("viber_text");
-        $whats_text = $request->get("whats_text");
-        $mailsFile = $request->hasFile('mails_file');
-        $mail_id = $request->get('mail_id');
-
-        if (isset($skype_text)) {
-            $skype = TemplateDeliverySkypes::where("task_id", "=", $request->get("delivery_id"))->first();
-            if (empty($skype)) {
-                $skype = new TemplateDeliverySkypes;
-                $skype->task_id = $request->get("delivery_id");
-            }
-
-            if ($this->checkSymbolsInText($skype_text)) {
-                $skype->text = $skype_text;
-                $skype->save();
-            } else {
-                Toastr::error("В тексте Skype найдены недопустимые символы!", $title = "Ошибка!", $options = []);
-            }
-        }
-
-        if (isset($ok_text)) {
-            $ok = TemplateDeliveryOK::where("task_id", "=", $request->get("delivery_id"))->first();
-            if (empty($ok)) {
-                $ok = new TemplateDeliveryOK;
-                $ok->task_id = $request->get("delivery_id");
-            }
-            if ($this->checkSymbolsInText($ok_text)) {
-                $ok->text = $ok_text;
-                $ok->save();
-            } else {
-                Toastr::error("В тексте Одноклассники найдены недопустимые символы!", $title = "Ошибка!",
-                    $options = []);
-            }
-        }
-
-        if (isset($vk_text)) {
-            $vk = TemplateDeliveryVK::where("task_id", "=", $request->get("delivery_id"))->first();
-            if (empty($vk)) {
-                $vk = new TemplateDeliveryVK;
-                $vk->task_id = $request->get("delivery_id");
-            }
-            if ($this->checkSymbolsInText($vk_text)) {
-                $vk->text = $vk_text;
-                $vk->save();
-            } else {
-                Toastr::error("В тексте Вконтакте найдены недопустимые символы!", $title = "Ошибка!", $options = []);
-            }
-        }
-
-        /*if (isset($tw_text)) {
-            $tw = TemplateDeliveryTw::where("task_id", "=", $request->get("delivery_id"))->first();
-            if (empty($tw)) {
-                $tw = new TemplateDeliveryTw();
-                $tw->task_id = $request->get("delivery_id");
-            }
-            $tw->text = $tw_text;
-            $tw->save();
-        }*/
-        if (isset($fb_text)) {
-            $fb = TemplateDeliveryFB::where("task_id", "=", $request->get("delivery_id"))->first();
-            if (empty($fb)) {
-                $fb = new TemplateDeliveryFB();
-                $fb->task_id = $request->get("delivery_id");
-            }
-            if ($this->checkSymbolsInText($fb_text)) {
-                $fb->text = $fb_text;
-                $fb->save();
-            } else {
-                Toastr::error("В тексте Facebook найдены недопустимые символы!", $title = "Ошибка!", $options = []);
-            }
-        }
-
-        if (isset($mail_subj)) {
-            $mail = TemplateDeliveryMails::where("task_id", "=", $request->get("delivery_id"))->first();
-
-            if (empty($mail)) {
-                $mail = new TemplateDeliveryMails;
-                $mail->task_id = $request->get("delivery_id");
-            }
-
-            $mail->subject = $mail_subj;
-
-            if (isset($mail_text)) {
-                if ($this->checkSymbolsInText($mail_text)) {
-                    $mail->text = $mail_text;
-                } else {
-                    Toastr::error("В тексте Contacts найдены недопустимые символы!", $title = "Ошибка!", $options = []);
-                }
-            }
-
-            $mail->save();
-        }
-
-        if ($mailsFile) {
-
-            if (!$mail_id) {
-                $mail_id = $mail->id;
-            }
-
-            $isExistFile = TemplateDeliveryMailsFiles::whereMailId($mail_id)->first();
-            $file = $request->file('mails_file');
-
-            if (isset($isExistFile)) {
-                Storage::delete($isExistFile->path);
-                $filename = uniqid('mail_' . $mail_id, true) . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('mail_files', $filename);
-                $isExistFile->name = $filename;
-                $isExistFile->path = 'mail_files/' . $filename;
-                $isExistFile->save();
-            } else {
-                $filename = uniqid('mail_' . $mail_id, true) . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('mail_files', $filename);
-                $file_model = new TemplateDeliveryMailsFiles;
-                $file_model->mail_id = $mail_id;
-                $file_model->name = $filename;
-                $file_model->path = 'mail_files/' . $filename;
-                $file_model->save();
-            }
-        }
-
-        if (isset($viber_text)) {
-            $count_lines = substr_count($viber_text, "\r\n");
-
-            $viber_text = str_pad($viber_text, strlen($viber_text) + 5 * 2, "\r\n", STR_PAD_RIGHT);
-
-            //dd((strlen($viber_text)/42).$viber_text);
-            $viber = TemplateDeliveryViber::where("task_id", "=", $request->get("delivery_id"))->first();
-            if (empty($viber)) {
-                $viber = new TemplateDeliveryViber();
-                $viber->task_id = $request->get("delivery_id");
-            }
-            if ($this->checkSymbolsInText($viber_text)) {
-                $viber->text = $viber_text;
-                $viber->save();
-            } else {
-                Toastr::error("В тексте Viber найдены недопустимые символы!", $title = "Ошибка!", $options = []);
-            }
-        }
-        if (isset($whats_text)) {
-            $whatsapp = TemplateDeliveryWhatsapp::where("task_id", "=", $request->get("delivery_id"))->first();
-            if (empty($whatsapp)) {
-                $whatsapp = new TemplateDeliveryWhatsapp();
-                $whatsapp->task_id = $request->get("delivery_id");
-            }
-            if ($this->checkSymbolsInText($whats_text)) {
-                $whatsapp->text = $whats_text;
-                $whatsapp->save();
-            } else {
-                Toastr::error("В тексте WhatsApp найдены недопустимые символы!", $title = "Ошибка!", $options = []);
-            }
+        $deliveryData = DeliveryData::where('task_group_id', '=', $request->get('task_group_id'))->first();
+        if (isset($deliveryData)) {
+            $deliveryData->payload = json_encode($request->get('data'));
+            $deliveryData->save();
         }
 
         return redirect()->back();
