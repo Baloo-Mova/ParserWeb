@@ -25,7 +25,7 @@ class ChangeSendData extends Migration
 
         Schema::create('delivery_data', function (Blueprint $table) {
             $table->increments('id');
-            $table->json('payload');
+            $table->longText('payload');
             $table->integer('task_group_id');
         });
     }
