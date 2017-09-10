@@ -202,7 +202,7 @@ class ParsingTasksController extends Controller
     public function getCsv($id)
     {
         set_time_limit(0);
-        $table = SearchQueries::where(['task_id' => $id])->get();
+        $table = SearchQueries::where(['task_group_id' => $id])->get();
 
         $cols = [];
         $res = [];

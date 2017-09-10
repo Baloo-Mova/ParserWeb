@@ -88,16 +88,16 @@
                                         <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}"
                                            class="btn btn-primary btn-flat" style="margin-top: -3px;">Экспортировать в
                                             CSV</a>
-                                        <form action="{{ route('parsing_tasks.getFromCsv') }}"
-                                              enctype="multipart/form-data" method="post" id="targetForm"
-                                              style="display: inline-block;">
-                                            {{ csrf_field() }}
-                                            <input type="hidden" name="task_id" value="{{ $data->id }}">
-                                            <label for="file-upload" class="custom-file-upload">
-                                                Импортировать из CSV
-                                            </label>
-                                            <input id="file-upload" type="file" disabled name="myfile"/>
-                                        </form>
+                                        {{--<form action="{{ route('parsing_tasks.getFromCsv') }}"--}}
+                                              {{--enctype="multipart/form-data" method="post" id="targetForm"--}}
+                                              {{--style="display: inline-block;">--}}
+                                            {{--{{ csrf_field() }}--}}
+                                            {{--<input type="hidden" name="task_id" value="{{ $data->id }}">--}}
+                                            {{--<label for="file-upload" class="custom-file-upload">--}}
+                                                {{--Импортировать из CSV--}}
+                                            {{--</label>--}}
+                                            {{--<input id="file-upload" type="file" disabled name="myfile"/>--}}
+                                        {{--</form>--}}
                                     </div>
                                     <hr>
                                 </div>
