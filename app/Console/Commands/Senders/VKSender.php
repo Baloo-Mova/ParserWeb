@@ -12,6 +12,7 @@ use App\Helpers\VK;
 use App\Models\Parser\ErrorLog;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\Macros;
+
 class VKSender extends Command
 {
     public $content;
@@ -49,39 +50,40 @@ class VKSender extends Command
     {
         while (true) {
             try {
-                $this->content['vkquery'] = null;
-                DB::transaction(function () {
+                $this->content = null;
+                $mutex = new FlockMutex(fopen(__FILE__, "r"));
+                $mutex->synchronized(function () {
+
                     $sk_query = SearchQueries::join('tasks', 'tasks.id', '=', 'search_queries.task_id')->where([
                         ['search_queries.vk_id', '<>', ''],
-                        'search_queries.vk_sended'   => 0,
+                        'search_queries.vk_sended' => 0,
                         'search_queries.vk_reserved' => 0,
-                        'tasks.need_send'            => 1,
-                        'tasks.active_type'          => 1,
+                        'tasks.need_send' => 1,
+                        'tasks.active_type' => 1,
                     ])->select('search_queries.*')->lockForUpdate()->first();
-                    if ( ! isset($sk_query)) {
+                    if (!isset($sk_query)) {
                         return;
                     }
                     $sk_query->vk_reserved = 1;
                     $sk_query->save();
                     $this->content['vkquery'] = $sk_query;
                 });
-                if ( ! isset($this->content['vkquery'])) {
+                if (!isset($this->content['vkquery'])) {
                     sleep(10);
                     continue;
                 }
 
                 $message = TemplateDeliveryVK::where('task_id', '=', $this->content['vkquery']->task_id)->first();
-                if ( ! isset($message)) {
+                if (!isset($message)) {
                     sleep(10);
                     $this->content['vkquery']->vk_reserved = 0;
                     $this->content['vkquery']->save();
                     continue;
                 }
-                if(substr_count ($message,"{")==substr_count ($message,"}")) {
-                    if((substr_count ($message,"{")==0 && substr_count ($message,"}")==0)){
-                        $str_mes= $message->text;
-                    }
-                    else {
+                if (substr_count($message, "{") == substr_count($message, "}")) {
+                    if ((substr_count($message, "{") == 0 && substr_count($message, "}") == 0)) {
+                        $str_mes = $message->text;
+                    } else {
                         $str_mes = Macros::convertMacro($message->text);
                     }
                     sleep(random_int(7, 10));
@@ -95,19 +97,19 @@ class VKSender extends Command
                         $this->content['vkquery']->save();
                     }
                     sleep(random_int(25, 35));
-                }else{
-                    $log          = new ErrorLog();
+                } else {
+                    $log = new ErrorLog();
                     $log->message = "VK_SEND: MESSAGE NOT CORRECT - update and try again";
                     $log->task_id = $this->content['vkquery']->task_id;
                     $log->save();
-                    $this->content['vkquery']->vk_reserved=0;
+                    $this->content['vkquery']->vk_reserved = 0;
                     $this->content['vkquery']->save();
-                    sleep(random_int(25,35));
+                    sleep(random_int(25, 35));
                     continue;
                 }
 
             } catch (\Exception $ex) {
-                $log          = new ErrorLog();
+                $log = new ErrorLog();
                 $log->message = $ex->getTraceAsString() . " VK_SEND " . $ex->getLine();
                 $log->task_id = 8888;
                 $log->save();

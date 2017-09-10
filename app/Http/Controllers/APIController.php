@@ -166,7 +166,7 @@ class APIController extends Controller
         $sqCountAll = SearchQueries::where('task_group_id', '=', $taskId)->count();
 
         $contactCountSended = Contacts::where(['task_group_id' => $taskId, 'sended' => 1])->count();
-        $contactCountAll = Contacts::where('task_group_id', '=', $taskId)->count();
+        $contactCountAll = Contacts::where(['task_group_id', '=', $taskId, 'sended' => '0'])->count();
 
         return json_encode([
             'success' => true,
