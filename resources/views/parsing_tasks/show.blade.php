@@ -128,6 +128,7 @@
 
 
                             <div id="stat" class="tab-pane well fade">
+                                <h1>Данная табилица еще не функционирует, информация обновляется на результатах</h1>
                                 <table class="table table-bordered">
                                     <thead>
                                     <tr>
@@ -137,15 +138,15 @@
                                     </tr>
                                     <tr>
                                         <th>Тип контакта</th>
-                                        <th>Найдено</th>
+                                        <th>Ожидает рассылки</th>
                                         <th>Разослано</th>
                                     </tr>
                                     </thead>
                                     <tbody>
                                     <tr>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
+                                        <td>VK</td>
+                                        <td><span class=".vk_searched">0</span></td>
+                                        <td><span class=".vk_sended">0</span></td>
                                     </tr>
                                     </tbody>
                                 </table>
