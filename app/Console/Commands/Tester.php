@@ -81,64 +81,14 @@ class Tester extends Command
 
     public function handle()
     {
-        $ids = [];
-        $toInsert = [];
-        $search = SearchQueries::all();
-        foreach ($search as $item) {
-            $ids[] = str_replace("https://vk.com/id", "", $item->link);
-            if (count($ids) > 950) {
-                $vk = new VK();
-                $results = $vk->validateUsers($ids);
-                foreach ($results['response'] as $items) {
-                    $toInsert [] = [
-                        'value' => $items['id'],
-                        'reserved' => 0,
-                        'sended' => 0,
-                        'task_id' => 1,
-                        'type' => Contacts::VK,
-                        'name' => $items['last_name'] . ' ' . $items['first_name'],
-                        'actual_mark' => isset($items['last_seen']) ? $items['last_seen']['time'] : 0,
-                        'city_id' => isset($items['city']) ? $items['city']['id'] : '',
-                        'city_name' => isset($items['city']) ? $items['city']['title'] : '',
-                    ];
-                }
 
-                Contacts::insert($toInsert);
-                $toInsert = [];
-                $ids = [];
-                sleep(1);
-            }
+        $accounts = AccountsData::find(1558); //AccountsData::getSenderAccount(AccountsData::VK);
 
 
-        }
+            $vk = new VK();
 
-        $vk = new VK();
-        $results = $vk->validateUsers($ids);
+            var_dump($vk->setAccount($accounts));
 
-        foreach ($results['response'] as $items) {
-            $toInsert [] = [
-                'value' => $items['id'],
-                'reserved' => 0,
-                'sended' => 0,
-                'task_id' => 1,
-                'type' => Contacts::VK,
-                'name' => $items['last_name'] . ' ' . $items['first_name'],
-                'actual_mark' => isset($items['last_seen']) ? $items['last_seen']['time'] : 0,
-                'city_id' => isset($items['city']) ? $items['city']['id'] : '',
-                'city_name' => isset($items['city']) ? $items['city']['title'] : '',
-            ];
-        }
-
-        Contacts::insert($toInsert);
-        $toInsert = [];
-
-//        $accounts = AccountsData::where('is_sender', '=', 1)->get(); //AccountsData::getSenderAccount(AccountsData::VK);
-//
-//        foreach ($accounts as $account) {
-//            $vk = new VK();
-//            var_dump($vk->setAccount($account));
-//            $vk->setUnReserved()->save();
-//        }
 //        $vk->sendMessage("115035415", "Хватит копить, пора покупать! HYUNDAI SOLARIS за 6000 руб/ в месяц.
 //Выгодная программа HYUNDAI СТАРТ.
 //Новый Solaris от 559 000 руб. Выгода до 300 000 руб в РОЛЬФ Лахта. +7(812)424-6293

@@ -84,12 +84,12 @@ class VK
 
     private function checkData($data)
     {
-        if (strpos($data, "login_blocked_wrap") === true) {
+        if (strpos($data, "login_blocked_wrap") > 2) {
             $this->setInvalid()->save();
             return false;
         }
 
-        if (strpos($data, "заблокиров") !== false || $data == "") {
+        if (strpos($data, "заблокиров") > 2 || $data == "") {
             $this->setInvalid()->save();
             return false;
         }
@@ -100,7 +100,7 @@ class VK
     private function request($method, $url, $options = [])
     {
         $data = $this->client->request($method, $url, $options);
-       // $this->incrementRequest();
+        // $this->incrementRequest();
         return $data;
     }
 
@@ -124,9 +124,9 @@ class VK
     {
         $this->needLogin = true;
         $this->accountData = $account;
-       // $this->setReserved()->save();
         $this->cookies = $this->accountData->getCookies();
         $this->proxyString = $this->accountData->getProxy();
+
         if (isset($this->cookies)) {
             $this->needLogin = false;
             if (is_array($this->cookies)) {
@@ -157,7 +157,7 @@ class VK
             'proxy' => $this->proxyString,
         ]);
 
-        if (isset($array) && count($array) > 2) {
+        if (isset($array) && count($array) > 0) {
             if (!$this->checkLogin()) {
                 return false;
             }
