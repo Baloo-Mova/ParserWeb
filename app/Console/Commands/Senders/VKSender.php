@@ -129,7 +129,7 @@ class VKSender extends Command
                 }
 
                 $this->account->actionDone();
-             
+
             } catch (\Exception $ex) {
 
                 if (isset($this->account)) {
