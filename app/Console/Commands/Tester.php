@@ -12,6 +12,7 @@ use App\Models\Proxy;
 use App\Models\SearchQueries;
 use App\Models\SkypeLogins;
 use App\Models\Tasks;
+use Carbon\Carbon;
 use Faker\Factory;
 use function GuzzleHttp\Psr7\parse_query;
 use Illuminate\Console\Command;
@@ -82,12 +83,7 @@ class Tester extends Command
     public function handle()
     {
 
-        $accounts = AccountsData::find(1558); //AccountsData::getSenderAccount(AccountsData::VK);
-
-
-            $vk = new VK();
-
-            var_dump($vk->setAccount($accounts));
+         dd(Carbon::now()->addSeconds(rand(1 *60* 60 , 2 * 60 * 60)));
 
 //        $vk->sendMessage("115035415", "Хватит копить, пора покупать! HYUNDAI SOLARIS за 6000 руб/ в месяц.
 //Выгодная программа HYUNDAI СТАРТ.
