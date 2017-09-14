@@ -130,6 +130,7 @@ class VKSender extends Command
 
                 $this->account->actionDone();
 
+
             } catch (\Exception $ex) {
 
                 if (isset($this->account)) {
@@ -145,6 +146,8 @@ class VKSender extends Command
                 $log->task_id = VK::VK_SEND_ERROR;
                 $log->save();
             }
+
+            sleep(rand(20, 40));
         }
     }
 

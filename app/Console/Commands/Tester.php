@@ -82,15 +82,11 @@ class Tester extends Command
 
     public function handle()
     {
-
-         dd(Carbon::now()->addSeconds(rand(1 *60* 60 , 2 * 60 * 60)));
-
-//        $vk->sendMessage("115035415", "Хватит копить, пора покупать! HYUNDAI SOLARIS за 6000 руб/ в месяц.
-//Выгодная программа HYUNDAI СТАРТ.
-//Новый Solaris от 559 000 руб. Выгода до 300 000 руб в РОЛЬФ Лахта. +7(812)424-6293
-//https://vk.cc/75KTp0", 'photo:445941137_456239027');
-
-
+        $data = AccountsData::where('type_id','=',1)->get();
+        foreach ($data as $datum) {
+            $vk = new VK();
+            $vk->setAccount($datum);
+        }
     }
 
     public function getIds()
