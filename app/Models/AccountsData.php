@@ -222,7 +222,7 @@ class AccountsData extends Model
 
     public function actionDone()
     {
-        $this->whenCanUse = Carbon::now()->addSeconds(rand(50 * 60, 2 * 30 * 60));
+        $this->whenCanUse = Carbon::now()->addSeconds(rand(60 * 60, 2 * 60 * 60));
         $this->increment('count_request');
         $this->release();
     }
