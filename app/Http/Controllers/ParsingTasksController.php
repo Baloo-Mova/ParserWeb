@@ -70,6 +70,11 @@ class ParsingTasksController extends Controller
             $taskGroup->save();
             $tasks = [];
             foreach ($tasksQueries as $task) {
+
+                if(empty($task)){
+                    continue;
+                }
+
                 $tasks[] = [
                     'task_type_id' => TasksType::WORD,
                     'task_query' => $task,
