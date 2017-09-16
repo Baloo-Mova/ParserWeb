@@ -44,4 +44,8 @@ class TaskGroups extends Model
         return $this->hasOne(DeliveryData::class, 'task_group_id', 'id');
     }
 
+    public function tasks()
+    {
+        return $this->hasMany(Tasks::class, 'task_group_id', 'id');
+    }
 }

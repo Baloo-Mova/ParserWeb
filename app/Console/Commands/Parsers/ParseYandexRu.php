@@ -196,7 +196,6 @@ class ParseYandexRu extends Command
         $valid = true;
 
         foreach ($check as $val) {
-
             if (stripos($url, $val->domain) !== false) {
                 $valid = false;
                 break;

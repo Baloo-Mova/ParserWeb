@@ -69,7 +69,7 @@
                         </div>
                         <div class="tab-content">
 
-                            <div id="result" class="tab-pane well fade in active">
+                            <div id="result" class="tab-pane well fade  in active">
                                 <div>
                                     <span>Обработаных:
                                         <span class="badge bg-success task_result_span_parsed">0</span>
@@ -89,14 +89,14 @@
                                            class="btn btn-primary btn-flat" style="margin-top: -3px;">Экспортировать в
                                             CSV</a>
                                         {{--<form action="{{ route('parsing_tasks.getFromCsv') }}"--}}
-                                              {{--enctype="multipart/form-data" method="post" id="targetForm"--}}
-                                              {{--style="display: inline-block;">--}}
-                                            {{--{{ csrf_field() }}--}}
-                                            {{--<input type="hidden" name="task_id" value="{{ $data->id }}">--}}
-                                            {{--<label for="file-upload" class="custom-file-upload">--}}
-                                                {{--Импортировать из CSV--}}
-                                            {{--</label>--}}
-                                            {{--<input id="file-upload" type="file" disabled name="myfile"/>--}}
+                                        {{--enctype="multipart/form-data" method="post" id="targetForm"--}}
+                                        {{--style="display: inline-block;">--}}
+                                        {{--{{ csrf_field() }}--}}
+                                        {{--<input type="hidden" name="task_id" value="{{ $data->id }}">--}}
+                                        {{--<label for="file-upload" class="custom-file-upload">--}}
+                                        {{--Импортировать из CSV--}}
+                                        {{--</label>--}}
+                                        {{--<input id="file-upload" type="file" disabled name="myfile"/>--}}
                                         {{--</form>--}}
                                     </div>
                                     <hr>
@@ -128,7 +128,7 @@
 
 
                             <div id="stat" class="tab-pane well fade">
-                                <h1>Данная табилица еще не функционирует, информация обновляется на результатах</h1>
+                                <h3> Для обновления данных обновите страницу</h3>
                                 <table class="table table-bordered">
                                     <thead>
                                     <tr>
@@ -143,54 +143,58 @@
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    <tr>
-                                        <td>VK</td>
-                                        <td><span class=".vk_searched">0</span></td>
-                                        <td><span class=".vk_sended">0</span></td>
-                                    </tr>
+                                    @foreach($sendInfo as $info)
+                                        <tr>
+                                            <td>{{\App\Models\Contacts::$types[$info->type]}}</td>
+                                            <td>{{$info->count_need_send}}</td>
+                                            <td>{{$info->count_sended}}</td>
+                                        </tr>
+                                    @endforeach
                                     </tbody>
                                 </table>
                                 <table class="table table-bordered">
                                     <thead>
                                     <tr>
-                                        <th colspan="4">Поиск</th>
+                                        <th colspan="6">Поиск</th>
                                     </tr>
                                     <tr>
-                                        <th>1</th>
+                                        <th>Task Query</th>
                                         <th>Google</th>
-                                        <th>Vk</th>
+                                        <th>Google UA</th>
+                                        <th>VK Groups</th>
+                                        <th>VK News</th>
                                         <th>Ok</th>
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    <tr>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                    </tr>
+                                    @foreach ($taskInfo as $info)
+                                        <tr>
+                                            <td>{{$info->task_query}}</td>
+                                            <td>Обработано <b>{{$info->google_ru_offset}}</b> страниц</td>
+                                            <td>Обработано <b>{{$info->google_ua_offset}}</b> страниц</td>
+                                            <td>
+                                                @if($info->vk_reserved == 1)
+                                                    Обработано
+                                                @else
+                                                    Ожидает обработки
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($info->vk_news_reserved == 1)
+                                                    Обработано
+                                                @else
+                                                    Ожидает обработки
+                                                @endif</td>
+                                            <td>
+                                                @if($info->ok_reserved == 0)
+                                                    Ожидает обработки
+                                                @else
+                                                    Обработано страниц <b>{{ $info->ok_offset - 1 }}</b>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
                                     </tbody>
-                                    <tfoot>
-                                    <tr>
-                                        <td colspan="4">
-                                            <div class="statistics_white_block">
-
-                                            </div>
-                                            <p class="statistics_description_p"> - ожидает</p>
-                                            <div class="clearfix"></div>
-                                            <div class="statistics_yellow_block">
-
-                                            </div>
-                                            <p class="statistics_description_p"> - в процессе</p>
-                                            <div class="clearfix"></div>
-                                            <div class="statistics_green_block">
-
-                                            </div>
-                                            <p class="statistics_description_p"> - завершенные</p>
-                                            <div class="clearfix"></div>
-                                        </td>
-                                    </tr>
-                                    </tfoot>
                                 </table>
                             </div>
 

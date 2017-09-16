@@ -116,7 +116,7 @@ class Proxy extends Model
         'valid',
     ];
     private $reservedFor = "";
-
+    private $proxyToReturn;
     /**
      * @param $type
      *
@@ -124,9 +124,11 @@ class Proxy extends Model
      */
     public static function getProxy($type, $proxy_id = 0)
     {
+
+
+
+
         $proxy = null;
-
-
         if ($proxy_id == 0) {
             DB::transaction(function () use ($type, &$proxy) {
                 $proxy = static::where([

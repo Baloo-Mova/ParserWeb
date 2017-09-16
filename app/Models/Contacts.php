@@ -43,6 +43,15 @@ class Contacts extends Model
     const OK = 5;
     const FB = 6;
 
+    public static $types = [
+        '1' => "Mails",
+        '2' => "Phones",
+        '3' => "Skypes",
+        '4' => "VK",
+        '5' => "OK",
+        '6' => "FB"
+    ];
+
     public $timestamps = false;
     public $table = "contacts";
 

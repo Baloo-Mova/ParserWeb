@@ -28,6 +28,16 @@ class ErrorLog extends Model
 
     public $table = "errors";
     public $fillable = [
-        'message'
+        'message',
+        'task_id'
     ];
+
+
+    public static function createLog($error, $who)
+    {
+        self::create([
+            'message' => $error->getMessage(),
+            'task_id' => $who . " " . $error->getLine()
+        ]);
+    }
 }

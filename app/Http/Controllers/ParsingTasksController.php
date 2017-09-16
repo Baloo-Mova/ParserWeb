@@ -47,6 +47,7 @@ class ParsingTasksController extends Controller
     {
         $taskTypeId = $request->get('task_type_id');
         $tasksQueries = $request->get('task_query');
+        $site_list = $request->get('site_list');
 
         if ($taskTypeId == 1 && empty($tasksQueries)) {
             Toastr::error("Вы не указали поисковые запросы!");
@@ -86,7 +87,6 @@ class ParsingTasksController extends Controller
                 $tasks = [];
             }
         } else {
-            $site_list = $request->get('site_list');
             $taskGroup->name = "Список сайтов";
             $taskGroup->save();
 
@@ -134,16 +134,21 @@ class ParsingTasksController extends Controller
             abort(404);
         }
 
+
         $tasks = $task->getTenTasks->toArray();
+        $sendInfo = Contacts::selectRaw('sum(sended = 1) as count_sended, sum(sended = 0) as count_need_send, type')->groupBy('type')->where('task_group_id', '=', $task->id)->get();
+        $taskInfo = $task->tasks;
         return view('parsing_tasks.show', [
             'data' => $task,
             'send' => json_decode($task->deliveryData->payload, true),
+            'taskInfo' => $taskInfo,
+            'sendInfo' => $sendInfo
         ]);
     }
 
     public function start($id)
     {
-        $task = Tasks::whereId($id)->first();
+        $task = TaskGroups::whereId($id)->first();
         $task->active_type = 1;
         $task->save();
 

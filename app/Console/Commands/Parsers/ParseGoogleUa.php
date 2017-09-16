@@ -8,6 +8,7 @@ use App\Models\Parser\SiteLinks;
 use App\Models\Tasks;
 use App\Models\TasksType;
 use App\Helpers\SimpleHtmlDom;
+use GuzzleHttp\Client;
 use Illuminate\Console\Command;
 use App\Models\IgnoreDomains;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,22 @@ use malkusch\lock\mutex\FlockMutex;
 class ParseGoogleUa extends Command
 {
 
-    public $content;
+    /**
+     * @var Tasks
+     */
+    public $task = null;
+    public $countRequests = 0;
+
+
+    /**
+     * @var Proxy
+     */
+    public $proxy = null;
+
+    /**
+     * @var Client
+     */
+    public $client = null;
     /**
      * The name and signature of the console command.
      *
@@ -49,131 +65,145 @@ class ParseGoogleUa extends Command
      */
     public function handle()
     {
-
         while (true) {
-            try {
-                sleep(random_int(10, 15));
-                $proxy = null;
-                $this->content['task'] = null;
-                $mutex = new FlockMutex(fopen(__FILE__, "r"));
-                $mutex->synchronized(function () {
-                    $task = Tasks::where([
-                        'task_type_id' => TasksType::WORD,
-                        'google_ua_reserved' => 0,
-                        'active_type' => 1
-                    ])->first();
+            $this->countRequests = 0;
+            $this->proxy = null;
+            $this->task = null;
+            $mutex = new FlockMutex(fopen(__FILE__, "r"));
+            $mutex->synchronized(function () {
+                $this->task = Tasks::where([
+                    'tasks.task_type_id' => TasksType::WORD,
+                    'tasks.google_ua_reserved' => 0,
+                    'task_groups.active_type' => 1,
+                ])->join('task_groups', 'task_groups.id', '=', 'tasks.task_group_id')->select(["tasks.*"])->first();
 
-                    if (!isset($task)) {
-                        return;
-                    }
-
-                    $task->google_ua_reserved = 1;
-                    $task->save();
-                    $this->content['task'] = $task;
-                });
-
-                if (!isset($this->content['task'])) {
-                    sleep(10);
-                    continue;
+                if (!isset($this->task)) {
+                    return;
                 }
-            } catch (Exception $exception) {
+                $this->task->google_ua_reserved = 1;
+                $this->task->save();
 
+            });
+
+
+            if (!isset($this->task)) {
+                sleep(10);
+                continue;
             }
+
             $ignore = IgnoreDomains::all();
-            try {
-                $web = new Web();
-                $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
-                $sitesCountNow = 0;
-                $sitesCountWas = 0;
-                $proxy = Proxy::getProxy(Proxy::Google);
-                if (!isset($proxy)) {
-                    sleep(random_int(5, 10));
-                    continue;
+            $web = new Web();
+            $crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
+            $sitesCountNow = 0;
+            $sitesCountWas = 0;
+
+            $mutex = new FlockMutex(fopen(__FILE__, "r"));
+            $mutex->synchronized(function () {
+                $this->proxy = Proxy::where([
+                    'google_reserved' => 0,
+                ])->inRandomOrder()->first();
+                if (isset($this->proxy)) {
+                    $this->proxy->google_reserved = 1;
+                    $this->proxy->save();
                 }
-                $i = $this->content['task']->google_ua_offset;
-                do {
+            });
 
-                    $data = "";
-                    while (strlen($data) < 200) {
+            if (!isset($this->proxy)) {
+                Proxy::update([
+                    'google_reserved' => 0,
+                ]);
 
-                        $data = $web->get("https://www.google.com.ua/search?q=" . urlencode($this->content['task']->task_query) . "&start=" . $i * 10,
-                            $proxy);
-                        $proxy->inc();
-                        if (true) {
-                            $proxy->release();
-                            $proxy = Proxy::getProxy(Proxy::Google);
-                        }
-                        if ($data == "NEED_NEW_PROXY") {
-                            while (true) {
-                                $proxy->release();
-                                $proxy = Proxy::getProxy(Proxy::Google);
-                                if (isset($proxy)) {
-                                    break;
-                                }
-                                sleep(10);
-                            }
+                $this->task->google_ua_reserved = 0;
+                $this->task->save();
+
+                sleep(10);
+                continue;
+            }
+
+            $i = $this->task->google_ua_offset;
+            $this->client = new Client([
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
+                    'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+                ],
+                'verify' => false,
+                'cookies' => true,
+                'allow_redirects' => true,
+                'timeout' => 10,
+            ]);
+
+            do {
+                if ($this->countRequests > 4) {
+                    $this->countRequests = 0;
+                    $this->task->google_ua_reserved = 0;
+                    $this->task->save();
+                    break;
+                }
+
+                $data = "";
+                try {
+                    while (true) {
+                        $data = $this->client->get("https://www.google.com.ua/search?q=" . urlencode($this->task->task_query) . "&start=" . $i * 10, [
+                            'proxy' => $this->proxy->generateString()
+                        ])->getBody()->getContents();
+
+                        $this->countRequests++;
+
+                        if (strlen($data) < 200) {
+                            sleep(rand(60, 120));
+                        } else {
+                            break;
                         }
                     }
-                    $sitesCountWas = $sitesCountNow;
-                    $crawler->clear();
-                    $crawler->load($data);
-                    foreach ($crawler->find('.r') as $item) {
+                } catch (\Exception $ex) {
+                    ErrorLog::createLog($ex, self::class);
+                }
+
+
+                $sitesCountWas = $sitesCountNow;
+                $crawler->clear();
+                $crawler->load($data);
+
+                foreach ($crawler->find('.r') as $item) {
+                    try {
                         $link = $item->find('a', 0);
                         if (isset($link) && !empty($link->href)) {
                             if ($this->validate($link->href, $ignore)) {
-                                $data = parse_url($link->href, PHP_URL_HOST);
+                                $url_host = parse_url($link->href, PHP_URL_HOST);
                                 $tmp = SiteLinks::where([
-                                    ['task_id', '=', trim($this->content['task']->id)],
-                                    ['link', 'like', '%' . $data . '%']
+                                    ['task_group_id', '=', $this->task->task_group_id],
+                                    ['link', 'like', '%' . $url_host . '%']
                                 ])->first();
                                 if (!isset($tmp)) {
                                     SiteLinks::insert([
                                         'link' => $link->href,
-                                        'link' => $link->href,
-                                        'task_id' => $this->content['task']->id,
+                                        'task_id' => $this->task->id,
+                                        'task_group_id' => $this->task->task_group_id,
                                         'reserved' => 0
                                     ]);
                                 }
                             }
                             $sitesCountNow++;
                         }
+                    } catch (\Exception $exception) {
+                        ErrorLog::createLog($exception, self::class);
                     }
-
-                    $i++;
-                    $task = Tasks::where('id', '=', $this->content['task']->id)->first();
-                    if (isset($task)) {
-                        $task->google_ua_offset = $i;
-                        $task->save();
-                        if ($task->active_type == 2) {
-                            $task->google_ua_reserved = 0;
-                            $task->save();
-                            break;
-                        }
-                    } else {
-                        break;
-                    }
-                    sleep(rand(30, 60));
-                } while ($sitesCountNow > $sitesCountWas);
-            } catch (\Exception $ex) {
-                $log = new ErrorLog();
-                $log->task_id = $this->content['task']->id;
-                $log->message = $ex->getMessage() . " line:" . __LINE__;
-                $log->save();
-            } finally {
-                if (isset($proxy)) {
-                    $proxy->release();
                 }
-            }
+
+                $i++;
+                $this->task->google_ua_offset = $i;
+                $this->task->save();
+                sleep(rand(10, 20));
+            } while ($sitesCountNow > $sitesCountWas);
         }
     }
 
     public function validate($url, $check)
     {
-
         $valid = true;
-
         foreach ($check as $val) {
-
             if (stripos($url, $val->domain) !== false) {
                 $valid = false;
                 break;
