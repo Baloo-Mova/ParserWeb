@@ -168,7 +168,7 @@ class SettingsController extends Controller
         } catch (\Supervisor\ApiException $e) {
 
         }
-        $processtmp = $supervisor->getProcessInfo($process->name);
+        //$processtmp = $supervisor->getProcessInfo($process->name);
 
         //$process->statename = "RUNNING";
         //$process->save();
