@@ -45,7 +45,7 @@ class OK
         $this->cookies = $this->accountData->getCookies();
         $this->gwt = $this->accountData->getParam('gwt');
         $this->tkn = $this->accountData->getParam('tkn');
-        $this->proxyString = "127.0.0.1:8888";// $this->accountData->getProxy();
+        $this->proxyString = $this->accountData->getProxy();
         if (isset($this->cookies)) {
             $this->needLogin = false;
             if (is_array($this->cookies)) {

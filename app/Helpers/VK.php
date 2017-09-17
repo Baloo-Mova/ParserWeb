@@ -159,7 +159,7 @@ class VK
             'cookies' => isset($array) && count($array) > 2 ? $array : true,
             'allow_redirects' => true,
             'timeout' => 15,
-            'proxy' => "127.0.0.1:8888"// $this->proxyString,
+            'proxy' =>  $this->proxyString,
         ]);
 
         if (isset($array) && count($array) > 0) {
