@@ -4,6 +4,8 @@ namespace App\Helpers;
 
 use App\Models\Parser\ErrorLog;
 use App\Models\Proxy;
+use App\Models\Tasks;
+use App\Models\VKNews;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
@@ -15,7 +17,6 @@ use App\Models\AccountsData;
 use App\Models\Parser\VKLinks;
 use App\Helpers\SimpleHtmlDom;
 use App\Models\SearchQueries;
-use App\Models\Proxy as ProxyItem;
 use App\Models\ProxyTemp;
 use App\Models\UserNames;
 use App\Helpers\PhoneNumber;
@@ -30,6 +31,10 @@ class VK
     const VK_USER_ERROR = 140004;
     const VK_SEND_ERROR = 140005;
 
+
+    /**
+     * @var Proxy
+     */
     public $cur_proxy;
     public $proxy_arr;
     public $proxy_string;
@@ -305,7 +310,7 @@ class VK
                     'proxy' => $proxy,
                 ]);
                 $data = $request->getBody()->getContents();
-                //dd($data);
+
                 if (!empty($data) && $request->getStatusCode() == "200") {
                     return $data;
                 }
@@ -334,12 +339,10 @@ class VK
         }
     }
 
-    public
-    function getGroups($find, $task_id)
+    public function getGroups($task)
     {
         while (true) {
             $proxy = null;
-
             $mutex = new FlockMutex(fopen(__FILE__, "r"));
             $mutex->synchronized(function () {
                 try {
@@ -399,21 +402,23 @@ class VK
             if (!isset($this->apiKey)) {
                 $sender->valid = -2;
                 $sender->save();
+                continue;
             }
 
             $result = $this->requestToApi('groups.search', [
                 'access_token' => $this->apiKey,
-                'q' => $find,
+                'q' => $task->task_query,
                 'count' => 1000,
                 'offset' => 0
             ]);
 
-            if (!isset($result['response'])) {
 
+            if (!isset($result['response'])) {
                 $errror = new ErrorLog();
                 $errror->message = json_encode($result);
                 $errror->task_id = 1234567;
                 $errror->save();
+
                 $sender->reserved = 0;
                 $sender->valid = 0;
                 $sender->save();
@@ -421,11 +426,13 @@ class VK
             }
 
             $data = [];
-            if ($result['response']['count'] > 0) {
+            $dataCount = $result['response']['count'];
+            if ($dataCount > 0) {
                 foreach ($result['response']['items'] as $item) {
                     $data[] = [
                         'vkuser_id' => $item['id'],
-                        'task_id' => $task_id,
+                        'task_id' => $task->id,
+                        'task_group_id' => $task->task_group_id,
                         'type' => 0,
                         'link' => "https://vk.com/club" . $item['id']
                     ];
@@ -435,11 +442,12 @@ class VK
                     VKLinks::insert($data);
                 } catch (\Exception $ex) {
                     $err = new ErrorLog();
-                    $err->message = $ex->getMessage() . " line:" . $ex->getLine() . "  find_WORD: " . $find;
+                    $err->message = $ex->getMessage() . " line:" . $ex->getLine() . "  find_WORD: " . $task->task_query;
                     $err->task_id = self::VK_PARSE_ERROR;
                     $err->save();
                 }
             }
+
 
             $sender->reserved = 0;
             $sender->count_request++;
@@ -449,8 +457,7 @@ class VK
         }
     }
 
-    private
-    function requestToApi($method, $fields)
+    private function requestToApi($method, $fields)
     {
         $fields['v'] = '5.64';
         $data = "";
@@ -472,21 +479,27 @@ class VK
         }
     }
 
-    public
-    function parseUsers(VKLinks $group)
+    public function parseUsers(VKLinks $group)
     {
         while (true) {
             try {
-                $this->cur_proxy = ProxyItem::where([
-                    ['vk', '>', -1],
-                    ['valid', '=', 1]
+                $this->cur_proxy = Proxy::where([
+                    ['vk_reserved', '=', 0],
                 ])->inRandomOrder()->first();
+
                 if (!isset($this->cur_proxy)) {
+
+                    Proxy::update([
+                        'vk_reserved' => 0,
+                    ]);
+
                     sleep(random_int(5, 10));
                     continue;
                 }
 
-                $this->proxy_arr = parse_url($this->cur_proxy->proxy);
+                $this->cur_proxy->vk_reserved = 1;
+                $this->cur_proxy->save();
+
                 $this->client = new Client([
                     'headers' => [
                         'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
@@ -498,7 +511,7 @@ class VK
                     'cookies' => true,
                     'allow_redirects' => true,
                     'timeout' => 10,
-                    'proxy' => $this->proxy_arr['scheme'] . "://" . $this->cur_proxy->login . ':' . $this->cur_proxy->password . '@' . $this->proxy_arr['host'] . ':' . $this->proxy_arr['port'],
+                    'proxy' => $this->cur_proxy->generateString()
                 ]);
 
                 $canRun = true;
@@ -543,46 +556,81 @@ class VK
                         $phones = $this->filterPhoneArray($phones);
 
                         foreach ($phones as $phone) {
-                            $array[] = [
-                                'value' => $phone,
-                                'task_id' => $group->task_id,
-                                'type' => Contacts::PHONES
-                            ];
+                            $isset = Contacts::where([
+                                ['value', '=', $phone],
+                                ['type', '=', Contacts::PHONES],
+                                ['task_group_id', '=', $group->task_group_id]
+                            ])->first();
+
+                            if (!isset($isset)) {
+                                Contacts::insert([
+                                    'value' => $phone,
+                                    'name' => $name,
+                                    'city_id' => $city_id,
+                                    'city_name' => $city,
+                                    'task_id' => $group->task_id,
+                                    'task_group_id' => $group->task_group_id,
+                                    'type' => Contacts::PHONES
+                                ]);
+                            }
                         }
 
                         $searchQueriesContacts['phones'] = $phones;
 
                         foreach ($skypes as $skype) {
-                            $array[] = [
-                                'value' => $skype,
-                                'task_id' => $group->task_id,
-                                'type' => Contacts::SKYPES
-                            ];
+                            $isset = Contacts::where([
+                                ['value', '=', $skype],
+                                ['type', '=', Contacts::SKYPES],
+                                ['task_group_id', '=', $group->task_group_id]
+                            ])->first();
+
+                            if (!isset($isset)) {
+                                Contacts::insert([
+                                    'value' => $skype,
+                                    'name' => $name,
+                                    'city_id' => $city_id,
+                                    'city_name' => $city,
+                                    'task_id' => $group->task_id,
+                                    'task_group_id' => $group->task_group_id,
+                                    'type' => Contacts::SKYPES
+                                ]);
+                            }
                         }
+
                         $searchQueriesContacts['skypes'] = $skypes;
 
                         if ($item["can_write_private_message"] == 1) {
-                            $array[] = [
-                                'value' => $item['id'],
-                                'task_id' => $group->task_id,
-                                'type' => Contacts::VK
-                            ];
+                            $isset = Contacts::where([
+                                ['value', '=', $item['id']],
+                                ['type', '=', Contacts::VK],
+                                ['task_group_id', '=', $group->task_group_id]
+                            ])->first();
+
+                            if (!isset($isset)) {
+                                Contacts::insert([
+                                    'value' => $item['id'],
+                                    'name' => $name,
+                                    'city_id' => $city_id,
+                                    'city_name' => $city,
+                                    'task_id' => $group->task_id,
+                                    'task_group_id' => $group->task_group_id,
+                                    'type' => Contacts::VK
+                                ]);
+                            }
+
                             $searchQueriesContacts['vk_id'] = $item['id'];
                         }
 
                         $skArray[] = [
                             'link' => 'https://vk.com/id' . $item['id'],
                             'name' => $name,
+                            'contact_from' => 'https://vk.com/club' . $group->vkuser_id,
                             'city' => $city,
                             'city_id' => $city_id,
                             'contact_data' => json_encode($searchQueriesContacts),
-                            'task_id' => $group->task_id
+                            'task_id' => $group->task_id,
+                            'task_group_id' => $group->task_group_id
                         ];
-                    }
-
-                    if (count($array) > 0) {
-                        Contacts::insert($array);
-                        $array = [];
                     }
 
                     if (count($skArray) > 0) {
@@ -607,7 +655,348 @@ class VK
         }
     }
 
-    public function validateUsers($users)
+    public function parseNews(Tasks $task)
+    {
+        while (true) {
+            $proxy = null;
+            $mutex = new FlockMutex(fopen(__FILE__, "r"));
+            $mutex->synchronized(function () {
+                try {
+                    $sender = AccountsData::where([
+                        ['type_id', '=', 1],
+                        ['valid', '=', 1],
+                        ['is_sender', '=', 0],
+                        ['reserved', '=', 0]
+                    ])->orderBy('count_request', 'asc')->first();
+
+                    if (!isset($sender)) {
+                        return;
+                    }
+
+                    $sender->reserved = 1;
+                    $sender->save();
+
+                    $this->accountData = $sender;
+                } catch (\Exception $ex) {
+                    $error = new ErrorLog();
+                    $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                    $error->task_id = self::VK_ACCOUNT_ERROR;
+                    $error->save();
+                }
+            });
+
+            $sender = $this->accountData;
+            if (!isset($sender)) {
+                sleep(random_int(5, 10));
+                continue;
+            }
+
+            $proxy = $sender->getProxy();
+            if (!isset($proxy)) {
+                $sender->release();
+                sleep(random_int(5, 10));
+                continue;
+            }
+
+            $this->client = new Client([
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
+                    'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+                ],
+                'verify' => false,
+                'cookies' => true,
+                'allow_redirects' => true,
+                'timeout' => 10,
+                'proxy' => $proxy
+            ]);
+
+
+            $this->apiKey = $sender->getApiKey();
+            if (!isset($this->apiKey)) {
+                $sender->valid = -2;
+                $sender->save();
+                continue;
+            }
+
+            $i = 0;
+            $next = "";
+            while (true) {
+                if ($i > 1000) {
+                    break;
+                }
+
+                $result = $this->requestToApi('newsfeed.search', [
+                    'access_token' => $this->apiKey,
+                    'q' => $task->task_query,
+                    'count' => 200,
+                    'start_from' => $next
+                ]);
+
+                $next = isset($result['response']['next_from']) ? $result['response']['next_from'] : "";
+
+                $i += 200;
+
+                if (!isset($result['response'])) {
+                    $errror = new ErrorLog();
+                    $errror->message = json_encode($result);
+                    $errror->task_id = 1234567;
+                    $errror->save();
+
+                    $sender->reserved = 0;
+                    $sender->valid = 0;
+                    $sender->save();
+                    return false;
+                }
+
+                $data = [];
+                $dataCount = count($result['response']['items']);
+                if ($dataCount > 0) {
+                    foreach ($result['response']['items'] as $item) {
+                        if (isset($item['likes']['count']) && $item['likes']['count'] > 0 && $item['post_type'] == "post") {
+                            $data[] = [
+                                'task_id' => $task->id,
+                                'task_group_id' => $task->task_group_id,
+                                'post_id' => $item['id'],
+                                'owner_id' => $item['owner_id']
+                            ];
+                        }
+                    }
+
+                    try {
+                        VKNews::insert($data);
+                    } catch (\Exception $ex) {
+                        $err = new ErrorLog();
+                        $err->message = $ex->getMessage() . " line:" . $ex->getLine() . "  find_WORD: " . $task->task_query;
+                        $err->task_id = self::VK_PARSE_ERROR;
+                        $err->save();
+                    }
+                } else {
+                    break;
+                }
+                sleep(2);
+            }
+
+            $sender->reserved = 0;
+            $sender->count_request++;
+            $sender->save();
+
+            return true;
+        }
+    }
+
+
+    public function parseLikes($task)
+    {
+        while (true) {
+            try {
+                $mutex = new FlockMutex(fopen(__FILE__, "r"));
+                $mutex->synchronized(function () {
+                    try {
+                        $sender = AccountsData::where([
+                            ['type_id', '=', 1],
+                            ['valid', '=', 1],
+                            ['is_sender', '=', 0],
+                            ['reserved', '=', 0]
+                        ])->orderBy('count_request', 'asc')->first();
+
+                        if (!isset($sender)) {
+                            return;
+                        }
+
+                        $sender->reserved = 1;
+                        $sender->save();
+
+                        $this->accountData = $sender;
+                    } catch (\Exception $ex) {
+                        $error = new ErrorLog();
+                        $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                        $error->task_id = self::VK_ACCOUNT_ERROR;
+                        $error->save();
+                    }
+                });
+
+                $sender = $this->accountData;
+                if (!isset($sender)) {
+                    sleep(random_int(5, 10));
+                    continue;
+                }
+
+                $proxy = $sender->getProxy();
+                if (!isset($proxy)) {
+                    $sender->release();
+                    sleep(random_int(5, 10));
+                    continue;
+                }
+
+                $this->client = new Client([
+                    'headers' => [
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
+                        'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
+                        'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+                    ],
+                    'verify' => false,
+                    'cookies' => true,
+                    'allow_redirects' => true,
+                    'timeout' => 10,
+                    'proxy' => $proxy
+                ]);
+
+
+                $this->apiKey = $sender->getApiKey();
+                if (!isset($this->apiKey)) {
+                    $sender->valid = -2;
+                    $sender->save();
+                    continue;
+                }
+
+
+                $response = $this->requestToApi('likes.getList', [
+                    'access_token' => $this->apiKey,
+                    'type' => 'post',
+                    'owner_id' => $task->owner_id,
+                    'item_id' => $task->post_id,
+                    'friends_only' => 0,
+                    'count' => 1000,
+                    'filter' => 'likes',
+                    'extended' => 1,
+                    'fields' => 'can_write_private_message,connections,contacts,city,deactivated'
+                ]);
+
+
+                $users = $response["response"]["items"];
+                $array = [];
+                $skArray = [];
+                foreach ($users as $item) {
+                    $skypes = [];
+                    $phones = [];
+                    $city = "";
+                    $city_id = 0;
+                    $name = $item["first_name"] . " " . $item["last_name"];
+                    $searchQueriesContacts = [];
+
+                    if (isset($item["deactivated"])) {
+                        continue;
+                    }
+
+                    if (isset($item["home_phone"])) {
+                        $phones[] = $item["home_phone"];
+                    }
+                    if (isset($item["mobile_phone"])) {
+                        $phones[] = $item["mobile_phone"];
+                    }
+                    if (isset($item["skype"])) {
+                        $skypes[] = $item["skype"];
+                    }
+                    if (isset($item["city"])) {
+                        $city = $item["city"]["title"];
+                        $city_id = $item['city']['id'];
+                    }
+
+                    $phones = $this->filterPhoneArray($phones);
+
+                    foreach ($phones as $phone) {
+                        $isset = Contacts::where([
+                            ['value', '=', $phone],
+                            ['type', '=', Contacts::PHONES],
+                            ['task_group_id', '=', $task->task_group_id]
+                        ])->first();
+
+                        if (!isset($isset)) {
+                            Contacts::insert([
+                                'value' => $phone,
+                                'name' => $name,
+                                'city_id' => $city_id,
+                                'city_name' => $city,
+                                'task_id' => $task->task_id,
+                                'task_group_id' => $task->task_group_id,
+                                'type' => Contacts::PHONES
+                            ]);
+                        }
+                    }
+
+                    $searchQueriesContacts['phones'] = $phones;
+
+                    foreach ($skypes as $skype) {
+                        $isset = Contacts::where([
+                            ['value', '=', $skype],
+                            ['type', '=', Contacts::SKYPES],
+                            ['task_group_id', '=', $task->task_group_id]
+                        ])->first();
+
+                        if (!isset($isset)) {
+                            Contacts::insert([
+                                'value' => $skype,
+                                'name' => $name,
+                                'city_id' => $city_id,
+                                'city_name' => $city,
+                                'task_id' => $task->task_id,
+                                'task_group_id' => $task->task_group_id,
+                                'type' => Contacts::SKYPES
+                            ]);
+                        }
+                    }
+
+                    $searchQueriesContacts['skypes'] = $skypes;
+
+                    if ($item["can_write_private_message"] == 1) {
+                        $isset = Contacts::where([
+                            ['value', '=', $item['id']],
+                            ['type', '=', Contacts::VK],
+                            ['task_group_id', '=', $task->task_group_id]
+                        ])->first();
+
+                        if (!isset($isset)) {
+                            Contacts::insert([
+                                'value' => $item['id'],
+                                'name' => $name,
+                                'city_id' => $city_id,
+                                'city_name' => $city,
+                                'task_id' => $task->task_id,
+                                'task_group_id' => $task->task_group_id,
+                                'type' => Contacts::VK
+                            ]);
+                        }
+
+                        $searchQueriesContacts['vk_id'] = $item['id'];
+                    }
+
+
+                    $isset = SearchQueries::where(['link' => 'https://vk.com/id' . $item['id'], 'task_group_id' => $task->task_group_id])->first();
+                    if (!isset($isset)) {
+                        SearchQueries::insert([
+                            'link' => 'https://vk.com/id' . $item['id'],
+                            'name' => $name,
+                            'contact_from' => 'https://vk.com/wall' . $task->owner_id . '_' . $task->post_id,
+                            'city' => $city,
+                            'city_id' => $city_id,
+                            'contact_data' => json_encode($searchQueriesContacts),
+                            'task_id' => $task->task_id,
+                            'task_group_id' => $task->task_group_id
+                        ]);
+                    }
+                }
+
+                $sender->reserved = 0;
+                $sender->count_request++;
+                $sender->save();
+
+                return true;
+            } catch (\Exception $ex) {
+                $error = new ErrorLog();
+                $error->message = $ex->getMessage() . " Line: " . $ex->getLine() . " ";
+                $error->task_id = 8888;
+                $error->save();
+            }
+        }
+
+        return false;
+    }
+
+    public
+    function validateUsers($users)
     {
         $proxy = Proxy::inRandomOrder()->first();
         $this->client = new Client([

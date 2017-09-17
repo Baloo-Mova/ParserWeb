@@ -61,6 +61,9 @@ class Contacts extends Model
         'sended',
         'type',
         'task_id',
+        'name',
+        'city_id',
+        'city_name',
     ];
 
     public function reserve()

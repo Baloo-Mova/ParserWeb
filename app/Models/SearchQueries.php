@@ -31,6 +31,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $tw_sended
  * @property int $tw_reserved
  * @property string $fb_id
+ * @property string $contact_from
  * @property int $fb_sended
  * @property int $fb_reserved
  * @property string $ins_user_id
@@ -71,6 +72,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\SearchQueries whereCityId($value)
  * @property int $task_group_id
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\SearchQueries whereTaskGroupId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\SearchQueries whereContactFrom($value)
  */
 class SearchQueries extends Model
 {
@@ -82,6 +84,7 @@ class SearchQueries extends Model
         'link',
         'name',
         'city',
+        'contact_from',
         'contact_data',
         'city_id',
         'task_group_id',

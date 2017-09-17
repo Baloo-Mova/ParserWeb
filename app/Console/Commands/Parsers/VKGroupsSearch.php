@@ -15,7 +15,10 @@ use malkusch\lock\mutex\FlockMutex;
 
 class VKGroupsSearch extends Command
 {
-    public $content;
+    /**
+     * @var Tasks
+     */
+    public $task;
     /**
      * The name and signature of the console command.
      *
@@ -48,42 +51,40 @@ class VKGroupsSearch extends Command
     public function handle()
     {
         while (true) {
-            $this->content['task'] = null;
-
+            $this->task = null;
             $mutex = new FlockMutex(fopen(__FILE__, "r"));
             $mutex->synchronized(function () {
-                $task = Tasks::where([
-                    ['task_type_id', '=', 1],
-                    ['vk_reserved', '=', 0],
-                    ['active_type', '=', 1],
-                ])->first();
-                if ( ! isset($task)) {
+                $this->task = Tasks::where([
+                    'tasks.task_type_id' => TasksType::WORD,
+                    'tasks.vk_reserved' => 0,
+                    'task_groups.active_type' => 1,
+                ])->join('task_groups', 'task_groups.id', '=', 'tasks.task_group_id')->select(["tasks.*"])->first();
+                if (!isset($this->task)) {
                     return;
                 }
-                $task->vk_reserved = 1;
-                $task->save();
-                $this->content['task'] = $task;
+                $this->task->vk_reserved = 1;
+                $this->task->save();
             });
 
-            if ( ! isset($this->content['task'])) {
+            if (!isset($this->task)) {
                 sleep(10);
                 continue;
             }
 
             try {
                 $web = new VK();
-                if ($web->getGroups($this->content['task']->task_query, $this->content['task']->id)) {
-                    $this->content['task']->vk_reserved = 2;
-                    $this->content['task']->save();
+                if ($web->getGroups($this->task)) {
+                    $this->task->vk_reserved = 2;
+                    $this->task->save();
                 }
             } catch (\Exception $ex) {
-                $log          = new ErrorLog();
-                $log->task_id = $this->content['task']->id;
+                $log = new ErrorLog();
+                $log->task_id = $this->task->id;
                 $log->message = $ex->getMessage() . " line:" . $ex->getLine();
                 $log->save();
             }
 
-            sleep(rand(10,15));
+            sleep(rand(10, 15));
         }
     }
 }

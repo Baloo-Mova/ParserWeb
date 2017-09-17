@@ -40,6 +40,7 @@ class VKLinks extends Model
     public $fillable = [
         'link',
         'task_id',
+        'task_group_id',
         'vkuser_id',
         'type',
         'reserved',

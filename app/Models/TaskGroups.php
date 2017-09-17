@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\TaskGroups whereNeedSend($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\TaskGroups whereUpdatedAt($value)
  * @mixin \Eloquent
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Tasks[] $tasks
  */
 class TaskGroups extends Model
 {

@@ -107,6 +107,7 @@
                                         <tr>
                                             <th class="small__th">#</th>
                                             <th>Link</th>
+                                            <th>From</th>
                                             <th>Name</th>
                                             <th>City</th>
                                             <th>Contact data</th>
@@ -173,14 +174,14 @@
                                             <td>Обработано <b>{{$info->google_ru_offset}}</b> страниц</td>
                                             <td>Обработано <b>{{$info->google_ua_offset}}</b> страниц</td>
                                             <td>
-                                                @if($info->vk_reserved == 1)
+                                                @if($info->vk_reserved == 2)
                                                     Обработано
                                                 @else
                                                     Ожидает обработки
                                                 @endif
                                             </td>
                                             <td>
-                                                @if($info->vk_news_reserved == 1)
+                                                @if($info->vk_news_reserved == 2)
                                                     Обработано
                                                 @else
                                                     Ожидает обработки
@@ -442,6 +443,7 @@
                                     cdata = "",
                                     link = item.link === null ? "" : item.link,
                                     name = item.name === null ? "" : item.name,
+                                    from = item.contact_from === null ? "" : item.contact_from,
                                     city = item.city === null ? "" : item.city,
                                     contacts_data = JSON.parse(item.contact_data);
 
@@ -487,6 +489,7 @@
                                 $(".task_result_table").append("<tr>" +
                                     "<td  data-id='" + item.id + "' data-task-id='" + item.task_id + "' data-list-number='" + ((data.sqCountAll - page_number * 10) + 10 - i ) + "'>" + ((data.sqCountAll - page_number * 10) + 10 - i ) + "</td>" +
                                     "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"" + link + "\">" + link + "</div></td>" +
+                                    "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"" + from + "\">" + from + "</div></td>" +
                                     "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\">" + name + "</div></td>" +
                                     "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"" + city + "\">" + city + "</div></td>" +
                                     "<td width='250px'><div style=\"max-width:500px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"" + cdata + "\">" + cdata + "</div></td>" +

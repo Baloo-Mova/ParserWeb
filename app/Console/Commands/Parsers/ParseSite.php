@@ -187,6 +187,7 @@ class ParseSite extends Command
                                 $res->link = $default_link;
                                 $res->task_id = $link->task_id;
                                 $res->task_group_id = $link->task_group_id;
+                                $res->contact_from = $l;
                                 $res->contact_data = json_encode([
                                     "emails" => $emails,
                                     "phones" => $phones,

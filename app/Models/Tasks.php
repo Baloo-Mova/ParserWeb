@@ -16,6 +16,7 @@ use App\Models\TasksType;
  * @property int $google_ru_offset
  * @property bool $need_send
  * @property int $vk_reserved
+ * @property int $vk_news_reserved
  * @property int $ok_offset
  * @property string $tw_offset
  * @property string $ins_offset
@@ -50,6 +51,7 @@ use App\Models\TasksType;
  * @property int $task_group_id
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Tasks whereGoogleRuReserved($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Tasks whereTaskGroupId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Tasks whereVkNewsReserved($value)
  */
 class Tasks extends Model
 {
@@ -61,6 +63,7 @@ class Tasks extends Model
         'task_query',
         'vk_reserved',
         'fb_reserved',
+        'vk_news_reserved',
         'fb_complete',
         'google_ua_reserved',
         'yandex_ua_reserved',

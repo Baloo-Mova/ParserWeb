@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddLinkContacts extends Migration
+class AddNewsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,13 @@ class AddLinkContacts extends Migration
      */
     public function up()
     {
-        Schema::table('search_queries', function (Blueprint $table) {
-            $table->text('contact_from');
+        Schema::create('vk_news', function (Blueprint $table) {
+            $table->increments('id');
+            $table->integer('task_group_id');
+            $table->integer('post_id');
+            $table->integer('owner_id');
+            $table->integer('task_id');
+            $table->integer('reserved')->default(0);
         });
     }
 

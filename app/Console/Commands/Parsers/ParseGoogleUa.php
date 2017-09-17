@@ -195,7 +195,7 @@ class ParseGoogleUa extends Command
                 $i++;
                 $this->task->google_ua_offset = $i;
                 $this->task->save();
-                sleep(rand(10, 20));
+                sleep(rand(30, 60));
             } while ($sitesCountNow > $sitesCountWas);
         }
     }

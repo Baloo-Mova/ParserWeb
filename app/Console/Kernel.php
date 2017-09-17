@@ -6,6 +6,8 @@ use App\Console\Commands\Parsers\ParseGoogle;
 use App\Console\Commands\Parsers\ParseSite;
 use App\Console\Commands\Parsers\ParseOk;
 use App\Console\Commands\Parsers\ParseOkGroups;
+use App\Console\Commands\Parsers\ParseVKLikes;
+use App\Console\Commands\Parsers\ParseVkNewsfeed;
 use App\Console\Commands\Parsers\Proxy;
 use App\Console\Commands\Parsers\VKGroupsSearch;
 use App\Console\Commands\Parsers\VKGroupsFindUsers;
@@ -80,6 +82,8 @@ class Kernel extends ConsoleKernel
         RegMailru::class,
         RegSkype::class,
         RefreshSenders::class,
+        ParseVkNewsfeed::class,
+        ParseVKLikes::class,
     ];
 
     /**
