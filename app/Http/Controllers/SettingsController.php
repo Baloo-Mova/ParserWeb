@@ -43,7 +43,7 @@ class SettingsController extends Controller
                 $dbproc->save();
             }
             // dd($processes);
-            $processes = Processes::where(['statename' => 'RUNNING'])->orwhere(['statename' => 'STARTING'])->orderBy('id',
+            $processes = Processes::where(['statename' => 'RUNNING'])->orwhere(['statename' => 'STARTING'])->orderBy('name',
                 'desc')->get();
 
             $windows = false;
