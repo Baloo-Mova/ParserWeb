@@ -8,6 +8,7 @@ use App\Models\Parser\SiteLinks;
 use App\Models\SearchQueries;
 use App\Models\Tasks;
 use App\Models\TasksType;
+use App\Models\VKNews;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Parser\VKLinks;
@@ -162,6 +163,7 @@ class APIController extends Controller
         }
         $sqCountQueue = SiteLinks::where('task_group_id', '=', $taskId)->count() +
             VKLinks::where('task_group_id', '=', $taskId)->count() +
+            VKNews::where('task_group_id', '=', $taskId)->count()+
             OkGroups::where('task_group_id', '=', $taskId)->count();
         $sqCountAll = SearchQueries::where('task_group_id', '=', $taskId)->count();
 
