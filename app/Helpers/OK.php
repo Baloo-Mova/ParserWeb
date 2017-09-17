@@ -184,10 +184,13 @@ class OK
         return $data;
     }
 
-    public function search($task){
+    public function search($task)
+    {
         $this->task = $task;
 
+        $groups_data = $this->client->post('https://ok.ru/search?st.mode=Groups&st.query=' . urlencode($task->task_query) . '&st.grmode=Groups&st.posted=set&gwt.requested=' . $this->gwt);
 
+        dd($groups_data);
     }
 
     private function login()

@@ -71,7 +71,7 @@ class ParsingTasksController extends Controller
             $tasks = [];
             foreach ($tasksQueries as $task) {
 
-                if(empty($task)){
+                if (empty($task)) {
                     continue;
                 }
 
@@ -388,10 +388,8 @@ class ParsingTasksController extends Controller
     public function testingDeliveryMails()
     {
         $user_id = Auth::user()->id;
-        $email_templates = EmailTemplates::where(['user_id' => $user_id])->get();
 
-        //dd($email_templates);
-        return view("parsing_tasks.testingDeliveryMails", ["data" => $email_templates]);
+        return view("parsing_tasks.testingDeliveryMails");
     }
 
     public function storeTestingDeliveryMails(Request $request)
@@ -401,68 +399,64 @@ class ParsingTasksController extends Controller
 
             return back();
         }
-        //Записываем в таблицу тасков
+
+
+        $taskGroup = new TaskGroups();
+        $taskGroup->name = "Тестовая рассылка Mails";
+        $taskGroup->active_type = 2;
+        $taskGroup->need_send = 1;
+        $taskGroup->save();
+
         $task = new Tasks();
         $task->task_type_id = 3;
-        $task->task_query = "Тестовая рассылка";
-        $task->active_type = 1;
-        $task->google_ru = 0;
-        $task->google_ru_offset = 0;
-        $task->tw_offset = "-1";
-        $task->need_send = 1;
+        $task->task_query = "*";
+        $task->task_group_id = $taskGroup->id;
         $task->save();
-        $task_id = $task->id;
-        //Записываем в таблицу тасков
-        //Обрабатываем список сайтов, если есть
+
         $mails_list = $request->get('mails_list');
         if (!empty($mails_list)) {
-
             $mails = explode("\r\n", $mails_list);
             $contacts = [];
 
             $search_query = new SearchQueries;
-            $search_query->link = "Тестовая рассылка";
-            $search_query->task_id = $task_id;
-            $search_query->email_reserved = 0;
-            $search_query->email_sended = 0;
-            $search_query->sk_recevied = 0;
-            $search_query->sk_sended = 0;
+            $search_query->link = "Тестовая рассылка Email";
+            $search_query->contact_from = "Добавлен в ручную";
+            $search_query->task_id = $task->id;
+            $search_query->task_group_id = $taskGroup->id;
+            $search_query->contact_data = json_encode(['emails' => $mails]);
             $search_query->save();
 
             foreach ($mails as $mailItem) {
-                $contacts[] = ["value" => $mailItem, "type" => 1, "search_queries_id" => $search_query->id];
+                $contacts[] = ["value" => $mailItem, "type" => Contacts::MAILS, "task_id" => $task->id, 'task_group_id' => $taskGroup->id];
             }
 
             Contacts::insert($contacts);
             $contacts = [];
         }
-        //Обрабатываем список сайтов, если есть
-        //Записываем в таблицу шаблонов mails
-        if (!empty($request->get('subject')) && !empty($request->get('mails_text'))) {
-            $mails = new TemplateDeliveryMails;
-            $mails->subject = $request->get('subject');
-            $mails->text = $request->get('mails_text');
-            $mails->task_id = $task_id;
-            $mails->save();
-        }
-        //Записываем в таблицу шаблонов mails
-        //Записываем в таблицу шаблонов вложений для mails
-        if ($request->hasFile('file')) {
-            foreach ($request->file('file') as $file) {
-                $filename = uniqid('mail_' . $mails->id, true) . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('mail_files', $filename);
 
-                $file_model = new TemplateDeliveryMailsFiles;
-                $file_model->mail_id = $mails->id;
-                $file_model->name = $filename;
-                $file_model->path = 'mail_files/' . $filename;
-                $file_model->save();
-
-                unset($file_model);
-            }
-        }
-
-        //Записываем в таблицу шаблонов вложений для mails
+        DeliveryData::insert([
+            'payload' => json_encode([
+                'skype' => [
+                    'text' => ""
+                ],
+                'ok' => [
+                    'text' => ''
+                ],
+                'vk' => [
+                    'text' => '',
+                    'media' => ''
+                ],
+                'mail' => [
+                    'text' => $request->get('mails_text'),
+                    'subject' => ''
+                ], 'viber' => [
+                    'text' => ''
+                ], 'whatsapp' => [
+                    'text' => ''
+                ],
+            ]),
+            'task_group_id' => $taskGroup->id
+        ]);
 
         return redirect()->route('parsing_tasks.index');
     }
@@ -479,15 +473,18 @@ class ParsingTasksController extends Controller
 
             return back();
         }
-        //Записываем в таблицу тасков
+
+        $taskGroup = new TaskGroups();
+        $taskGroup->name = "Тестовая рассылка Skype";
+        $taskGroup->active_type = 2;
+        $taskGroup->need_send = 1;
+        $taskGroup->save();
+
         $task = new Tasks();
         $task->task_type_id = 3;
-        $task->task_query = "Тестовая рассылка SKYPE";
-        $task->active_type = 1;
-        $task->need_send = 1;
+        $task->task_query = "*";
+        $task->task_group_id = $taskGroup->id;
         $task->save();
-        $task_id = $task->id;
-        //Записываем в таблицу тасков
 
         $skypes_list = $request->get('skypes_list');
         if (!empty($skypes_list)) {
@@ -495,22 +492,44 @@ class ParsingTasksController extends Controller
 
             $search_query = new SearchQueries;
             $search_query->link = "Тестовая рассылка SKYPE";
-            $search_query->task_id = $task_id;
+            $search_query->task_id = $task->id;
+            $search_query->task_group_id = $taskGroup->id;
+            $search_query->contact_from = "Добавлен в ручную";
             $search_query->contact_data = json_encode(['skypes' => $skypes]);
             $search_query->save();
             $contacts = [];
+
             foreach ($skypes as $item) {
-                $contacts[] = ["value" => $item, "type" => 3, "task_id" => $task_id];
+                $contacts[] = ["value" => $item, "type" => Contacts::SKYPES, "task_id" => $task->id, 'task_group_id' => $taskGroup->id];
             }
 
             Contacts::insert($contacts);
         }
 
         if (!empty($request->get('skypes_text'))) {
-            $skype = new TemplateDeliverySkypes();
-            $skype->text = $request->get('skypes_text');
-            $skype->task_id = $task_id;
-            $skype->save();
+            DeliveryData::insert([
+                'payload' => json_encode([
+                    'skype' => [
+                        'text' => $request->get('skypes_text')
+                    ],
+                    'ok' => [
+                        'text' => ''
+                    ],
+                    'vk' => [
+                        'text' => '',
+                        'media' => ''
+                    ],
+                    'mail' => [
+                        'text' => '',
+                        'subject' => ''
+                    ], 'viber' => [
+                        'text' => ''
+                    ], 'whatsapp' => [
+                        'text' => ''
+                    ],
+                ]),
+                'task_group_id' => $taskGroup->id
+            ]);
         }
 
         return redirect()->route('parsing_tasks.index');
@@ -524,51 +543,69 @@ class ParsingTasksController extends Controller
     public function storeTestingDeliveryVK(Request $request)
     {
         if (!$this->checkSymbolsInText($request->get('vk_text'))) {
-            Toastr::error("В тексте Вконтакте найдены недопустимые символы!", $title = "Ошибка!", $options = []);
+            Toastr::error("В тексте Skype найдены недопустимые символы!", $title = "Ошибка!", $options = []);
 
             return back();
         }
-        //Записываем в таблицу тасков
+
+        $taskGroup = new TaskGroups();
+        $taskGroup->name = "Тестовая рассылка VK";
+        $taskGroup->active_type = 2;
+        $taskGroup->need_send = 1;
+        $taskGroup->save();
+
         $task = new Tasks();
         $task->task_type_id = 3;
-        $task->task_query = "Тестовая рассылка";
-        $task->active_type = 1;
-        $task->google_ru = 0;
-        $task->google_ru_offset = 0;
-        $task->need_send = 1;
-        $task->tw_offset = "-1";
-        $task->fb_complete = "1";
+        $task->task_query = "*";
+        $task->task_group_id = $taskGroup->id;
         $task->save();
-        $task_id = $task->id;
-        //Записываем в таблицу тасков
 
-        $vks_list = $request->get('vk_list');
-        if (!empty($vks_list)) {
+        $skypes_list = $request->get('vk_list');
+        if (!empty($skypes_list)) {
+            $skypes = explode("\r\n", $skypes_list);
+            $contacts = [];
 
-            $vks = explode("\r\n", $vks_list);
-
-            foreach ($vks as $item) {
+            foreach ($skypes as $item) {
                 $search_query = new SearchQueries;
-                $search_query->link = "Тестовая рассылка";
-                $search_query->vk_id = $item;
-                $search_query->task_id = $task_id;
-                $search_query->email_reserved = 0;
-                $search_query->email_sended = 0;
-                $search_query->sk_recevied = 0;
-                $search_query->sk_sended = 0;
+                $search_query->link = "Тестовая рассылка VK";
+                $search_query->task_id = $task->id;
+                $search_query->task_group_id = $taskGroup->id;
+                $search_query->contact_from = "Добавлен в ручную";
+                $search_query->contact_data = json_encode(['vk_id' => $item]);
                 $search_query->save();
+
+                $contacts[] = ["value" => $item, "type" => Contacts::VK, "task_id" => $task->id, 'task_group_id' => $taskGroup->id];
             }
+
+            Contacts::insert($contacts);
         }
 
-        //Записываем в таблицу шаблонов skypes
         if (!empty($request->get('vk_text'))) {
-            $vk = new TemplateDeliveryVK();
-            $vk->text = $request->get('vk_text');
-            $vk->task_id = $task_id;
-            $vk->save();
+            DeliveryData::insert([
+                'payload' => json_encode([
+                    'skype' => [
+                        'text' => ""
+                    ],
+                    'ok' => [
+                        'text' => ''
+                    ],
+                    'vk' => [
+                        'text' => $request->get('vk_text'),
+                        'media' => ''
+                    ],
+                    'mail' => [
+                        'text' => '',
+                        'subject' => ''
+                    ], 'viber' => [
+                        'text' => ''
+                    ], 'whatsapp' => [
+                        'text' => ''
+                    ],
+                ]),
+                'task_group_id' => $taskGroup->id
+            ]);
         }
 
-        //Записываем в таблицу шаблонов skypes
 
         return redirect()->route('parsing_tasks.index');
     }
@@ -585,48 +622,61 @@ class ParsingTasksController extends Controller
 
             return back();
         }
-        //Записываем в таблицу тасков
+        $taskGroup = new TaskGroups();
+        $taskGroup->name = "Тестовая рассылка OK";
+        $taskGroup->active_type = 2;
+        $taskGroup->need_send = 1;
+        $taskGroup->save();
+
         $task = new Tasks();
         $task->task_type_id = 3;
-        $task->task_query = "Тестовая рассылка";
-        $task->active_type = 1;
-        $task->google_ru = 0;
-        $task->google_ru_offset = 0;
-        $task->need_send = 1;
-        $task->tw_offset = "-1";
-        $task->fb_complete = "1";
+        $task->task_query = "*";
+        $task->task_group_id = $taskGroup->id;
         $task->save();
-        $task_id = $task->id;
-        //Записываем в таблицу тасков
 
-        $oks_list = $request->get('ok_list');
-        if (!empty($oks_list)) {
-
-            $oks = explode("\r\n", $oks_list);
-
-            foreach ($oks as $item) {
+        $skypes_list = $request->get('ok_list');
+        if (!empty($skypes_list)) {
+            $skypes = explode("\r\n", $skypes_list);
+            $contacts = [];
+            foreach ($skypes as $item) {
                 $search_query = new SearchQueries;
-                $search_query->link = "Тестовая рассылка";
-                $search_query->vk_id = null;
-                $search_query->ok_user_id = $item;
-                $search_query->task_id = $task_id;
-                $search_query->email_reserved = 0;
-                $search_query->email_sended = 0;
-                $search_query->sk_recevied = 0;
-                $search_query->sk_sended = 0;
+                $search_query->link = "Тестовая рассылка OK";
+                $search_query->task_id = $task->id;
+                $search_query->task_group_id = $taskGroup->id;
+                $search_query->contact_from = "Добавлен в ручную";
+                $search_query->contact_data = json_encode(['ok_id' => $skypes]);
                 $search_query->save();
+                $contacts[] = ["value" => $item, "type" => Contacts::OK, "task_id" => $task->id, 'task_group_id' => $taskGroup->id];
             }
+
+            Contacts::insert($contacts);
         }
 
-        //Записываем в таблицу шаблонов ok
         if (!empty($request->get('ok_text'))) {
-            $vk = new TemplateDeliveryOK();
-            $vk->text = $request->get('ok_text');
-            $vk->task_id = $task_id;
-            $vk->save();
+            DeliveryData::insert([
+                'payload' => json_encode([
+                    'skype' => [
+                        'text' => ""
+                    ],
+                    'ok' => [
+                        'text' => $request->get('ok_text')
+                    ],
+                    'vk' => [
+                        'text' => '',
+                        'media' => ''
+                    ],
+                    'mail' => [
+                        'text' => '',
+                        'subject' => ''
+                    ], 'viber' => [
+                        'text' => ''
+                    ], 'whatsapp' => [
+                        'text' => ''
+                    ],
+                ]),
+                'task_group_id' => $taskGroup->id
+            ]);
         }
-
-        //Записываем в таблицу шаблонов skypes
 
         return redirect()->route('parsing_tasks.index');
     }

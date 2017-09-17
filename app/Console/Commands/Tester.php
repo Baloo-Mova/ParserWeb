@@ -82,34 +82,11 @@ class Tester extends Command
 
     public function handle()
     {
-
-        $proxy = Proxy::find(10);
-
-        $this->client = new Client([
-            'headers' => [
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
-                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
-                'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
-            ],
-            'verify' => false,
-            'cookies' => true,
-            'allow_redirects' => true,
-            'timeout' => 10,
-            'proxy'=>$proxy->generateString()
-        ]);
-
-        $resp = $this->client->get("https://api.vk.com/method/newsfeed.search?access_token=aba24cf2602b791952560a7c83ec85d54312cb9c5edb8a83e2d0cebdf9a95cf39db20fdfe706009d40118&q=Ставки%20на%20спорт&count=200");
-
-        $data= json_decode($resp->getBody()->getContents(),true)['response'];
-        foreach ($data as $item){
-
-            if(!isset($item['id'])){
-                continue;
-            }
-
-            echo  $item['id'].PHP_EOL;
-        }
+        $acc = AccountsData::find(1642);
+        $task = Tasks::find(1856);
+        $ok = new OK();
+        $ok->setAccount($acc);
+        $ok->sendMessage("526652183408", "GHBDTNKASDHALSD ASKDHA LSDASD ");
     }
 
     public function getIds()

@@ -159,7 +159,7 @@ class VK
             'cookies' => isset($array) && count($array) > 2 ? $array : true,
             'allow_redirects' => true,
             'timeout' => 15,
-            'proxy' => $this->proxyString,
+            'proxy' => "127.0.0.1:8888"// $this->proxyString,
         ]);
 
         if (isset($array) && count($array) > 0) {
@@ -209,8 +209,6 @@ class VK
         ]);
 
         $data = $request->getBody()->getContents();
-        //$this->incrementRequest();
-
         $data = iconv('windows-1251', 'UTF-8', $data);
 
         return strpos($data, "отправлено") !== false;
@@ -784,6 +782,66 @@ class VK
 
             return true;
         }
+    }
+
+    public function sendMailMessage($to, $message)
+    {
+        $request = $this->client->request("GET", "https://vk.com/im");
+        $data = $request->getBody()->getContents();
+
+        $hash = substr($data, strpos($data, '"writeHash":"') + 13, 100);
+        $hash = substr($hash, 0, strpos($hash, "\""));
+
+
+        $request = $this->client->post("https://vk.com/al_im.php", [
+            'form_params' => [
+                'act' => 'a_email_start',
+                'al' => 1,
+                'hash' => $hash,
+                'newImJs' => 1,
+                'email' => $to,
+            ],
+            'headers' => [
+                'Origin' => 'https://vk.com',
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Referer' => 'https://vk.com/im'
+            ]
+        ]);
+
+        $data = $request->getBody()->getContents();
+
+        if (strpos($data, 'hash":"') === false) {
+            return false;
+        }
+
+        $hash = substr($data, strpos($data, '"hash":"') + 8, 100);
+        $hash = substr($hash, 0, strpos($hash, "\""));
+
+        $peer = substr($data, strpos($data, '"peerId":') + 9, 100);
+        $peer = substr($peer, 0, strpos($peer, ","));
+
+
+        $request = $this->client->post("https://vk.com/al_im.php", [
+            'form_params' => [
+                'act' => 'a_send',
+                'msg' => $message,
+                'al' => 1,
+                'gid' => 0,
+                'hash' => $hash,
+                'newImJs' => 1,
+                'media' => "",
+                'to' => $peer,
+                'random_id' => time(),
+                'guid' => microtime(true) * 10000,
+            ],
+            'headers' => [
+                'Origin' => 'https://vk.com',
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Referer' => 'https://vk.com/im'
+            ]
+        ]);
+
+        return strpos($request->getBody()->getContents(), 'msg_id') !== false;
     }
 
 

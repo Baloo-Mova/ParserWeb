@@ -18,49 +18,47 @@
                             <textarea class="form-control" rows="6" name="mails_list" id="mails_list"></textarea>
                         </div>
 
-                        <div class="form-group has-feedback">
-                            <label for="subject" class="control-label">Тема Сообщения E-mail</label>
-                            <input type="text" class="form-control" placeholder="Тема" name="subject" id="subject"/>
-                        </div>
-                        <div class="form-group has-feedback">
+                        {{--<div class="form-group has-feedback">--}}
+                        {{--<label for="subject" class="control-label">Тема Сообщения E-mail</label>--}}
+                        {{--<input type="text" class="form-control" placeholder="Тема" name="subject" id="subject"/>--}}
+                        {{--</div>--}}
+                        {{--<div class="form-group has-feedback">--}}
 
 
-                            <label for="task_type" class="control-label">Шаблоны</label>
+                        {{--<label for="task_type" class="control-label">Шаблоны</label>--}}
 
-                            <select class="form-control task_type_select" name="email_templates" id="email_templates" >
-                                <option value="0" selected>Без шаблона</option>
-                                @foreach($data as $item)
+                        {{--<select class="form-control task_type_select" name="email_templates" id="email_templates" >--}}
+                        {{--<option value="0" selected>Без шаблона</option>--}}
+                        {{--@foreach($data as $item)--}}
+                        {{--<option value="{{ $item->id }}" >{{$item->name }}</option> --}}
+                        {{--@endforeach--}}
+                        {{--</select>--}}
 
-                                    <option value="{{ $item->id }}" >{{$item->name }}</option>
-
-                                @endforeach
-                            </select>
-
-                        </div>
+                        {{--</div>--}}
                         <div class="form-group has-feedback">
                             <label for="mails_text" class="control-label">Текст Сообщения E-mail</label>
                             <div class="tab-content">
                                 <div class="tab-pane active" id="withouttemplate">
-                                    <textarea class="form-control" rows="5" name="mails_text" id="mails_text"></textarea>
+                                    <textarea class="form-control" rows="5" name="mails_text"
+                                              id="mails_text"></textarea>
                                 </div>
                                 <div class="tab-pane" id="withtemplate">
                                     <div id="email_template">
 
                                     </div>
-                                    </div>
+                                </div>
 
                             </div>
 
 
                         </div>
-                        <div class="form-group has-feedback">
-                            <label for="mails_file" class="control-label">Вложения Для Сообщения E-mail</label>
-                            <input type="file" id="mails_file" name="file[]" multiple>
-                        </div>
+                        {{--<div class="form-group has-feedback">--}}
+                        {{--<label for="mails_file" class="control-label">Вложения Для Сообщения E-mail</label>--}}
+                        {{--<input type="file" id="mails_file" name="file[]" multiple>--}}
+                        {{--</div>--}}
 
                     </div>
                     <div class="box-footer">
-
                         <button type="submit" onClick="delDropped()" class="btn btn-primary btn-flat">Сохранить</button>
                     </div>
                 </div>
@@ -72,48 +70,49 @@
 @endsection
 @section('css')
     <style>
-        .navbar-custom-menu .nav{
+        .navbar-custom-menu .nav {
             background-color: #3c8dbc;
         }
-        .navbar-custom-menu .nav:hover{
+
+        .navbar-custom-menu .nav:hover {
             background-color: #367FA9;
         }
     </style>
 @stop
 @section('js')
     <script>
-        $(function(){
+        $(function () {
 
-            $('#email_templates').change(function(){
+            $('#email_templates').change(function () {
                 var curcolor = $('#email_templates :selected').val();
-                if(curcolor!=0) {
+                if (curcolor != 0) {
 
 
                     $.ajax({
-                        method  : "get",
-                        url     : "{{ url('api/selectEmailTemplate') }}/" + curcolor ,
-                        success : function (data) {
-                           // console.log(data);
+                        method: "get",
+                        url: "{{ url('api/selectEmailTemplate') }}/" + curcolor,
+                        success: function (data) {
+                            // console.log(data);
                             if (data.success == true) {
                                 localStorage.setItem('dropped', data.result);
                                 localStorage.setItem('globalcolor', data.globalcolor);
-                               // $('#withtemplate').eq($(this).val()).tab('show');
+                                // $('#withtemplate').eq($(this).val()).tab('show');
                                 //$('#').show();
 
                                 document.getElementById("withtemplate").classList.add('active');
 
                                 document.getElementById("withouttemplate").classList.remove('active');
 
-                               // $(".task_result_span_parsed").text(data.count_parsed);
-                               // $(".task_result_span_queue").text(data.count_queue);
-                               // $(".task_result_span_sended").text(data.count_sended);
-                               // $(".last_task_id").val(data.max_id);
+                                // $(".task_result_span_parsed").text(data.count_parsed);
+                                // $(".task_result_span_queue").text(data.count_queue);
+                                // $(".task_result_span_sended").text(data.count_sended);
+                                // $(".last_task_id").val(data.max_id);
 
-                               // if (Object.keys(data.result).length > 0) {
-                              //      $('.no_results_class').remove();
-                               // }
+                                // if (Object.keys(data.result).length > 0) {
+                                //      $('.no_results_class').remove();
+                                // }
 
-                               // paginateConstruct(1);
+                                // paginateConstruct(1);
                                 //load();
 
                             }
@@ -121,7 +120,7 @@
                         dataType: "json"
                     });
                 }
-                else{
+                else {
                     document.getElementById("withouttemplate").classList.add('active');
 
                     document.getElementById("withtemplate").classList.remove('active');
@@ -131,7 +130,8 @@
             })
 
         });
-        function delDropped(){
+
+        function delDropped() {
             localStorage.removeItem('dropped');
             localStorage.removeItem('autoEdit');
             localStorage.removeItem('globalcolor');

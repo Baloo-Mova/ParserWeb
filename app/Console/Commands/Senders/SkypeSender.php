@@ -66,12 +66,12 @@ class SkypeSender extends Command
 
                 $mutex = new FlockMutex(fopen(__FILE__, "r"));
                 $mutex->synchronized(function () {
-                    $this->task = Contacts::join('tasks', 'tasks.id', '=',
-                        'contacts.task_id')->where([
+                    $this->task = Contacts::join('task_groups', 'task_groups.id', '=',
+                        'contacts.task_group_id')->where([
                         ['contacts.type', '=', 3],
                         ['contacts.sended', '=', 0],
                         ['contacts.reserved', '=', 0],
-                        ['tasks.need_send', '=', 1],
+                        ['task_groups.need_send', '=', 1],
                     ])->first(['contacts.*']);
 
                     if (isset($this->task)) {
@@ -105,7 +105,7 @@ class SkypeSender extends Command
 
                 $this->skype = new Skype($this->sender);
 
-                $message = TemplateDeliverySkypes::where('task_id', '=', $this->task->task_id)->first();
+                $message = $this->task->deliveryData;
 
                 if (!isset($message)) {
                     $this->sender->reserved = 0;
@@ -119,15 +119,17 @@ class SkypeSender extends Command
                     continue;
                 }
 
+                $message = $message->getParam('skype')['text'];
+
                 if (substr_count($message, "{") == substr_count($message, "}")) {
-                    $str_mes = Macros::convertMacro($message->text);
+                    $str_mes = Macros::convertMacro($message);
                 } else {
                     $this->sender->reserved = 0;
                     $this->sender->save();
                     Contacts::whereId($this->task->id)->update(['reserved' => 2]);
                     $log = new ErrorLog();
                     $log->message = ErrorLog::SKYPE_MESSAGE_TEXT_ERROR;
-                    $log->task_id = $this->task[0]->id;
+                    $log->task_id = $this->task->id;
                     sleep(5);
                     continue;
                 }
