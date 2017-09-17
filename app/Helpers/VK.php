@@ -487,7 +487,7 @@ class VK
 
                 if (!isset($this->cur_proxy)) {
 
-                    Proxy::update([
+                    Proxy::where('id','>',0)->update([
                         'vk_reserved' => 0,
                     ]);
 

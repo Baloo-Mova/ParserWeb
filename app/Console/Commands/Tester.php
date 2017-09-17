@@ -82,11 +82,9 @@ class Tester extends Command
 
     public function handle()
     {
-        $acc = AccountsData::find(1642);
-        $task = Tasks::find(1856);
-        $ok = new OK();
-        $ok->setAccount($acc);
-        $ok->sendMessage("526652183408", "GHBDTNKASDHALSD ASKDHA LSDASD ");
+        Proxy::where('id','>',0)->update([
+            'vk_reserved' => 0,
+        ]);
     }
 
     public function getIds()

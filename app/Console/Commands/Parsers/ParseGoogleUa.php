@@ -109,7 +109,7 @@ class ParseGoogleUa extends Command
             });
 
             if (!isset($this->proxy)) {
-                Proxy::update([
+                Proxy::where('id','>',0)->update([
                     'google_reserved' => 0,
                 ]);
 

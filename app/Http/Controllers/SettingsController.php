@@ -161,14 +161,14 @@ class SettingsController extends Controller
 
     public function proc_start(ProcessConfigs $process)
     {
-        //dd($process);
+
         $supervisor = new \Supervisor\Api('127.0.0.1', 9001, 'admin', 'admin');
         try {
             $supervisor->startProcessGroup($process->name, $wait = true);
         } catch (\Supervisor\ApiException $e) {
-            //dd($e);
+
         }
-        //$processtmp = $supervisor->getProcessInfo($process->name);
+        $processtmp = $supervisor->getProcessInfo($process->name);
 
         //$process->statename = "RUNNING";
         //$process->save();
