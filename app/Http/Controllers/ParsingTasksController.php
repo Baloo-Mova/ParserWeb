@@ -145,7 +145,7 @@ class ParsingTasksController extends Controller
         $taskInfo = $task->tasks;
         return view('parsing_tasks.show', [
             'data' => $task,
-            'send' => json_decode($task->deliveryData->payload, true),
+            'send' => isset($task->deliveryData) ? json_decode($task->deliveryData->payload, true) : [],
             'taskInfo' => $taskInfo,
             'sendInfo' => $sendInfo
         ]);
@@ -209,10 +209,37 @@ class ParsingTasksController extends Controller
         return redirect()->back();
     }
 
-    public function getCsv($id)
+    public function getCsv(Request $request)
     {
         set_time_limit(0);
-        $table = SearchQueries::where(['task_group_id' => $id])->get();
+        $types = [
+            1 => 'https://vk.com/club%',
+            2 => 'https://vk.com/wall%',
+            3 => 'https://ok.ru%'
+        ];
+        $task_group_id = $request->get('task_group_id');
+        $filter_city = $request->get('city');
+        $filter_type = $request->get('contact_from');
+
+        $where[] = ['task_group_id', '=', $task_group_id];
+
+        if(isset($filter_city) && $filter_city != "null"){
+            $where[] = ['city', 'like', '%'.$filter_city.'%'];
+        }
+
+        if(isset($filter_type) && ($filter_type != "null")){
+            if($filter_type != "search"){
+                $where[] = ['contact_from', 'like', $types[$filter_type].'%'];
+            }else{
+                $where[] = ['contact_from', 'not like', 'https://vk.com/club%'];
+                $where[] = ['contact_from', 'not like', 'https://vk.com/wall%'];
+                $where[] = ['contact_from', 'not like', 'https://ok.ru%'];
+            }
+        }
+
+
+
+        $table = SearchQueries::where($where)->get();
 
         $cols = [];
         $res = [];
@@ -223,7 +250,7 @@ class ParsingTasksController extends Controller
                 mkdir(storage_path('app/csv/'));
             }
 
-            $file = fopen(storage_path('app/csv/') . "parse_result_" . $id . ".csv", 'w');
+            $file = fopen(storage_path('app/csv/') . "parse_result_" . $task_group_id . ".csv", 'w');
 
             $cols[0] = "link";
             $cols[1] = "name";
@@ -269,7 +296,7 @@ class ParsingTasksController extends Controller
             }
             fclose($file);
 
-            return response()->download(storage_path('app/csv/') . 'parse_result_' . $id . '.csv');
+            return response()->download(storage_path('app/csv/') . 'parse_result_' . $task_group_id . '.csv');
         } else {
             return redirect()->back();
         }
