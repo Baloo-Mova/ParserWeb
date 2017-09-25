@@ -450,6 +450,7 @@
                                 $(".task_result_tbody").html("");
                                 $(".pagination").html("");
                             }else{
+                                $(".pagination").html("");
                                 $(".task_result_tbody").html("<tr><td class='text-center' colspan='6'>Нет результатов</td></tr>")
                             }
 
