@@ -420,6 +420,9 @@
             $(".filter_city").on("change", function(){
                 var valuee = $(this).val();
                 $(".filter_city_export").val($(this).val());
+                $('#preloader').fadeIn('slow', function () {
+                    $(this).show();
+                });
             });
 
 
