@@ -290,4 +290,9 @@ class OK
         $this->accountData->save();
         return $this;
     }
+
+    public function getGroups()
+    {
+
+    }
 }

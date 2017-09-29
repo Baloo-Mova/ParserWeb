@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Parsers;
 
+use App\Helpers\OK;
 use App\Models\AccountsData;
 use Illuminate\Console\Command;
 use App\Helpers\Web;
@@ -19,19 +20,15 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use malkusch\lock\mutex\FlockMutex;
 use Mockery\Exception;
+use Carbon\Carbon;
 
 class ParseOk extends Command
 {
 
-    public $client = null;
-    public $crawler = null;
-    public $gwt = "";
-    public $tkn = "";
-    public $cur_proxy;
-    public $proxy_arr;
-    public $proxy_string;
-    public $data = [];
-    public $content = null;
+    public $task;
+    public $user;
+    private static $data = null;
+
     /**
      * The name and signature of the console command.
      *
@@ -62,7 +59,59 @@ class ParseOk extends Command
      */
     public function handle()
     {
-        $this->crawler = new SimpleHtmlDom(null, true, true, 'UTF-8', true, '\r\n', ' ');
+
+        while(true){
+            $this->task = null;
+            $mutex = new FlockMutex(fopen(__FILE__, "r"));
+            $mutex->synchronized(function () {
+                $this->task = Tasks::where([
+                    'tasks.task_type_id' => TasksType::WORD,
+                    'tasks.vk_reserved' => 0,
+                    'task_groups.active_type' => 1,
+                ])->join('task_groups', 'task_groups.id', '=', 'tasks.task_group_id')->select(["tasks.*"])->first();
+                if (!isset($this->task)) {
+                    return;
+                }
+                $this->task->vk_reserved = 1;
+                $this->task->save();
+            });
+
+            if (!isset($this->task)) {
+                sleep(5);
+                continue;
+            }
+
+            $this->user = $this->getUser();
+
+            if (!isset($this->user)) {
+                $this->task->vk_reserved = 0;
+                $this->task->save();
+                sleep(5);
+                continue;
+            }
+
+            try {
+                $web = new OK();
+                if(!$web->setAccount($this->user)){
+                    $this->user->valid = 0;
+                    $this->user->save();
+                    sleep(5);
+                    continue;
+                }
+
+                $web->getGroups(); // not finished
+
+            } catch (\Exception $ex) {
+                $log = new ErrorLog();
+                $log->task_id = $this->task->id;
+                $log->message = $ex->getMessage() . " line:" . $ex->getLine();
+                $log->save();
+            }
+
+            sleep(rand(10, 15));
+        }
+
+
         while (true) {
             try {
                 $this->data['task'] = null;
@@ -146,7 +195,6 @@ class ParseOk extends Command
                         'headers' => [
                             'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36 OPR/41.0.2353.69',
                             'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                            //'Accept-Encoding' => 'gzip, deflate, lzma, sdch, br',
                             'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
                         ],
                         'verify' => false,
@@ -208,20 +256,6 @@ class ParseOk extends Command
                 }
 
                 $groups_data = $this->client->post('https://ok.ru/search?st.mode=Groups&st.query=' . urlencode($task->task_query) . '&st.grmode=Groups&st.posted=set&gwt.requested=' . $this->gwt);
-//                $groups_data = $this->client->request('POST',
-//                    'http://ok.ru/search?cmd=PortalSearchResults&gwt.requested=' . $this->gwt, [
-//                        'headers' => [
-//                            "TKN" => $this->tkn,
-//                        ],
-//                        'form_params' => [
-//                            "gwt.requested" => $this->gwt,
-//                            "st.query" => $task->task_query,
-//                            "st.posted" => "set",
-//                            "st.mode" => "Groups",
-//                            "st.grmode" => "Groups"
-//                        ]
-//                    ]);
-
                $from->count_request += 1;
                 $from->save();
 
@@ -286,6 +320,37 @@ class ParseOk extends Command
         }
     }
 
+    protected function getUser()
+    {
+        static::$data = null;
+        $mutex = new FlockMutex(fopen(__FILE__, "r"));
+        $mutex->synchronized(function (){
+            try {
+                static::$data = AccountsData::where([
+                    ['type_id', '=', 2],
+                    ['valid', '=', 1],
+                    ['is_sender', '=', 0],
+                    ['reserved', '=', 0],
+                    ['count_request', '<', 15],
+                    ['whenCanUse', '<', Carbon::now()]
+                ])->orWhereRaw('(whenCanUse is null and valid = 1 and is_sender = 0 and reserved = 0 and count_request < 15 and type_id = 2)')
+                    ->orderBy('count_request', 'asc')->first();
+
+                if (isset(static::$data)) {
+                    static::$data->reserved = 1;
+                    static::$data->save();
+                }
+
+            } catch (\Exception $ex) {
+                $error = new ErrorLog();
+                $error->message = $ex->getMessage() . " Line: " . $ex->getLine();
+                $error->task_id = VK::VK_ACCOUNT_ERROR;
+                $error->save();
+            }
+        });
+        return static::$data;
+    }
+
     public function login($login, $password)
     {
         $data = $this->client->request('POST', 'https://www.ok.ru/https', [
@@ -318,10 +383,8 @@ class ParseOk extends Command
                 return false;
             }
             try {
-                //$this->gwt = substr($html_doc, strripos($html_doc, "gwtHash:") + 9, 8);
                 preg_match('/gwtHash\:("(.*?)(?:"|$)|([^"]+))/i', $html_doc, $this->gwt);
                 $this->gwt = $this->gwt[2];
-                // $this->tkn =substr($html_doc, strripos($html_doc, "OK.tkn.set('") + 12, 32);
                 preg_match("/OK\.tkn\.set\(('(.*?)(?:'|$)|([^']+))\)/i", $html_doc, $this->tkn);
                 $this->tkn = $this->tkn[2];
             } catch (\Exception $exception) {
