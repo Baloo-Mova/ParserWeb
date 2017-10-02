@@ -109,6 +109,13 @@ class ParseOk extends Command
                     $this->user->save();
                     sleep(5);
                     continue;
+                }else{
+                    $this->user->reserved = 0;
+                    $this->user->save();
+                    $this->task->vk_reserved = 0;
+                    $this->task->save();
+                    sleep(5);
+                    continue;
                 }
 
             } catch (\Exception $ex) {

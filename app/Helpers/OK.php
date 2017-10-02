@@ -17,6 +17,8 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use App\Models\Parser\OkGroups;
 use App\Models\Contacts;
+use App\Helpers\SimpleHtmlDom;
+use Illuminate\Support\Facades\DB;
 
 class OK
 {
@@ -440,7 +442,9 @@ class OK
     public function parseUsersList($query_data)
     {
         $this->crawler = new SimpleHtmlDom();
+
         foreach ($query_data as $item) {
+
             try {
                 $groups_data = $this->client->request('GET', 'https://ok.ru' . $item->group_url);
                 $html_doc = $groups_data->getBody()->getContents();
@@ -469,23 +473,33 @@ class OK
                 }
 
                 $skypes_users = $this->extractSkype($html_doc);
-                $searchQueriesContacts['skypes'] = $skypes_users;
-                if (!empty($skypes_users)) {
-                    foreach ($skypes_users as $s1) {
-                        $contacts[] = [
-                            "value" => $s1,
-                            "task_id" => $item->task_id,
-                            "type" => Contacts::SKYPES
-                        ];
+                if(count($skypes_users) > 0){
+                    $searchQueriesContacts['skypes'] = $skypes_users;
+                    if (!empty($skypes_users)) {
+                        foreach ($skypes_users as $s1) {
+                            $contacts[] = [
+                                "value" => $s1,
+                                "task_id" => $item->task_id,
+                                "type" => Contacts::SKYPES
+                            ];
+                        }
                     }
                 }
                 $fio = "";
                 $user_info_tmp = "";
                 try {
                     $fio = $html_doc->find("h1.mctc_name_tx", 0)->plaintext;
-                    $user_info_tmp = $html_doc->find("span.mctc_infoContainer_not_block", 0)->plaintext;
-                } catch (\Exception $ex) {
 
+                    $res = $html_doc->find(".user-profile_i");
+                    $userCityNew = " ";
+                    foreach ($res as $userItem){
+                        if(strpos($userItem, "ic_city") !== false){
+                            $userCityNew = $userItem->find(".user-profile_i_value", 0)->plaintext;
+                        }
+                    }
+
+                }catch (\Exception $ex) {
+                    continue;
                 }
 
                 if (preg_match('/[0-9]/', $user_info_tmp)) {
@@ -496,7 +510,7 @@ class OK
 
                 try {
                     $userName = (isset($fio) && strlen($fio) > 0 && strlen($fio) < 500) ? $this->clearstr($fio) : "";
-                    $userCity = isset($user_info) && strlen($user_info) > 0 && strlen($user_info) < 500 ? $user_info : null;
+                    $userCity = isset($userCityNew) && strlen($userCityNew) > 0 && strlen($userCityNew) < 500 ? $userCityNew : null;
                     $contacts[] = [
                         'value' => $people_id,
                         'task_id' => $item->task_id,
@@ -515,10 +529,11 @@ class OK
                         'contact_from' => "https://ok.ru"
                     ]);
                     Contacts::insert($contacts);
+                    $contacts = [];
+                    $item->delete();
                 } catch (\Exception $exp) {
-                    return false;
+                    DB::table('ok_groups')->where(['id' => $item->id])->delete();
                 }
-                $item->delete();
 
                 $data = $groups_data->getBody()->getContents();
                 preg_match('/gwtHash\:("(.*?)(?:"|$)|([^"]+))/i', $data, $gwtTmp);
@@ -534,6 +549,7 @@ class OK
                 $this->incrementRequest();
 
                 sleep(rand(1, 3));
+                continue;
             } catch (\Exception $ex) {
                 return false;
             }
@@ -686,7 +702,7 @@ class OK
                     'contact_from' => "https://ok.ru"
                 ]);
             }
-            
+
             $this->saveSession()->save();
             $this->incrementRequest();
 

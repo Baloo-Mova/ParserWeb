@@ -227,7 +227,7 @@ class ParsingTasksController extends Controller
             $where[] = ['city', 'like', '%'.$filter_city.'%'];
         }
 
-        if(isset($filter_type) && ($filter_type != "null")){
+        if(isset($filter_type) && !empty($filter_type) && ($filter_type != "null")){
             if($filter_type != "search"){
                 $where[] = ['contact_from', 'like', $types[$filter_type].'%'];
             }else{

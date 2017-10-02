@@ -5,21 +5,9 @@ namespace App\Console\Commands\Parsers;
 use App\Helpers\OK;
 use App\Models\Parser\OkGroups;
 use Illuminate\Console\Command;
-use App\Helpers\SimpleHtmlDom;
 use App\Models\AccountsData;
-use App\Models\SearchQueries;
 use App\Models\Parser\ErrorLog;
-
-use GuzzleHttp;
-use GuzzleHttp\Client;
-use GuzzleHttp\Cookie\CookieJar;
-use GuzzleHttp\Cookie\SetCookie;
-use App\Models\GoodProxies;
-
-use App\Models\Proxy as ProxyItem;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use App\Models\Contacts;
 use malkusch\lock\mutex\FlockMutex;
 use Carbon\Carbon;
 
@@ -29,6 +17,7 @@ class ParseOkGroups extends Command
     public $user;
     public $taskType;
     private static $data = null;
+    public $usersIdList;
     /**
      * The name and signature of the console command.
      *
@@ -75,10 +64,8 @@ class ParseOkGroups extends Command
 
 
                     if (count($query_data) > 0) {
-                        foreach ($query_data as $item){
-                            $item->reserved = 1;
-                            $item->save();
-                        }
+                        $this->usersIdList = array_column($query_data->toArray(), 'id');
+                        DB::table('ok_groups')->whereIn('id', $this->usersIdList)->update(['reserved' => 1]);
                         $this->task = $query_data;
                         $this->taskType = 2;
                     } else {
@@ -87,7 +74,7 @@ class ParseOkGroups extends Command
                             ['ok_groups.reserved', '=', 0],
                             ['ok_groups.type', '=', 1],
                             ['tasks.task_type_id', '=', 1]
-                        ])->select('ok_groups.*')->first(); // Забираем 1 групп для этого таска
+                        ])->select('ok_groups.*')->first();
                         if (isset($query_data)) {
                             $query_data->reserved = 1;
                             $query_data->save();
@@ -95,8 +82,7 @@ class ParseOkGroups extends Command
                             $this->taskType = 1;
                         }
                     }
-                } catch (\Exception $ex) {
-                    dd($ex->getLine(), $ex->getMessage());
+                }catch(\Exception $ex) {
                     $this->task->reserved = 0;
                     $this->task->save();
                     $log = new ErrorLog();
@@ -113,10 +99,13 @@ class ParseOkGroups extends Command
             }
 
             $this->user = $this->getUser();
-
             if (!isset($this->user)) {
-                $this->task->reserved = 0;
-                $this->task->save();
+                if($this->taskType == 2){
+                    DB::table('ok_groups')->whereIn('id', $this->usersIdList)->update(['reserved' => 0]);
+                }else{
+                    $this->task->reserved = 0;
+                    $this->task->save();
+                }
                 sleep(5);
                 continue;
             }
@@ -137,6 +126,10 @@ class ParseOkGroups extends Command
                         $this->user->reserved = 0;
                         $this->user->save();
                         sleep(5);
+                    }else{
+                        $this->user->reserved = 0;
+                        $this->user->save();
+                        sleep(5);
                     }
 
                 }else{ // Users
@@ -144,14 +137,27 @@ class ParseOkGroups extends Command
                         $this->user->reserved = 0;
                         $this->user->save();
                         sleep(5);
+                        continue;
+                    }else{
+                        $this->user->reserved = 0;
+                        $this->user->save();
+                        DB::table('ok_groups')->whereIn('id', $this->usersIdList)->update(['reserved' => 0]);
+                        sleep(5);
+                        continue;
                     }
                 }
 
 
             } catch (\Exception $ex) {
-                $this->task->reserved = 0;
-                $this->task->offset = 0;
-                $this->task->save();
+
+                if($this->taskType == 2){
+                    DB::table('ok_groups')->whereIn('id', $this->usersIdList)->update(['reserved' => 0]);
+                }else{
+                    $this->task->reserved = 0;
+                    $this->task->offset = 0;
+                    $this->task->save();
+                }
+
                 $this->user->reserved = 0;
                 $this->user->save();
                 $log = new ErrorLog();
@@ -161,7 +167,6 @@ class ParseOkGroups extends Command
             }
 
             sleep(rand(10, 15));
-
 
         }
 
