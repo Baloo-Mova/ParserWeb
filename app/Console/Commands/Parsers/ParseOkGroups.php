@@ -196,7 +196,7 @@ class ParseOkGroups extends Command
             } catch (\Exception $ex) {
                 $error = new ErrorLog();
                 $error->message = $ex->getMessage() . " Line: " . $ex->getLine();
-                $error->task_id = VK::VK_ACCOUNT_ERROR;
+                $error->task_id = OK::OK_ACCOUNT_ERROR;
                 $error->save();
             }
         });

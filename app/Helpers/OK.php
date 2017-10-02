@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 
 class OK
 {
+    const OK_ACCOUNT_ERROR = 240001;
     /**
      * @var AccountsData
      */

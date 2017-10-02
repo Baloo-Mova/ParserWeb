@@ -66,13 +66,13 @@ class ParseOk extends Command
             $mutex->synchronized(function () {
                 $this->task = Tasks::where([
                     ['tasks.task_type_id', '=', TasksType::WORD],
-                    ['tasks.vk_reserved', '<>', -1],
+                    ['tasks.ok_reserved', '<>', -1],
                     ['task_groups.active_type', '=', 1],
                 ])->join('task_groups', 'task_groups.id', '=', 'tasks.task_group_id')->select(["tasks.*"])->first();
                 if (!isset($this->task)) {
                     return;
                 }
-                $this->task->vk_reserved = 1;
+                $this->task->ok_reserved = 1;
                 $this->task->save();
             });
 
@@ -84,7 +84,7 @@ class ParseOk extends Command
             $this->user = $this->getUser();
 
             if (!isset($this->user)) {
-                $this->task->vk_reserved = 0;
+                $this->task->ok_reserved = 0;
                 $this->task->save();
                 sleep(5);
                 continue;
@@ -102,7 +102,7 @@ class ParseOk extends Command
 
 
                 if($web->getGroups($this->task)){
-                    $this->task->vk_reserved = -1;
+                    $this->task->ok_reserved = -1;
                     $this->task->ok_offset = -1;
                     $this->task->save();
                     $this->user->reserved = 0;
@@ -112,14 +112,14 @@ class ParseOk extends Command
                 }else{
                     $this->user->reserved = 0;
                     $this->user->save();
-                    $this->task->vk_reserved = 0;
+                    $this->task->ok_reserved = 0;
                     $this->task->save();
                     sleep(5);
                     continue;
                 }
 
             } catch (\Exception $ex) {
-                $this->task->vk_reserved = 0;
+                $this->task->ok_reserved = 0;
                 $this->task->ok_offset = 0;
                 $this->task->save();
                 $this->user->reserved = 0;
@@ -158,7 +158,7 @@ class ParseOk extends Command
             } catch (\Exception $ex) {
                 $error = new ErrorLog();
                 $error->message = $ex->getMessage() . " Line: " . $ex->getLine();
-                $error->task_id = VK::VK_ACCOUNT_ERROR;
+                $error->task_id = OK::OK_ACCOUNT_ERROR;
                 $error->save();
             }
         });
