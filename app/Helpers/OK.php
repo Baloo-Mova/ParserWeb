@@ -15,6 +15,7 @@ use Faker\Factory;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
+use App\Models\Parser\OkGroups;
 
 class OK
 {
@@ -36,6 +37,7 @@ class OK
     private $tkn;
     private $proxyString = "";
     private $needLogin = true;
+    private $crawler = null;
 
     public function setAccount($accData)
     {
@@ -184,15 +186,6 @@ class OK
         return $data;
     }
 
-    public function search($task)
-    {
-        $this->task = $task;
-
-        $groups_data = $this->client->post('https://ok.ru/search?st.mode=Groups&st.query=' . urlencode($task->task_query) . '&st.grmode=Groups&st.posted=set&gwt.requested=' . $this->gwt);
-
-        dd($groups_data);
-    }
-
     private function login()
     {
         $this->request("GET", 'https://ok.ru/');
@@ -247,6 +240,13 @@ class OK
         return $this;
     }
 
+    private function incrementOffset()
+    {
+        $this->task->ok_offset++;
+        $this->save();
+        return $this;
+    }
+
     private function checkData($data)
     {
         if (stripos($data, 'заблокировали') !== false) {
@@ -291,8 +291,106 @@ class OK
         return $this;
     }
 
-    public function getGroups()
+    public function search($task)
     {
+        $groups_data = $this->client->post('https://ok.ru/search?st.mode=Groups&st.query=' . urlencode($task->task_query) . '&st.grmode=Groups&st.posted=set&gwt.requested=' . $this->gwt);
 
+        $data = $groups_data->getBody()->getContents();
+        preg_match('/gwtHash\:("(.*?)(?:"|$)|([^"]+))/i', $data, $gwtTmp);
+        if (count($gwtTmp) > 2){
+            $this->gwt = $gwtTmp[2];
+        }
+        preg_match("/OK\.tkn\.set\(('(.*?)(?:'|$)|([^']+))\)/i", $data, $tknTmp);
+        if (count($tknTmp) > 2){
+            $this->tkn = $tknTmp[2];
+        }
+
+
+        $this->saveSession()->save();
+        $this->incrementRequest();
+        return $data;
+    }
+
+    public function groupSearch($task, $page_numb)
+    {
+        $groups_data = $this->client->post(
+        'https://ok.ru/search?cmd=PortalSearchResults&gwt.requested=' . $this->gwt . '&st.cmd=searchResult&st.mode=Groups&st.query=' . $task->task_query . '&st.vpl.mini=false&st.grmode=Groups',
+        [
+            'headers' => [
+                "TKN" => $this->tkn,
+            ],
+            "form_params" => [
+                "fetch" => "false",
+                "st.page" => $page_numb,
+                "st.loaderid" => "PortalSearchResultsLoader"
+            ]
+        ]);
+
+        $data = $groups_data->getBody()->getContents();
+        preg_match('/gwtHash\:("(.*?)(?:"|$)|([^"]+))/i', $data, $gwtTmp);
+        if (count($gwtTmp) > 2){
+            $this->gwt = $gwtTmp[2];
+        }
+        preg_match("/OK\.tkn\.set\(('(.*?)(?:'|$)|([^']+))\)/i", $data, $tknTmp);
+        if (count($tknTmp) > 2){
+            $this->tkn = $tknTmp[2];
+        }
+
+        $this->saveSession()->save();
+        $this->incrementRequest();
+
+        return $data;
+    }
+
+    public function getGroups($task)
+    {
+        $this->task = $task;
+        $this->crawler = new SimpleHtmlDom();
+        while (true){
+            try{
+
+                if($task->ok_offset == 1){
+                    $data = $this->search($task);
+                }else{
+                    $data = $this->groupSearch($task, $task->ok_offset);
+                }
+
+                if(!isset($data)){
+                    return false;
+                }
+
+                if(strlen($data) < 200){
+                    return true;
+                }
+
+                $this->parsePage($data, $task->id, $task->task_group_id);
+
+                $task->ok_offset++;
+                $task->save();
+                sleep(3);
+
+            }catch(\Exception $exception){
+                return false;
+            }
+        }
+    }
+
+    public function parsePage($data, $task_id, $task_group_id)
+    {
+        $this->crawler->clear();
+        $this->crawler->load($data);
+        foreach ($this->crawler->find(".gs_result_i_t_name") as $link) {
+            $href_tmp = urldecode($link->href);
+            $href = substr($href_tmp, 0, stripos($href_tmp, "?st"));
+            if (strpos($href, "market") === false) {
+                $ok_group = new OkGroups();
+                $ok_group->group_url = $href;
+                $ok_group->task_id = $task_id;
+                $ok_group->task_group_id = $task_group_id;
+                $ok_group->type = 1;
+                $ok_group->reserved = 0;
+                $ok_group->save();
+            }
+        }
     }
 }
