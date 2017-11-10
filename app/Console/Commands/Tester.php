@@ -82,9 +82,22 @@ class Tester extends Command
 
     public function handle()
     {
-        Proxy::where('id','>',0)->update([
-            'vk_reserved' => 0,
-        ]);
+
+        $file = file_get_contents("2.html");
+
+        $crawler = new SimpleHtmlDom();
+        $crawler->load($file);
+
+        $res = $crawler->find(".user-profile_i");
+
+        foreach ($res as $item){
+            var_dump($item->plaintext);
+            if(strpos($item, "ic_city") !== false){
+                dd($item->find("div.user-profile_i_value", 0)->plaintext);
+            }
+        }
+
+
     }
 
     public function getIds()

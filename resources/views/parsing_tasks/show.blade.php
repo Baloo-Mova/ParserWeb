@@ -85,9 +85,13 @@
                                     </span>&nbsp;
                                     <hr>
                                     <div style="margin-top: -10px;">
-                                        <a href="{{ route('parsing_tasks.getCsv', ['id' => $data->id]) }}"
-                                           class="btn btn-primary btn-flat" style="margin-top: -3px;">Экспортировать в
-                                            CSV</a>
+                                        <form action="{{ route('parsing_tasks.getCsv') }}" method="post">
+                                            {{ csrf_field() }}
+                                            <input type="hidden" name="task_group_id" value="{{ $data->id }}">
+                                            <input type="hidden" name="city" class="filter_city_export">
+                                            <input type="hidden" name="contact_from" class="filter_type_export">
+                                            <button type="submit" class="btn btn-primary btn-flat" style="margin-top: -3px;">Экспортировать в CSV</button>
+                                        </form>
                                         {{--<form action="{{ route('parsing_tasks.getFromCsv') }}"--}}
                                         {{--enctype="multipart/form-data" method="post" id="targetForm"--}}
                                         {{--style="display: inline-block;">--}}
@@ -104,18 +108,36 @@
                                 <div class="table-responsive">
                                     <table class="table table-bordered task_result_table">
                                         <thead>
-                                        <tr>
-                                            <th class="small__th">#</th>
-                                            <th>Link</th>
-                                            <th>From</th>
-                                            <th>Name</th>
-                                            <th>City</th>
-                                            <th>Contact data</th>
-                                        </tr>
+                                            <tr>
+                                                <th></th>
+                                                <th></th>
+                                                <th>
+                                                    <select name="" id="" class="form-control filter_type">
+                                                        <option value="null">Все источники</option>
+                                                        <option value="1">Vk группы</option>
+                                                        <option value="2">Vk новости</option>
+                                                        <option value="3">Ok</option>
+                                                        <option value="search">Поисковики</option>
+                                                    </select>
+                                                </th>
+                                                <th></th>
+                                                <th>
+                                                    <input type="text" class="form-control filter_city">
+                                                </th>
+                                                <th></th>
+                                            </tr>
+                                            <tr>
+                                                <th class="small__th">#</th>
+                                                <th>Link</th>
+                                                <th>From</th>
+                                                <th>Name</th>
+                                                <th>City</th>
+                                                <th>Contact data</th>
+                                            </tr>
                                         </thead>
                                         <tbody class="task_result_tbody">
                                         <tr class="no_results_class">
-                                            <td colspan="5" class="text-center"> Ожидание результатов ...</td>
+                                            <td colspan="6" class="text-center"> Ожидание результатов ...</td>
                                         </tr>
                                         </tbody>
                                     </table>
@@ -212,10 +234,10 @@
                                                 <h4>Mail</h4>
                                                 <label>Subject</label>
                                                 <input class="form-control" name="data[mail][subject]"
-                                                       value="{{$send['mail']['subject']}}">
+                                                       value="{{isset($send['mail']) ? $send['mail']['subject'] : ""}}">
                                                 <label>Text</label>
                                                 <textarea name="data[mail][text]" class="form-control" cols="30"
-                                                          rows="4">{{$send['mail']['text']}}</textarea>
+                                                          rows="4">{{isset($send['mail']) ? $send['mail']['text'] : ""}}</textarea>
                                             </div>
                                         </div>
                                     </div>
@@ -226,10 +248,10 @@
                                                 <h4>VK</h4>
                                                 <label>Text</label>
                                                 <textarea name="data[vk][text]" class="form-control" cols="30"
-                                                          rows="6">{{$send['vk']['text']}}</textarea>
+                                                          rows="6">{{isset($send['vk']) ? $send['vk']['text'] : ""}}</textarea>
                                                 <label>Media</label>
                                                 <input name="data[vk][media]" class="form-control"
-                                                       value="{{ $send['vk']['media'] }}">
+                                                       value="{{ isset($send['vk']) ? $send['vk']['media'] : ""}}">
                                             </div>
                                         </div>
                                     </div>
@@ -239,14 +261,14 @@
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>OK</h4>
                                                 <textarea name="data[ok][text]" class="form-control" cols="30"
-                                                          rows="6">{{$send['ok']['text']}}</textarea>
+                                                          rows="6">{{isset($send['ok']) ? $send['ok']['text'] : ""}}</textarea>
                                             </div>
                                         </div>
                                         <div class="col-xs-6">
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>Skype</h4>
                                                 <textarea name="data[skype][text]" class="form-control" cols="30"
-                                                          rows="6">{{$send['skype']['text']}}</textarea>
+                                                          rows="6">{{isset($send['skype']) ? $send['skype']['text'] : ""}}</textarea>
                                             </div>
                                         </div>
                                     </div>
@@ -256,14 +278,14 @@
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>Viber</h4>
                                                 <textarea name="data[viber][text]" class="form-control" cols="30"
-                                                          rows="6">{{$send['viber']['text']}}</textarea>
+                                                          rows="6">{{isset($send['viber']) ? $send['viber']['text'] : ""}}</textarea>
                                             </div>
                                         </div>
                                         <div class="col-xs-6">
                                             <div class="add_info_card_wrap add_info_card_wrap_normal">
                                                 <h4>WhatsApp</h4>
                                                 <textarea name="data[whatsapp][text]" class="form-control" cols="30"
-                                                          rows="6">{{$send['whatsapp']['text']}}</textarea>
+                                                          rows="6">{{isset($send['viber']) ? $send['whatsapp']['text'] : ""}}</textarea>
                                             </div>
                                         </div>
                                     </div>
@@ -384,13 +406,34 @@
             window.number = 1;
             needCheck = true;
 
+            var old_type = "null";
+
             getNewInfo();
+
+            $(".filter_type").on("change", function(){
+                var filter_type = $(this).val();
+                $(".filter_type_export").val(filter_type);
+                $('#preloader').fadeIn('slow', function () {
+                    $(this).show();
+                });
+            });
+            $(".filter_city").on("change", function(){
+                var valuee = $(this).val();
+                $(".filter_city_export").val($(this).val());
+                $('#preloader').fadeIn('slow', function () {
+                    $(this).show();
+                });
+            });
+
 
             function getNewInfo() {
                 var
                     lastId = $(".last_task_id").data("value"),
                     taskId = $(".reserve_task_id").data("taskId"),
-                    page_number = Number(window.location.hash.replace(/\D+/g, "")) == 0 ? 1 : Number(window.location.hash.replace(/\D+/g, ""));
+                    page_number = Number(window.location.hash.replace(/\D+/g, "")) == 0 ? 1 : Number(window.location.hash.replace(/\D+/g, "")),
+                    filter_type = $(".filter_type").val(),
+                    filter_city = $(".filter_city").val() == "" ? "null" : $(".filter_city").val();
+
                 window.number = $(".task_result_table td:first").data("listNumber") == null ? 0 : $(".task_result_table td:first").data("listNumber");
 
                 window.location.hash = "page=" + page_number;
@@ -398,9 +441,19 @@
 
                 $.ajax({
                     method: "get",
-                    url: "{{ url('api/actualParsed') }}/" + taskId + "/" + lastId + "/" + page_number,
+                    url: "{{ url('api/actualParsed') }}/" + taskId + "/" + lastId + "/" + page_number + "/" + filter_type + "/" + filter_city,
                     success: function (data) {
                         if (data.success == true) {
+
+                            if (data.sqCountAll > 0) {
+                                $('.no_results_class').remove();
+                                $(".task_result_tbody").html("");
+                                $(".pagination").html("");
+                            }else{
+                                $(".pagination").html("");
+                                $(".task_result_tbody").html("<tr><td class='text-center' colspan='6'>Нет результатов</td></tr>")
+                            }
+
                             window.location.hash = "page=" + page_number;
                             var l = 0;
                             if (data.sqCountAll > 10) {
@@ -427,18 +480,8 @@
                             $(".task_result_span_sended").text(data.countSended);
                             $(".last_task_id").data("value", data.max_id);
 
-                            if (data.result == null) {
-                                return;
-                            }
-
-                            if (Object.keys(data.result).length > 0) {
-                                $('.no_results_class').remove();
-                                $(".task_result_tbody").html("");
-                            }
-
                             var i = 1;
                             data.result.forEach(function (item, i, arr) {
-
                                 var
                                     cdata = "",
                                     link = item.link === null ? "" : item.link,
@@ -494,6 +537,10 @@
                                     "<td width='250px'><div style=\"max-width:250px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"" + city + "\">" + city + "</div></td>" +
                                     "<td width='250px'><div style=\"max-width:500px; height: 40px; overflow: hidden;\"  data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"" + cdata + "\">" + cdata + "</div></td>" +
                                     "</tr>");
+                            });
+
+                            $('#preloader').fadeOut('slow', function () {
+                                $(this).hide();
                             });
 
                         }

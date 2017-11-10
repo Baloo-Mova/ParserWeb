@@ -151,12 +151,34 @@ class APIController extends Controller
         return preg_match("/<[^<]+>/", $string, $m) != 0;
     }
 
-    public function getTaskParsedInfo($taskId, $lastId, $page_number)
+    public function getTaskParsedInfo($taskId, $lastId, $page_number, $filter_type, $filter_city)
     {
+        $types = [
+            1 => 'https://vk.com/club%',
+            2 => 'https://vk.com/wall%',
+            3 => 'https://ok.ru%'
+        ];
         $maxId = \intval($lastId);
 
         $skip = ($page_number - 1) * 10;
-        $results = SearchQueries::where(['task_group_id' => $taskId])->orderBy('id', 'desc')->limit(10)->skip($skip)->get();
+
+        $where[] = ['task_group_id', '=', $taskId];
+
+        if(isset($filter_city) && $filter_city != "null"){
+            $where[] = ['city', 'like', '%'.$filter_city.'%'];
+        }
+
+        if(isset($filter_type) && ($filter_type != "null")){
+            if($filter_type != "search"){
+                $where[] = ['contact_from', 'like', $types[$filter_type].'%'];
+            }else{
+                $where[] = ['contact_from', 'not like', 'https://vk.com/club%'];
+                $where[] = ['contact_from', 'not like', 'https://vk.com/wall%'];
+                $where[] = ['contact_from', 'not like', 'https://ok.ru%'];
+            }
+        }
+
+        $results = SearchQueries::where($where)->orderBy('id', 'desc')->limit(10)->skip($skip)->get();
 
         if ($results->count() > 0) {
             $maxId = $results[0]->id;
@@ -165,7 +187,7 @@ class APIController extends Controller
             VKLinks::where('task_group_id', '=', $taskId)->count() +
             VKNews::where('task_group_id', '=', $taskId)->count()+
             OkGroups::where('task_group_id', '=', $taskId)->count();
-        $sqCountAll = SearchQueries::where('task_group_id', '=', $taskId)->count();
+        $sqCountAll = SearchQueries::where($where)->count();
 
         $contactCountSended = Contacts::where(['task_group_id' => $taskId, 'sended' => 1])->count();
         $contactCountAll = Contacts::where(['task_group_id' => $taskId, 'sended' => '0'])->count();
@@ -177,7 +199,7 @@ class APIController extends Controller
             'countAll' => $contactCountAll,
             'countSended' => $contactCountSended,
             'max_id' => $maxId,
-            'result' => $lastId == $maxId ? null : $results
+            'result' => $results
         ]);
     }
 

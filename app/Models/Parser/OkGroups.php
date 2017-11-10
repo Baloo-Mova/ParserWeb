@@ -35,6 +35,7 @@ class OkGroups extends Model
     public $fillable = [
         'group_url',
         'task_id',
-        'reserved'
+        'reserved',
+        'task_group_id'
     ];
 }

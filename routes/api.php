@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::get('/actualParsed/{taskId}/{lastId}/{pageNumber}', ["uses" => "APIController@getTaskParsedInfo", "as" => "get.task.parsed.info"]);
+Route::get('/actualParsed/{taskId}/{lastId}/{pageNumber}/{filter_type}/{filter_city}', ["uses" => "APIController@getTaskParsedInfo", "as" => "get.task.parsed.info"]);
 Route::get('/selectEmailTemplate/{id}', ["uses" => "APIController@getSelectEmailTemplate", "as" => "get.select.email.template"]);
 Route::get('/getProxy/{type}',["uses"=> "APIController@getRandomProxy", "as"=>"get.proxy"]);
 Route::post('/addAccs/{type}',["uses"=> "APIController@addAccs", "as"=>"add.accs"]);

@@ -63,6 +63,7 @@ class Tasks extends Model
         'task_query',
         'vk_reserved',
         'fb_reserved',
+        'ok_offset',
         'vk_news_reserved',
         'fb_complete',
         'google_ua_reserved',

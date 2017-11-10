@@ -31,6 +31,7 @@ desired effect
 -->
 <body class="skin-blue sidebar-mini">
 {!! Toastr::render() !!}
+<div id="preloader"></div>
 <div id="app_">
     <div class="wrapper">
 
