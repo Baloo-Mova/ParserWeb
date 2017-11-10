@@ -13,8 +13,6 @@ use App\Models\Parser\ErrorLog;
  */
 class Macros {
 
-
-
     public function __construct() {
 
     }

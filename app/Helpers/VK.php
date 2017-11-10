@@ -1068,7 +1068,7 @@ class VK
             'cookies' => true,
             'allow_redirects' => true,
             'timeout' => 10,
-            'proxy' => "127.0.0.1:8888"//$proxy->generateString(),
+            'proxy' => $proxy->generateString(),
         ]);
 
         $result = $this->requestToApi('users.get', [
